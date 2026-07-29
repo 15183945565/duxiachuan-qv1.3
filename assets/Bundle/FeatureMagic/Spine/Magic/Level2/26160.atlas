@@ -1,0 +1,20 @@
+
+26160.png
+size: 1087,682
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+1
+  rotate: false
+  xy: 2, 2
+  size: 804, 678
+  orig: 808, 684
+  offset: 2, 4
+  index: -1
+2
+  rotate: true
+  xy: 808, 343
+  size: 337, 277
+  orig: 352, 277
+  offset: 0, 0
+  index: -1

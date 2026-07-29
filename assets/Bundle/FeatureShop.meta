@@ -1,0 +1,16 @@
+{
+  "ver": "1.2.0",
+  "importer": "directory",
+  "imported": true,
+  "uuid": "fbbc08c6-48dc-4d76-8d9b-b3f2a12f6827",
+  "files": [],
+  "subMetas": {},
+  "userData": {
+    "compressionType": {},
+    "isRemoteBundle": {},
+    "isBundle": true,
+    "bundleConfigID": "default",
+    "bundleName": "feature-shop",
+    "priority": 3
+  }
+}

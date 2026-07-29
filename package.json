@@ -1,0 +1,29 @@
+{
+  "name": "duxiachuan-qv1-3",
+  "uuid": "d4f03868-dfa1-447b-b0b3-3acb3e3b363a",
+  "creator": {
+    "version": "3.8.8"
+  },
+  "scripts": {
+    "fix:sprite-metas": "node tools/repair-sprite-frame-metas.mjs --write",
+    "extract:home-ui": "node tools/extract-home-ui-prefabs.mjs --write",
+    "preview:web": "node tools/serve-web-build.mjs",
+    "preview:web:release": "node tools/serve-web-build.mjs 8765 --build-dir web-mobile-release",
+    "check:scene": "node tools/audit-scene-uuids.mjs",
+    "check:ui": "node tools/audit-ui-editor-nodes.mjs",
+    "check:display": "node tools/audit-display-adaptation.mjs",
+    "check:code": "node tools/audit-code-integrity.mjs",
+    "check:type": "node tools/audit-typescript.mjs",
+    "check:resources": "node tools/audit-resource-integrity.mjs",
+    "check:bundles": "node tools/audit-bundle-ownership.mjs",
+    "check:backend": "node tools/audit-backend-boundary.mjs",
+    "check:runtime": "node tools/audit-runtime-config.mjs",
+    "check:delivery": "node tools/audit-web-delivery.mjs",
+    "check:delivery:release": "node tools/audit-web-delivery.mjs --build-dir web-mobile-release --release",
+    "check:delivery:startup": "node tools/audit-web-startup-requests.mjs web-mobile-release temp/codex-preview-release.log",
+    "report:delivery": "node tools/audit-web-delivery.mjs --report",
+    "check:architecture": "node tools/audit-home-architecture.mjs",
+    "check:clean": "node tools/audit-project-cleanliness.mjs",
+    "check:all": "npm run check:scene && npm run check:ui && npm run check:display && npm run check:code && npm run check:type && npm run check:resources && npm run check:bundles && npm run check:backend && npm run check:runtime && npm run check:delivery && npm run check:architecture && npm run check:clean"
+  }
+}

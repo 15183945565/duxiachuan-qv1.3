@@ -1,0 +1,97 @@
+
+specialAtk147003-1.png
+size: 997,1076
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+bd_00000
+  rotate: false
+  xy: 2, 752
+  size: 351, 322
+  orig: 418, 404
+  offset: 38, 32
+  index: -1
+bd_00001
+  rotate: false
+  xy: 355, 743
+  size: 344, 331
+  orig: 418, 404
+  offset: 42, 32
+  index: -1
+bd_00002
+  rotate: false
+  xy: 2, 417
+  size: 341, 333
+  orig: 418, 404
+  offset: 43, 32
+  index: -1
+bd_00003
+  rotate: true
+  xy: 345, 411
+  size: 330, 335
+  orig: 418, 404
+  offset: 49, 32
+  index: -1
+bd_00004
+  rotate: true
+  xy: 701, 744
+  size: 330, 292
+  orig: 418, 404
+  offset: 49, 32
+  index: -1
+bd_00005
+  rotate: true
+  xy: 701, 412
+  size: 330, 294
+  orig: 418, 404
+  offset: 49, 32
+  index: -1
+bd_00006
+  rotate: false
+  xy: 2, 120
+  size: 330, 295
+  orig: 418, 404
+  offset: 49, 32
+  index: -1
+bd_00007
+  rotate: false
+  xy: 334, 237
+  size: 330, 172
+  orig: 418, 404
+  offset: 49, 32
+  index: -1
+bd_00008
+  rotate: false
+  xy: 666, 242
+  size: 325, 167
+  orig: 418, 404
+  offset: 52, 36
+  index: -1
+bd_00009
+  rotate: false
+  xy: 666, 78
+  size: 315, 162
+  orig: 418, 404
+  offset: 57, 41
+  index: -1
+bd_00010
+  rotate: false
+  xy: 334, 85
+  size: 299, 150
+  orig: 418, 404
+  offset: 65, 50
+  index: -1
+bd_00011
+  rotate: false
+  xy: 2, 2
+  size: 244, 116
+  orig: 418, 404
+  offset: 91, 80
+  index: -1
+jian
+  rotate: true
+  xy: 248, 5
+  size: 78, 200
+  orig: 112, 229
+  offset: 17, 10
+  index: -1

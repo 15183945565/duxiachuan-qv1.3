@@ -1,0 +1,16 @@
+{
+  "ver": "1.2.0",
+  "importer": "directory",
+  "imported": true,
+  "uuid": "63a9100e-0cc7-4861-a9ba-09348f8360c8",
+  "files": [],
+  "subMetas": {},
+  "userData": {
+    "compressionType": {},
+    "isRemoteBundle": {},
+    "isBundle": true,
+    "bundleConfigID": "default",
+    "bundleName": "feature-bag",
+    "priority": 3
+  }
+}

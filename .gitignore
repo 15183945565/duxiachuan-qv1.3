@@ -1,0 +1,35 @@
+# Cocos Creator generated/cache folders
+/library/
+/temp/
+/local/
+/build/
+/profiles/
+
+# Dependency folders
+/node_modules/
+
+# Codex/generated temporary work files
+/.codex-backup/
+/.codex-tmp/
+/.codex_tmp/
+/tmp/
+/tmp_*/
+/generated_beast_equipment_icons/
+/generated_icon_tmp/
+/generated_home_icons/
+
+# Local preview/export scratch images in the project root
+/*.png
+/*.jpg
+/*.jpeg
+/*.webp
+/*preview*.png
+/*_preview*.png
+/*_contact.png
+/codex-clipboard-*.png
+
+# Logs and OS/editor files
+*.log
+*.tmp
+.DS_Store
+Thumbs.db

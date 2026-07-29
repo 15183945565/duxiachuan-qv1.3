@@ -1,0 +1,111 @@
+
+frame_0375.png
+size: 426,139
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+h1
+  rotate: false
+  xy: 294, 29
+  size: 27, 24
+  orig: 29, 26
+  offset: 1, 1
+  index: -1
+h2
+  rotate: false
+  xy: 323, 29
+  size: 11, 7
+  orig: 11, 8
+  offset: 0, 0
+  index: -1
+h3
+  rotate: true
+  xy: 173, 10
+  size: 12, 11
+  orig: 13, 13
+  offset: 1, 1
+  index: -1
+yanxi_qiandao_1
+  rotate: false
+  xy: 294, 2
+  size: 25, 25
+  orig: 34, 34
+  offset: 4, 5
+  index: -1
+yanxi_qiandao_10
+  rotate: false
+  xy: 125, 5
+  size: 46, 17
+  orig: 54, 19
+  offset: 1, 1
+  index: -1
+yanxi_qiandao_11
+  rotate: false
+  xy: 205, 10
+  size: 87, 31
+  orig: 90, 41
+  offset: 2, 1
+  index: -1
+yanxi_qiandao_12
+  rotate: false
+  xy: 2, 16
+  size: 121, 121
+  orig: 123, 123
+  offset: 1, 1
+  index: -1
+yanxi_qiandao_2
+  rotate: false
+  xy: 321, 10
+  size: 17, 17
+  orig: 23, 23
+  offset: 3, 3
+  index: -1
+yanxi_qiandao_3
+  rotate: false
+  xy: 323, 38
+  size: 15, 15
+  orig: 22, 21
+  offset: 3, 3
+  index: -1
+yanxi_qiandao_4
+  rotate: false
+  xy: 278, 43
+  size: 11, 10
+  orig: 13, 12
+  offset: 1, 1
+  index: -1
+yanxi_qiandao_5
+  rotate: false
+  xy: 344, 63
+  size: 80, 74
+  orig: 80, 74
+  offset: 0, 0
+  index: -1
+yanxi_qiandao_6
+  rotate: false
+  xy: 205, 43
+  size: 71, 94
+  orig: 71, 97
+  offset: 0, 0
+  index: -1
+yanxi_qiandao_7
+  rotate: false
+  xy: 278, 55
+  size: 64, 82
+  orig: 64, 82
+  offset: 0, 0
+  index: -1
+yanxi_qiandao_8
+  rotate: true
+  xy: 344, 5
+  size: 56, 79
+  orig: 56, 79
+  offset: 0, 0
+  index: -1
+yanxi_qiandao_9
+  rotate: false
+  xy: 125, 24
+  size: 78, 113
+  orig: 78, 113
+  offset: 0, 0
+  index: -1

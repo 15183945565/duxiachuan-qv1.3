@@ -1,0 +1,76 @@
+
+26162.png
+size: 1855,1250
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+0_0
+  rotate: true
+  xy: 1755, 699
+  size: 52, 68
+  orig: 55, 70
+  offset: 2, 1
+  index: -1
+0_1
+  rotate: false
+  xy: 1755, 655
+  size: 33, 42
+  orig: 35, 44
+  offset: 1, 1
+  index: -1
+0_10
+  rotate: false
+  xy: 1416, 68
+  size: 63, 116
+  orig: 65, 119
+  offset: 1, 1
+  index: -1
+0_11
+  rotate: true
+  xy: 2, 2
+  size: 1246, 1103
+  orig: 1287, 1103
+  offset: 0, 0
+  index: -1
+0_2
+  rotate: false
+  xy: 1790, 643
+  size: 12, 13
+  orig: 14, 15
+  offset: 1, 1
+  index: -1
+0_4
+  rotate: true
+  xy: 1107, 3
+  size: 635, 307
+  orig: 637, 314
+  offset: 1, 5
+  index: -1
+0_5
+  rotate: false
+  xy: 1107, 640
+  size: 646, 111
+  orig: 648, 114
+  offset: 1, 2
+  index: -1
+0_7
+  rotate: true
+  xy: 1416, 186
+  size: 452, 411
+  orig: 452, 411
+  offset: 0, 0
+  index: -1
+0_8
+  rotate: false
+  xy: 1107, 753
+  size: 746, 495
+  orig: 772, 495
+  offset: 0, 0
+  index: -1
+0_9
+  rotate: false
+  xy: 1790, 658
+  size: 33, 39
+  orig: 36, 42
+  offset: 1, 1
+  index: -1

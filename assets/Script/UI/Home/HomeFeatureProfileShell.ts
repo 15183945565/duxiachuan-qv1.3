@@ -1,0 +1,436 @@
+import {
+    Color,
+    EventTouch,
+    Graphics,
+    HorizontalTextAlignment,
+    Label,
+    Node,
+    Overflow,
+    Sprite,
+    UITransform,
+    VerticalTextAlignment,
+    sys,
+} from 'cc';
+import { applySimKaiFont } from '../Common/UIFont';
+import * as HomeConfig from './HomeConfig';
+import type { RoleProfile } from './HomeTypes';
+import { HomeViewBase } from './HomeViewBase';
+import { closeProfileDaoYouPanel, openProfileDaoYouPanel } from './HomeProfileDaoYouPanel';
+
+/**
+ * Owns the profile entry, main profile popup, labels, and action routing.
+ */
+export abstract class HomeFeatureProfileShell extends HomeViewBase {
+    protected setupAvatarProfileButton(): void {
+        const topHud = this.persistentCurrencyHud || this.findNode('TopHud', this.uiMainLayer || this.node) || this.findNode('TopHud');
+        if (!topHud) return;
+        const avatarIcon = this.findNode('AvatarIcon', topHud);
+        if (avatarIcon) {
+            avatarIcon.active = true;
+            this.applyUiSkinKeepingEditorSize(avatarIcon, HomeConfig.UI_HOME_AVATAR, 104, 104);
+        }
+        const targets = [
+            this.findNode('AvatarFrame', topHud),
+            avatarIcon,
+        ].filter((node): node is Node => !!node);
+        const bound = new Set<Node>();
+        targets.forEach((target) => {
+            if (bound.has(target)) return;
+            bound.add(target);
+            this.bindScaledClick(target, () => {
+                void this.openProfileEntry().catch((error) => {
+                    console.error('[MainHomeView] failed to open profile entry', error);
+                    this.showToast('\u6863\u6848\u8d44\u6e90\u52a0\u8f7d\u5931\u8d25');
+                });
+            });
+        });
+        this.loadProfileAvatarFrameState();
+        this.applyEquippedProfileAvatarFrameVisual();
+    }
+    protected async openProfileEntry(): Promise<void> {
+        await this.withTransitionLoading(async () => {
+            await this.prepareHomeEntry('BtnProfile');
+            if (!this.node.isValid) return;
+            this.openProfilePopup();
+        });
+    }
+    protected openProfilePopup(): void {
+        const panel = this.ensureProfilePopup();
+        panel.active = true;
+        closeProfileDaoYouPanel(this);
+        this.ensureInputBlocker(panel);
+        panel.setSiblingIndex((panel.parent?.children.length || 1) - 1);
+        this.refreshRootLayerOrder();
+        this.refreshProfilePopupLabels();
+        this.applyEquippedProfileAvatarFrameVisual();
+    }
+    protected closeProfilePopup(): void {
+        closeProfileDaoYouPanel(this);
+        this.closeProfileSettingsPopup();
+        this.closeProfileAvatarFramePopup();
+        if (this.profilePopupRoot?.isValid) {
+            this.profilePopupRoot.active = false;
+        }
+    }
+    protected ensureProfilePopup(): Node {
+        if (this.profilePopupRoot?.isValid) {
+            return this.profilePopupRoot;
+        }
+
+        const parent = this.popupRoot || this.uiHudLayer || this.node;
+        let root = parent.getChildByName('ProfilePopup');
+        if (root) {
+            root.active = false;
+            if (this.bindProfilePopupFromEditor(root)) {
+                return root;
+            }
+        }
+        if (!root) {
+            root = this.createNode('ProfilePopup', parent, HomeConfig.VIEW_WIDTH, HomeConfig.VIEW_HEIGHT, 0, 0);
+        }
+        root.active = false;
+        root.removeAllChildren();
+
+        const mask = this.createNode('ProfilePopupMask', root, HomeConfig.VIEW_WIDTH, HomeConfig.VIEW_HEIGHT, 0, 0);
+        this.drawRect(mask, HomeConfig.VIEW_WIDTH, HomeConfig.VIEW_HEIGHT, new Color(0, 0, 0, 118));
+        mask.on(Node.EventType.TOUCH_END, (event: EventTouch) => {
+            event.propagationStopped = true;
+            this.closeProfilePopup();
+        }, this);
+        const board = this.createNode(
+            'ProfilePopupBoard',
+            root,
+            HomeConfig.PROFILE_POPUP_WIDTH,
+            HomeConfig.PROFILE_POPUP_HEIGHT,
+            0,
+            HomeConfig.PROFILE_POPUP_Y,
+        );
+        board.on(Node.EventType.TOUCH_START, (event: EventTouch) => {
+            event.propagationStopped = true;
+        }, this);
+        board.on(Node.EventType.TOUCH_END, (event: EventTouch) => {
+            event.propagationStopped = true;
+        }, this);
+
+        this.profilePopupRoot = root;
+        this.profilePopupBoard = board;
+        this.buildProfilePopupBoardSkin(board);
+        this.buildProfileHeader(board);
+        this.buildProfileActionButtons(board);
+        return root;
+    }
+    protected bindProfilePopupFromEditor(root: Node): boolean {
+        const board = this.findNode('ProfilePopupBoard', root);
+        if (!board) {
+            return false;
+        }
+        this.profilePopupRoot = root;
+        this.profilePopupBoard = board;
+        this.refreshEditorProfilePopupSkins(root, board);
+        const mask = this.findNode('ProfilePopupMask', root);
+        if (mask) {
+            (mask.getComponent(UITransform) || mask.addComponent(UITransform)).setContentSize(HomeConfig.VIEW_WIDTH, HomeConfig.VIEW_HEIGHT);
+            if (!mask.getComponent(Graphics) && !mask.getComponent(Sprite)) {
+                this.drawRect(mask, HomeConfig.VIEW_WIDTH, HomeConfig.VIEW_HEIGHT, new Color(0, 0, 0, 118));
+            }
+            mask.off(Node.EventType.TOUCH_END);
+            mask.on(Node.EventType.TOUCH_END, (event: EventTouch) => {
+                event.propagationStopped = true;
+                this.closeProfilePopup();
+            }, this);
+        }
+
+        board.off(Node.EventType.TOUCH_START);
+        board.off(Node.EventType.TOUCH_END);
+        board.on(Node.EventType.TOUCH_START, (event: EventTouch) => {
+            event.propagationStopped = true;
+        }, this);
+        board.on(Node.EventType.TOUCH_END, (event: EventTouch) => {
+            event.propagationStopped = true;
+        }, this);
+
+        const nameLabel = this.findNode('ProfileNameLabel', board)?.getComponent(Label) || null;
+        if (nameLabel) {
+            this.profilePopupNameLabel = nameLabel;
+            applySimKaiFont(nameLabel);
+            this.applyProfileNicknameLabelStyle(nameLabel);
+        }
+
+        const uidLabel = this.findNode('ProfileUidLabel', board)?.getComponent(Label) || null;
+        if (uidLabel) {
+            this.profilePopupUidLabel = uidLabel;
+            applySimKaiFont(uidLabel);
+            this.applyProfileTextOutline(uidLabel, 2);
+        }
+
+        const editButton = this.findNode('ProfileEditButton', board);
+        if (editButton) {
+            this.bindScaledClick(editButton, () => this.showToast('\u6539\u540d\u529f\u80fd\u9884\u7559'));
+        }
+
+        const copyButton = this.findNode('ProfileCopyButton', board);
+        if (copyButton) {
+            this.bindScaledClick(copyButton, () => this.copyProfileUid());
+        }
+        this.ensureProfileAvatarFrameButton(board);
+
+        [
+            { slotName: 'ProfileCustomerButtonSlot', buttonName: 'ProfileCustomerButton', message: '' },
+            { slotName: 'ProfileFriendButtonSlot', buttonName: 'ProfileFriendButton', message: '\u9053\u53cb\u529f\u80fd\u9884\u7559' },
+            { slotName: 'ProfileSettingsButtonSlot', buttonName: 'ProfileSettingsButton', message: '\u8bbe\u7f6e\u529f\u80fd\u9884\u7559' },
+            { slotName: 'ProfileRealNameButtonSlot', buttonName: 'ProfileRealNameButton', message: '\u5b9e\u540d\u529f\u80fd\u9884\u7559' },
+            { slotName: 'ProfileBillButtonSlot', buttonName: 'ProfileBillButton', message: '\u8d26\u5355\u529f\u80fd\u9884\u7559' },
+            { slotName: 'ProfileStreamerButtonSlot', buttonName: 'ProfileStreamerButton', message: '\u4e3b\u64ad\u529f\u80fd\u9884\u7559' },
+        ].forEach((action) => {
+            const slot = this.findNode(action.slotName, board);
+            if (slot) {
+                slot.off(Node.EventType.TOUCH_START);
+                slot.off(Node.EventType.TOUCH_END);
+                slot.off(Node.EventType.TOUCH_CANCEL);
+            }
+
+            const button = this.findNode(action.buttonName, board);
+            if (button) {
+                this.bindScaledClick(button, () => {
+                    if (action.buttonName === 'ProfileCustomerButton') {
+                        this.openCustomerServiceUrl();
+                        return;
+                    }
+                    if (action.buttonName === 'ProfileFriendButton') {
+                        openProfileDaoYouPanel(this);
+                        return;
+                    }
+                    if (action.buttonName === 'ProfileSettingsButton') {
+                        this.openProfileSettingsPopup();
+                        return;
+                    }
+                    this.showToast(action.message);
+                });
+            }
+        });
+
+        return true;
+    }
+    protected refreshEditorProfilePopupSkins(root: Node, board: Node): void {
+        const skin = (name: string, path: string, width: number, height: number, searchRoot: Node = board): void => {
+            const target = this.findNode(name, searchRoot);
+            if (target) {
+                this.applyUiSkinKeepingEditorSize(target, path, width, height);
+            }
+        };
+
+        skin('ProfilePopupBoardSkin', HomeConfig.UI_PROFILE_POPUP_BG, HomeConfig.PROFILE_POPUP_WIDTH, HomeConfig.PROFILE_POPUP_HEIGHT);
+        skin('ProfileAvatarFrame', HomeConfig.UI_HOME_PROFILE_FRAME, 104, 104);
+        skin('ProfileAvatarIcon', HomeConfig.UI_HOME_AVATAR, 92, 92);
+        this.hideProfileNameBar(board);
+        skin('ProfileEditButton', HomeConfig.UI_PROFILE_BTN_EDIT, 32, 32);
+        skin('ProfileCopyButton', HomeConfig.UI_PROFILE_BTN_COPY, 34, 34);
+
+        [
+            { name: 'ProfileCustomerButton', path: HomeConfig.UI_PROFILE_BTN_CUSTOMER },
+            { name: 'ProfileFriendButton', path: HomeConfig.UI_PROFILE_BTN_FRIEND },
+            { name: 'ProfileSettingsButton', path: HomeConfig.UI_PROFILE_BTN_SETTINGS },
+            { name: 'ProfileRealNameButton', path: HomeConfig.UI_PROFILE_BTN_REALNAME },
+            { name: 'ProfileBillButton', path: HomeConfig.UI_PROFILE_BTN_BILL },
+            { name: 'ProfileStreamerButton', path: HomeConfig.UI_PROFILE_BTN_STREAMER },
+        ].forEach((item) => {
+            skin(item.name, item.path, 82, 82);
+        });
+
+        if (root !== board) {
+            root.setSiblingIndex((root.parent?.children.length || 1) - 1);
+        }
+    }
+    protected buildProfilePopupBoardSkin(board: Node): void {
+        const skin = this.createSkinnedNode(
+            'ProfilePopupBoardSkin',
+            board,
+            HomeConfig.PROFILE_POPUP_WIDTH,
+            HomeConfig.PROFILE_POPUP_HEIGHT,
+            0,
+            0,
+            HomeConfig.UI_PROFILE_POPUP_BG,
+        );
+        skin.setSiblingIndex(0);
+    }
+    protected buildProfileHeader(board: Node): void {
+        const header = this.createNode('ProfileHeader', board, 470, 150, -105, 92);
+        header.setSiblingIndex(3);
+        this.createSkinnedNode('ProfileAvatarFrame', header, 104, 104, -210, 8, HomeConfig.UI_HOME_PROFILE_FRAME).setSiblingIndex(0);
+        this.createSkinnedNode('ProfileAvatarIcon', header, 92, 92, -210, 8, HomeConfig.UI_HOME_AVATAR).setSiblingIndex(1);
+
+        const nameBar = this.createSkinnedNode('ProfileNameBar', header, 230, 44, -28, 36, HomeConfig.UI_HOME_RESOURCE_BAR);
+        nameBar.active = false;
+        const nameBarSprite = nameBar.getComponent(Sprite);
+        if (nameBarSprite) nameBarSprite.enabled = false;
+        nameBar.setSiblingIndex(0);
+        this.profilePopupNameLabel = this.createLabel(header, 'ProfileNameLabel', this.getProfileNicknameText(), 25, -84, 64, 220, 44, Color.WHITE);
+        this.applyProfileNicknameLabelStyle(this.profilePopupNameLabel);
+
+        const editButton = this.createSkinnedNode('ProfileEditButton', header, 32, 32, 118, 36, HomeConfig.UI_PROFILE_BTN_EDIT);
+        this.bindScaledClick(editButton, () => this.showToast('\u6539\u540d\u529f\u80fd\u9884\u7559'));
+
+        this.profilePopupUidLabel = this.createLabel(header, 'ProfileUidLabel', `UID: ${HomeConfig.DEFAULT_UID}`, 25, -26, -10, 260, 36, Color.WHITE);
+        this.applyProfileTextOutline(this.profilePopupUidLabel, 2);
+
+        const copyButton = this.createSkinnedNode('ProfileCopyButton', header, 34, 34, 118, -12, HomeConfig.UI_PROFILE_BTN_COPY);
+        this.bindScaledClick(copyButton, () => this.copyProfileUid());
+        this.ensureProfileAvatarFrameButton(board);
+    }
+    protected ensureProfileAvatarFrameButton(board: Node): void {
+        const header = this.findNode('ProfileHeader', board);
+        if (!header?.isValid) return;
+
+        let button = header.getChildByName('ProfileAvatarFrameButton');
+        if (!button?.isValid) {
+            button = this.createSkinnedNode('ProfileAvatarFrameButton', header, 118, 39, -210, -70, HomeConfig.UI_PROFILE_AVATAR_FRAME_BUTTON_BG);
+        } else {
+            button.active = true;
+        }
+
+        let labelNode = button.getChildByName('ProfileAvatarFrameButtonLabel');
+        if (!labelNode?.isValid) {
+            labelNode = this.createNode('ProfileAvatarFrameButtonLabel', button, 106, 30, 0, 1);
+            const label = labelNode.getComponent(Label) || labelNode.addComponent(Label);
+            applySimKaiFont(label);
+            label.string = '\u6362\u5934\u50cf\u6846';
+            label.fontSize = 20;
+            label.lineHeight = 28;
+            label.color = new Color(96, 58, 31, 255);
+            label.horizontalAlign = HorizontalTextAlignment.CENTER;
+            label.verticalAlign = VerticalTextAlignment.CENTER;
+            label.overflow = Overflow.SHRINK;
+            label.enableWrapText = false;
+            this.applyProfileTextOutline(label, 1);
+        }
+        labelNode.active = true;
+
+        this.bindScaledClick(button, () => this.openProfileAvatarFramePopup());
+    }
+    protected buildProfileActionButtons(board: Node): void {
+        const actions = [
+            { name: 'ProfileCustomerButton', icon: HomeConfig.UI_PROFILE_BTN_CUSTOMER, x: -235, y: -72, message: '' },
+            { name: 'ProfileFriendButton', icon: HomeConfig.UI_PROFILE_BTN_FRIEND, x: -85, y: -72, message: '\u9053\u53cb\u529f\u80fd\u9884\u7559' },
+            { name: 'ProfileSettingsButton', icon: HomeConfig.UI_PROFILE_BTN_SETTINGS, x: 65, y: -72, message: '\u8bbe\u7f6e\u529f\u80fd\u9884\u7559' },
+            { name: 'ProfileRealNameButton', icon: HomeConfig.UI_PROFILE_BTN_REALNAME, x: 215, y: -72, message: '\u5b9e\u540d\u529f\u80fd\u9884\u7559' },
+            { name: 'ProfileBillButton', icon: HomeConfig.UI_PROFILE_BTN_BILL, x: -235, y: -168, message: '\u8d26\u5355\u529f\u80fd\u9884\u7559' },
+            { name: 'ProfileStreamerButton', icon: HomeConfig.UI_PROFILE_BTN_STREAMER, x: -85, y: -168, message: '\u4e3b\u64ad\u529f\u80fd\u9884\u7559' },
+        ];
+
+        actions.forEach((action) => {
+            const slot = this.createNode(`${action.name}Slot`, board, 92, 92, action.x, action.y);
+            slot.setSiblingIndex(3);
+            const button = this.createSkinnedNode(action.name, slot, 82, 82, 0, 0, action.icon);
+            button.setSiblingIndex(0);
+            this.bindScaledClick(button, () => {
+                if (action.name === 'ProfileCustomerButton') {
+                    this.openCustomerServiceUrl();
+                    return;
+                }
+                if (action.name === 'ProfileFriendButton') {
+                    openProfileDaoYouPanel(this);
+                    return;
+                }
+                if (action.name === 'ProfileSettingsButton') {
+                    this.openProfileSettingsPopup();
+                    return;
+                }
+                this.showToast(action.message);
+            });
+        });
+    }
+    protected refreshProfilePopupLabels(): void {
+        if (this.profilePopupNameLabel?.isValid) {
+            this.profilePopupNameLabel.string = this.getProfileNicknameText();
+            this.applyProfileNicknameLabelStyle(this.profilePopupNameLabel);
+        }
+        if (this.profilePopupUidLabel?.isValid) {
+            this.profilePopupUidLabel.string = `UID: ${HomeConfig.DEFAULT_UID}`;
+        }
+    }
+    protected getProfileNicknameText(): string {
+        return `\u6635\u79f0\uff1a${this.profile.name || HomeConfig.DEFAULT_NAME}`;
+    }
+    protected hideProfileNameBar(root: Node): void {
+        const nameBar = this.findNode('ProfileNameBar', root);
+        if (!nameBar?.isValid) return;
+        nameBar.active = false;
+        const sprite = nameBar.getComponent(Sprite);
+        if (sprite) sprite.enabled = false;
+    }
+    protected applyProfileNicknameLabelStyle(label: Label): void {
+        const node = label.node;
+        node.active = true;
+        node.setPosition(-84, 64, 0);
+        (node.getComponent(UITransform) || node.addComponent(UITransform)).setContentSize(220, 44);
+        label.string = this.getProfileNicknameText();
+        label.fontSize = 25;
+        label.lineHeight = 33;
+        label.color = Color.WHITE;
+        label.horizontalAlign = HorizontalTextAlignment.CENTER;
+        label.verticalAlign = VerticalTextAlignment.CENTER;
+        label.overflow = Overflow.SHRINK;
+        label.enableWrapText = false;
+        applySimKaiFont(label);
+        this.applyProfileTextOutline(label, 2);
+    }
+    protected copyProfileUid(): void {
+        const clipboard = (globalThis as unknown as { navigator?: { clipboard?: { writeText?: (text: string) => Promise<void> } } }).navigator?.clipboard;
+        if (clipboard?.writeText) {
+            void clipboard.writeText(HomeConfig.DEFAULT_UID).catch((err) => {
+                console.warn('[MainHomeView] copy uid failed', err);
+            });
+        }
+        this.showToast('UID\u5df2\u590d\u5236');
+    }
+    protected openCustomerServiceUrl(): void {
+        const fallbackOpen = (globalThis as unknown as { open?: (url: string, target?: string) => void }).open;
+        try {
+            if (typeof sys.openURL === 'function') {
+                sys.openURL(HomeConfig.CUSTOMER_SERVICE_URL);
+                return;
+            }
+            if (typeof fallbackOpen === 'function') {
+                fallbackOpen(HomeConfig.CUSTOMER_SERVICE_URL, '_blank');
+                return;
+            }
+        } catch (err) {
+            console.warn('[MainHomeView] open customer service failed', err);
+        }
+        this.showToast('\u5ba2\u670d\u94fe\u63a5\u6253\u5f00\u5931\u8d25');
+    }
+    protected applyProfileTextOutline(label: Label, width: number): void {
+        label.enableOutline = width > 0;
+        label.outlineColor = new Color(28, 26, 22, 255);
+        label.outlineWidth = width;
+    }
+    protected updateProfileLabels(): void {
+        if (this.playerNameLabel) {
+            this.playerNameLabel.string = this.profile.name;
+        }
+        this.refreshRolePageNameLabel(HomeConfig.ROLE_ASSETS[this.profile.gender]);
+        this.refreshProfilePopupLabels();
+    }
+    protected loadProfile(): RoleProfile {
+        const raw = sys.localStorage.getItem(HomeConfig.PROFILE_KEY);
+        if (!raw) {
+            return { name: HomeConfig.DEFAULT_NAME, gender: 'male', created: false, version: HomeConfig.PROFILE_VERSION };
+        }
+
+        try {
+            const parsed = JSON.parse(raw) as Partial<RoleProfile>;
+            return {
+                name: parsed.name || HomeConfig.DEFAULT_NAME,
+                gender: parsed.gender === 'female' ? 'female' : 'male',
+                created: parsed.version === HomeConfig.PROFILE_VERSION && parsed.created === true,
+                version: HomeConfig.PROFILE_VERSION,
+            };
+        } catch (err) {
+            console.warn('[MainHomeView] invalid local profile', err);
+            return { name: HomeConfig.DEFAULT_NAME, gender: 'male', created: false, version: HomeConfig.PROFILE_VERSION };
+        }
+    }
+    protected saveProfile(profile: RoleProfile): void {
+        sys.localStorage.setItem(HomeConfig.PROFILE_KEY, JSON.stringify({ ...profile, version: HomeConfig.PROFILE_VERSION }));
+    }
+}

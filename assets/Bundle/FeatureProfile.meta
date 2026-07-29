@@ -1,0 +1,16 @@
+{
+  "ver": "1.2.0",
+  "importer": "directory",
+  "imported": true,
+  "uuid": "41f0d7b8-1d6c-48d8-a88c-d20a689ca8d7",
+  "files": [],
+  "subMetas": {},
+  "userData": {
+    "compressionType": {},
+    "isRemoteBundle": {},
+    "isBundle": true,
+    "bundleConfigID": "default",
+    "bundleName": "feature-profile",
+    "priority": 3
+  }
+}

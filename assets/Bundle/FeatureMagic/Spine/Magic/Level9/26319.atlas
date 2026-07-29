@@ -1,0 +1,62 @@
+
+26319.png
+size: 824,316
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+hua01
+  rotate: false
+  xy: 774, 59
+  size: 48, 50
+  orig: 54, 51
+  offset: 2, 0
+  index: -1
+hua02
+  rotate: true
+  xy: 774, 28
+  size: 29, 34
+  orig: 30, 34
+  offset: 1, 0
+  index: -1
+huaban01
+  rotate: true
+  xy: 774, 6
+  size: 20, 18
+  orig: 23, 20
+  offset: 1, 1
+  index: -1
+huaban02
+  rotate: true
+  xy: 794, 12
+  size: 14, 13
+  orig: 19, 21
+  offset: 1, 2
+  index: -1
+shanshi
+  rotate: false
+  xy: 2, 2
+  size: 490, 312
+  orig: 503, 443
+  offset: 8, 8
+  index: -1
+shitou
+  rotate: false
+  xy: 710, 5
+  size: 62, 104
+  orig: 64, 106
+  offset: 1, 1
+  index: -1
+shu
+  rotate: true
+  xy: 494, 30
+  size: 284, 214
+  orig: 487, 303
+  offset: 152, 50
+  index: -1
+shui
+  rotate: false
+  xy: 710, 111
+  size: 105, 203
+  orig: 126, 207
+  offset: 21, 4
+  index: -1

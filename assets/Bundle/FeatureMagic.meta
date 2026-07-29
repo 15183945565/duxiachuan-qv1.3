@@ -1,0 +1,16 @@
+{
+  "ver": "1.2.0",
+  "importer": "directory",
+  "imported": true,
+  "uuid": "b0f46989-9e1a-49e5-8dc5-ed3c06c2681c",
+  "files": [],
+  "subMetas": {},
+  "userData": {
+    "compressionType": {},
+    "isRemoteBundle": {},
+    "isBundle": true,
+    "bundleConfigID": "default",
+    "bundleName": "feature-magic",
+    "priority": 3
+  }
+}

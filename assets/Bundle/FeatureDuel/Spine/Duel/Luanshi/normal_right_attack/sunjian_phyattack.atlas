@@ -1,0 +1,48 @@
+
+sunjian_phyattack.png
+size: 486,244
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+glow
+  rotate: false
+  xy: 113, 7
+  size: 96, 96
+  orig: 100, 100
+  offset: 2, 2
+  index: -1
+guangdian
+  rotate: false
+  xy: 2, 17
+  size: 57, 57
+  orig: 64, 64
+  offset: 4, 3
+  index: -1
+tx dilie
+  rotate: false
+  xy: 2, 76
+  size: 109, 27
+  orig: 110, 29
+  offset: 0, 1
+  index: -1
+tx0001
+  rotate: true
+  xy: 408, 51
+  size: 191, 76
+  orig: 193, 77
+  offset: 1, 0
+  index: -1
+tx0002
+  rotate: true
+  xy: 253, 2
+  size: 240, 153
+  orig: 242, 154
+  offset: 0, 0
+  index: -1
+tx0003
+  rotate: false
+  xy: 2, 105
+  size: 249, 137
+  orig: 250, 137
+  offset: 0, 0
+  index: -1

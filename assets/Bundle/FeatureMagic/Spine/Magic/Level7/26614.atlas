@@ -1,0 +1,83 @@
+
+26614.png
+size: 640,417
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+1
+  rotate: true
+  xy: 542, 313
+  size: 102, 96
+  orig: 111, 114
+  offset: 5, 9
+  index: -1
+10
+  rotate: true
+  xy: 560, 130
+  size: 12, 27
+  orig: 13, 27
+  offset: 0, 0
+  index: -1
+11
+  rotate: false
+  xy: 2, 2
+  size: 538, 413
+  orig: 540, 416
+  offset: 1, 2
+  index: -1
+2
+  rotate: false
+  xy: 542, 226
+  size: 85, 85
+  orig: 103, 104
+  offset: 8, 9
+  index: -1
+3
+  rotate: true
+  xy: 558, 206
+  size: 18, 36
+  orig: 18, 37
+  offset: 0, 0
+  index: -1
+4
+  rotate: false
+  xy: 542, 73
+  size: 14, 33
+  orig: 14, 36
+  offset: 0, 2
+  index: -1
+5
+  rotate: false
+  xy: 542, 144
+  size: 17, 37
+  orig: 17, 37
+  offset: 0, 0
+  index: -1
+6
+  rotate: true
+  xy: 542, 58
+  size: 13, 30
+  orig: 14, 30
+  offset: 1, 0
+  index: -1
+7
+  rotate: false
+  xy: 542, 183
+  size: 14, 41
+  orig: 14, 41
+  offset: 0, 0
+  index: -1
+8
+  rotate: true
+  xy: 558, 189
+  size: 15, 34
+  orig: 18, 34
+  offset: 1, 0
+  index: -1
+9
+  rotate: false
+  xy: 542, 108
+  size: 16, 34
+  orig: 16, 34
+  offset: 0, 0
+  index: -1

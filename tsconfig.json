@@ -1,0 +1,9 @@
+{
+  "extends": "./temp/tsconfig.cocos.json",
+  "include": [
+    "assets/**/*.ts"
+  ],
+  "compilerOptions": {
+    "strict": false
+  }
+}

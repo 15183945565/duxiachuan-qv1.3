@@ -1,0 +1,55 @@
+
+simayi_phyattack_1.png
+size: 154,735
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+fxpa_01
+  rotate: true
+  xy: 2, 2
+  size: 157, 134
+  orig: 163, 137
+  offset: 3, 1
+  index: -1
+fxpa_02_1
+  rotate: true
+  xy: 71, 516
+  size: 217, 81
+  orig: 218, 82
+  offset: 0, 0
+  index: -1
+fxpa_02_2
+  rotate: true
+  xy: 2, 494
+  size: 239, 67
+  orig: 240, 68
+  offset: 1, 1
+  index: -1
+fxpa_02_3
+  rotate: true
+  xy: 2, 309
+  size: 183, 60
+  orig: 184, 61
+  offset: 1, 1
+  index: -1
+fxpa_02_4
+  rotate: true
+  xy: 71, 330
+  size: 184, 60
+  orig: 185, 60
+  offset: 0, 0
+  index: -1
+fxpa_02_5
+  rotate: true
+  xy: 64, 161
+  size: 167, 62
+  orig: 168, 62
+  offset: 0, 0
+  index: -1
+fxpa_02_6
+  rotate: true
+  xy: 2, 181
+  size: 126, 58
+  orig: 126, 59
+  offset: 0, 0
+  index: -1

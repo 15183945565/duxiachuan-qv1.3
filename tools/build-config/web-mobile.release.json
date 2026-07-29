@@ -1,0 +1,82 @@
+{
+  "platform": "web-mobile",
+  "debug": false,
+  "md5Cache": true,
+  "outputName": "web-mobile-release",
+  "taskName": "web-mobile-release",
+  "buildMode": "normal",
+  "buildPath": "project://build",
+  "name": "duxiachuan-qv1-3",
+  "mainBundleCompressionType": "merge_dep",
+  "mainBundleIsRemote": false,
+  "server": "",
+  "useBuiltinServer": false,
+  "startSceneAssetBundle": false,
+  "moveRemoteBundleScript": false,
+  "startScene": "1fe122f8-07ac-48c2-8c03-f366e7b37e9d",
+  "scenes": [
+    {
+      "url": "db://assets/Scene/LoadingScene.scene",
+      "uuid": "1fe122f8-07ac-48c2-8c03-f366e7b37e9d"
+    },
+    {
+      "url": "db://assets/Scene/MainScene.scene",
+      "uuid": "79d65da4-a246-4f1d-96bd-0866d2a98c7a"
+    }
+  ],
+  "designResolution": {
+    "width": 750,
+    "height": 1624,
+    "fitWidth": true,
+    "fitHeight": false,
+    "policy": 4
+  },
+  "packages": {
+    "adsense-h5g-plugin": {
+      "enableAdsense": false,
+      "enableTestAd": false
+    },
+    "web-mobile": {
+      "useWebGPU": false,
+      "orientation": "portrait",
+      "embedWebDebugger": false
+    }
+  },
+  "engineModulesConfigKey": "defaultConfig",
+  "mangleProperties": false,
+  "skipCompressTexture": false,
+  "sourceMaps": false,
+  "overwriteProjectSettings": {
+    "includeModules": {
+      "gfx-webgl2": "on",
+      "physics": "inherit-project-setting",
+      "physics-2d": "inherit-project-setting"
+    },
+    "macroConfig": {
+      "cleanupImageCache": "inherit-project-setting"
+    }
+  },
+  "nativeCodeBundleMode": "both",
+  "polyfills": {
+    "asyncFunctions": true
+  },
+  "experimentalEraseModules": false,
+  "inlineEnum": true,
+  "useSplashScreen": true,
+  "bundleCommonChunk": false,
+  "packAutoAtlas": true,
+  "bundleConfigs": [],
+  "wasmCompressionMode": false,
+  "binGroupConfig": {
+    "threshold": 16,
+    "enable": false
+  },
+  "md5CacheOptions": {
+    "excludes": [
+      "runtime-config.js"
+    ],
+    "includes": [],
+    "replaceOnly": [],
+    "handleTemplateMd5Link": true
+  }
+}

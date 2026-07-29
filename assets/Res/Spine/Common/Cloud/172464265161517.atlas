@@ -1,0 +1,20 @@
+
+172464265161517.png
+size: 678,399
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+huaban1
+  rotate: true
+  xy: 644, 341
+  size: 56, 32
+  orig: 56, 32
+  offset: 0, 0
+  index: -1
+yun
+  rotate: false
+  xy: 2, 2
+  size: 640, 395
+  orig: 640, 395
+  offset: 0, 0
+  index: -1

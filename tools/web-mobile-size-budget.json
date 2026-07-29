@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "maximumBuildBytes": 230686720,
+  "maximumStartupTransferBytes": 52428800,
+  "maximumSingleFileBytes": 12582912,
+  "bundles": {
+    "internal": 2097152,
+    "main": 29360128,
+    "res": 47185920,
+    "ui-home": 5242880,
+    "feature-magic": 57671680,
+    "feature-battle": 26214400,
+    "feature-duel": 20971520,
+    "feature-beast": 10485760,
+    "feature-shop": 8388608,
+    "feature-profile": 10485760,
+    "feature-bag": 5242880,
+    "feature-role": 5242880
+  }
+}

@@ -1,0 +1,41 @@
+
+skeleton.png
+size: 1783,1286
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+dimian
+  rotate: true
+  xy: 2, 644
+  size: 640, 1386
+  orig: 640, 1386
+  offset: 0, 0
+  index: -1
+dimian_light
+  rotate: true
+  xy: 1390, 644
+  size: 640, 391
+  orig: 640, 391
+  offset: 0, 0
+  index: -1
+qianjing_shitou
+  rotate: true
+  xy: 743, 2
+  size: 640, 446
+  orig: 640, 446
+  offset: 0, 0
+  index: -1
+qianjing_yun
+  rotate: true
+  xy: 1191, 2
+  size: 640, 433
+  orig: 640, 433
+  offset: 0, 0
+  index: -1
+yuanjing
+  rotate: true
+  xy: 2, 2
+  size: 640, 739
+  orig: 640, 750
+  offset: 0, 11
+  index: -1

@@ -1,0 +1,146 @@
+
+26163.png
+size: 1884,1982
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+10
+  rotate: true
+  xy: 1521, 1563
+  size: 20, 36
+  orig: 22, 38
+  offset: 1, 1
+  index: -1
+11
+  rotate: true
+  xy: 1255, 518
+  size: 16, 28
+  orig: 19, 31
+  offset: 2, 2
+  index: -1
+14
+  rotate: true
+  xy: 1255, 518
+  size: 16, 28
+  orig: 19, 31
+  offset: 2, 2
+  index: -1
+13
+  rotate: false
+  xy: 1811, 1052
+  size: 19, 34
+  orig: 21, 36
+  offset: 1, 1
+  index: -1
+15
+  rotate: true
+  xy: 1360, 518
+  size: 1041, 308
+  orig: 1296, 396
+  offset: 2, 87
+  index: -1
+16
+  rotate: false
+  xy: 2, 1561
+  size: 1517, 419
+  orig: 1520, 423
+  offset: 2, 2
+  index: -1
+17
+  rotate: false
+  xy: 2, 111
+  size: 1251, 487
+  orig: 1254, 501
+  offset: 2, 2
+  index: -1
+18
+  rotate: false
+  xy: 2, 600
+  size: 1356, 959
+  orig: 1359, 962
+  offset: 2, 2
+  index: -1
+18a
+  rotate: true
+  xy: 1670, 1088
+  size: 203, 191
+  orig: 203, 191
+  offset: 0, 0
+  index: -1
+19
+  rotate: false
+  xy: 2, 39
+  size: 228, 70
+  orig: 228, 70
+  offset: 0, 0
+  index: -1
+2
+  rotate: false
+  xy: 1255, 536
+  size: 35, 62
+  orig: 42, 68
+  offset: 0, 6
+  index: -1
+20
+  rotate: false
+  xy: 1255, 2
+  size: 602, 514
+  orig: 602, 536
+  offset: 0, 0
+  index: -1
+3
+  rotate: true
+  xy: 1670, 1293
+  size: 290, 150
+  orig: 291, 150
+  offset: 1, 0
+  index: -1
+4
+  rotate: false
+  xy: 1670, 999
+  size: 139, 87
+  orig: 139, 87
+  offset: 0, 0
+  index: -1
+5
+  rotate: true
+  xy: 1521, 1585
+  size: 395, 361
+  orig: 564, 361
+  offset: 169, 0
+  index: -1
+6
+  rotate: false
+  xy: 232, 75
+  size: 19, 34
+  orig: 21, 36
+  offset: 1, 1
+  index: -1
+7
+  rotate: false
+  xy: 2, 2
+  size: 24, 35
+  orig: 36, 38
+  offset: 11, 2
+  index: -1
+12
+  rotate: false
+  xy: 2, 2
+  size: 24, 35
+  orig: 36, 38
+  offset: 11, 2
+  index: -1
+8
+  rotate: false
+  xy: 1822, 1549
+  size: 19, 34
+  orig: 21, 36
+  offset: 1, 1
+  index: -1
+9
+  rotate: false
+  xy: 1670, 963
+  size: 19, 34
+  orig: 21, 36
+  offset: 1, 1
+  index: -1
