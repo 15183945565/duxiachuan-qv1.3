@@ -169,9 +169,13 @@ export abstract class HomeFeatureRoleStrengthen extends HomeFeatureRoleStrengthe
         this.consumeRoleInventory(material.itemId, cost);
         this.roleEquipmentLevels.set(config.id, level + 1);
         this.syncRoleEquipmentSlot(config);
+        if (config.id === 'weapon') {
+            void this.refreshCurrentRoleSkeletonFromEquipment()
+                .catch((err) => console.warn('[MainHomeView] role weapon skel refresh failed', err));
+        }
         this.updateRoleStrengthenStatus(config);
         this.refreshRoleStrengthenMaterials();
-        this.refreshRolePagePower(HomeConfig.ROLE_ASSETS[this.profile.gender]);
+        this.refreshRolePagePower(this.getCurrentRoleAssetConfig(this.profile.gender));
         this.openRoleProgressSuccessPopup('strengthen', before, this.getRoleSnapshot(), config.displayName);
     }
     protected ensureRoleProgressSuccessPopup(): Node {

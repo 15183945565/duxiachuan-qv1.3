@@ -8,6 +8,7 @@ import {
     Node,
     Overflow,
     ScrollView,
+    Sprite,
     UITransform,
     VerticalTextAlignment,
 } from 'cc';
@@ -42,6 +43,9 @@ interface ProfileDaoYouRuntime {
 const PANEL_NAME = 'ProfileDaoYouPanel';
 const ROW_TEMPLATE_NAME = 'ProfileDaoYouRowTemplate';
 const DEFAULT_TAB: ProfileDaoYouTabId = 'chief';
+const ROW_SCALE = 1.1;
+const ROW_VISIBLE_GAP = 28;
+const ROW_TOP_PADDING = 14;
 
 export function openProfileDaoYouPanel(host: HomeViewBase): void {
     const api = host as unknown as ProfileDaoYouRuntime;
@@ -103,7 +107,9 @@ function buildProfileDaoYouPanel(api: ProfileDaoYouRuntime, root: Node): Node {
     createTabNode(api, tabs, 'generation', 88);
 
     createStyledLabel(api, panel, 'ProfileDaoYouCountLabel', '', 25, 0, 455, 360, 44, new Color(102, 62, 35, 255), HorizontalTextAlignment.CENTER, 1).setSiblingIndex(5);
-    api.createSkinnedNode('ProfileDaoYouBoard', panel, HomeConfig.PROFILE_DAOYOU_BOARD_WIDTH, HomeConfig.PROFILE_DAOYOU_BOARD_HEIGHT, 0, -168, HomeConfig.UI_PROFILE_DAOYOU_BOARD).setSiblingIndex(6);
+    const board = api.createNode('ProfileDaoYouBoard', panel, HomeConfig.PROFILE_DAOYOU_BOARD_WIDTH, HomeConfig.PROFILE_DAOYOU_BOARD_HEIGHT, 0, -168);
+    hideDecorativeSprite(board);
+    board.setSiblingIndex(6);
 
     const scroll = api.createNode('ProfileDaoYouScrollView', panel, HomeConfig.PROFILE_DAOYOU_SCROLL_WIDTH, HomeConfig.PROFILE_DAOYOU_SCROLL_HEIGHT, 0, -168);
     scroll.setSiblingIndex(7);
@@ -151,7 +157,9 @@ function bindProfileDaoYouPanel(api: ProfileDaoYouRuntime, panel: Node): void {
         HorizontalTextAlignment.CENTER,
         1,
     );
-    ensureSkinnedChild(api, panel, 'ProfileDaoYouBoard', HomeConfig.PROFILE_DAOYOU_BOARD_WIDTH, HomeConfig.PROFILE_DAOYOU_BOARD_HEIGHT, 0, -168, HomeConfig.UI_PROFILE_DAOYOU_BOARD);
+    const board = ensureNodeChild(api, panel, 'ProfileDaoYouBoard', HomeConfig.PROFILE_DAOYOU_BOARD_WIDTH, HomeConfig.PROFILE_DAOYOU_BOARD_HEIGHT, 0, -168);
+    hideDecorativeSprite(board);
+    board.setSiblingIndex(6);
 
     const back = api.findNode('ProfileDaoYouBackButton', panel);
     if (back) {
@@ -273,13 +281,15 @@ function refreshProfileDaoYouRows(api: ProfileDaoYouRuntime, content: Node, temp
 
     const visibleSize = getEditorNodeSize(content.parent, HomeConfig.PROFILE_DAOYOU_SCROLL_WIDTH, HomeConfig.PROFILE_DAOYOU_SCROLL_HEIGHT);
     const currentContentSize = getEditorNodeSize(content, visibleSize.width, visibleSize.height);
+    const rowVisualHeight = HomeConfig.PROFILE_DAOYOU_ROW_HEIGHT * ROW_SCALE;
     const contentHeight = Math.max(
-        currentContentSize.height,
         visibleSize.height,
-        members.length * HomeConfig.PROFILE_DAOYOU_ROW_HEIGHT + Math.max(0, members.length - 1) * HomeConfig.PROFILE_DAOYOU_ROW_GAP + 18,
+        members.length * rowVisualHeight + Math.max(0, members.length - 1) * ROW_VISIBLE_GAP + 18,
     );
     setNodeSize(content, Math.max(currentContentSize.width, visibleSize.width), contentHeight);
     template.active = false;
+    const rowStep = rowVisualHeight + ROW_VISIBLE_GAP;
+    const topY = contentHeight / 2 - rowVisualHeight / 2 - ROW_TOP_PADDING;
 
     members.forEach((member, index) => {
         const rowName = `ProfileDaoYouRow_${member.id}`;
@@ -288,8 +298,8 @@ function refreshProfileDaoYouRows(api: ProfileDaoYouRuntime, content: Node, temp
             row = instantiate(template);
             row.name = rowName;
             row.setParent(content);
-            row.setPosition(0, getFallbackRowY(content, contentHeight, members, index), 0);
         }
+        row.setPosition(0, topY - index * rowStep, 0);
         row.active = true;
         fillProfileDaoYouRow(api, row, member);
     });
@@ -297,6 +307,7 @@ function refreshProfileDaoYouRows(api: ProfileDaoYouRuntime, content: Node, temp
 
 function createRowTemplate(api: ProfileDaoYouRuntime, parent: Node): Node {
     const row = api.createSkinnedNode(ROW_TEMPLATE_NAME, parent, HomeConfig.PROFILE_DAOYOU_ROW_WIDTH, HomeConfig.PROFILE_DAOYOU_ROW_HEIGHT, 0, 0, HomeConfig.UI_PROFILE_DAOYOU_ROW_BG);
+    row.setScale(ROW_SCALE, ROW_SCALE, 1);
     row.active = false;
     api.createSkinnedNode('ProfileDaoYouAvatarFrame', row, 86, 86, -246, 0, HomeConfig.UI_HOME_PROFILE_FRAME).setSiblingIndex(0);
     api.createSkinnedNode('ProfileDaoYouAvatarIcon', row, 74, 74, -246, 0, HomeConfig.UI_HOME_AVATAR).setSiblingIndex(1);
@@ -307,26 +318,10 @@ function createRowTemplate(api: ProfileDaoYouRuntime, parent: Node): Node {
     return row;
 }
 
-function getFallbackRowY(content: Node, contentHeight: number, members: readonly ProfileDaoYouMember[], index: number): number {
-    const rowStep = HomeConfig.PROFILE_DAOYOU_ROW_HEIGHT + HomeConfig.PROFILE_DAOYOU_ROW_GAP;
-    for (let previousIndex = index - 1; previousIndex >= 0; previousIndex -= 1) {
-        const previous = content.getChildByName(`ProfileDaoYouRow_${members[previousIndex].id}`);
-        if (previous?.isValid) {
-            return previous.position.y - rowStep * (index - previousIndex);
-        }
-    }
-    for (let nextIndex = index + 1; nextIndex < members.length; nextIndex += 1) {
-        const next = content.getChildByName(`ProfileDaoYouRow_${members[nextIndex].id}`);
-        if (next?.isValid) {
-            return next.position.y + rowStep * (nextIndex - index);
-        }
-    }
-    return contentHeight / 2 - HomeConfig.PROFILE_DAOYOU_ROW_HEIGHT / 2 - 9 - index * rowStep;
-}
-
 function fillProfileDaoYouRow(api: ProfileDaoYouRuntime, row: Node, member: ProfileDaoYouMember): void {
     flattenLegacyRowSkin(row);
     ensureEditorNodeSize(row, HomeConfig.PROFILE_DAOYOU_ROW_WIDTH, HomeConfig.PROFILE_DAOYOU_ROW_HEIGHT);
+    row.setScale(ROW_SCALE, ROW_SCALE, 1);
     if (needsFallbackSprite(row)) {
         api.applyUiSkinKeepingEditorSize(row, HomeConfig.UI_PROFILE_DAOYOU_ROW_BG, HomeConfig.PROFILE_DAOYOU_ROW_WIDTH, HomeConfig.PROFILE_DAOYOU_ROW_HEIGHT);
     }
@@ -408,6 +403,24 @@ function ensureSkinnedChild(api: ProfileDaoYouRuntime, parent: Node, name: strin
         api.applyUiSkinKeepingEditorSize(node, skinPath, width, height);
     }
     return node;
+}
+
+function ensureNodeChild(api: ProfileDaoYouRuntime, parent: Node, name: string, width: number, height: number, x: number, y: number): Node {
+    let node = parent.getChildByName(name);
+    if (!node?.isValid) {
+        node = api.createNode(name, parent, width, height, x, y);
+    } else {
+        node.active = true;
+        ensureEditorNodeSize(node, width, height);
+    }
+    return node;
+}
+
+function hideDecorativeSprite(node: Node): void {
+    const sprite = node.getComponent(Sprite);
+    if (!sprite) return;
+    sprite.enabled = false;
+    sprite.spriteFrame = null;
 }
 
 function ensureLabel(api: ProfileDaoYouRuntime, parent: Node, name: string, text: string, fontSize: number, x: number, y: number, width: number, height: number): Label {

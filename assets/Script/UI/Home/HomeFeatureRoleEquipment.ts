@@ -98,7 +98,7 @@ export abstract class HomeFeatureRoleEquipment extends HomeFeatureRoleEquipmentH
         }, this);
     
         this.drawRect(this.rolePagePanel, HomeConfig.VIEW_WIDTH, HomeConfig.VIEW_HEIGHT, new Color(6, 15, 18, 255));
-        this.getOrCreateRolePageSkinnedNode(this.rolePagePanel, 'RolePageBackground', 750, 1700, 0, 0, HomeConfig.UI_ROLE_PAGE_BG).node.setSiblingIndex(0);
+        this.getOrCreateRolePageSkinnedNode(this.rolePagePanel, 'RolePageBackground', 920, HomeConfig.VIEW_HEIGHT, 0, 0, HomeConfig.UI_ROLE_PAGE_BG).node.setSiblingIndex(0);
         this.rolePageTitleLabel = this.getOrCreateRolePageLabel(this.rolePagePanel, 'RolePageTitle', '\u89d2\u8272', 42, 0, 720, 240, 64, new Color(255, 238, 196, 255)).label;
 
         const backButton = this.getOrCreateRolePageSkinnedNode(
@@ -118,7 +118,8 @@ export abstract class HomeFeatureRoleEquipment extends HomeFeatureRoleEquipmentH
         const leftEquipFrame = this.createRolePageSideFrame(this.rolePageEquipmentRoot, 'RolePageLeftFrame', -270, 140 + HomeConfig.ROLE_PAGE_CONTENT_OFFSET_Y + HomeConfig.ROLE_PAGE_EQUIP_OFFSET_Y, HomeConfig.ROLE_PAGE_LEFT_EQUIPS);
         const rightEquipFrame = this.createRolePageSideFrame(this.rolePageEquipmentRoot, 'RolePageRightFrame', 270, 140 + HomeConfig.ROLE_PAGE_CONTENT_OFFSET_Y + HomeConfig.ROLE_PAGE_EQUIP_OFFSET_Y, HomeConfig.ROLE_PAGE_RIGHT_EQUIPS);
     
-        this.getOrCreateRolePageSkinnedNode(this.rolePageEquipmentRoot, 'RoleShowStage', HomeConfig.ROLE_PAGE_STAGE_WIDTH, HomeConfig.ROLE_PAGE_STAGE_HEIGHT, HomeConfig.ROLE_PAGE_STAGE_X, HomeConfig.ROLE_PAGE_STAGE_Y + HomeConfig.ROLE_PAGE_CONTENT_OFFSET_Y, HomeConfig.UI_ROLE_SHOW_STAGE).node.setSiblingIndex(2);
+        const oldShowStage = this.rolePageEquipmentRoot.getChildByName('RoleShowStage');
+        if (oldShowStage?.isValid) oldShowStage.active = false;
         const roleNodeInfo = this.getOrCreateRolePageNode(this.rolePageEquipmentRoot, 'RolePageRole', HomeConfig.ROLE_PAGE_ROLE_NODE_WIDTH, HomeConfig.ROLE_PAGE_ROLE_NODE_HEIGHT, 0, 0);
         const roleNode = roleNodeInfo.node;
         this.rolePageRoleUsesEditorTransform = roleNodeInfo.existed;
@@ -771,9 +772,13 @@ export abstract class HomeFeatureRoleEquipment extends HomeFeatureRoleEquipmentH
         this.roleEquippedItems.set(config.id, item);
         this.roleEquipmentLevels.set(config.id, this.getEquipmentLevel(item));
         this.syncRoleEquipmentSlot(config);
+        if (config.id === 'weapon') {
+            void this.refreshCurrentRoleSkeletonFromEquipment()
+                .catch((err) => console.warn('[MainHomeView] role weapon skel refresh failed', err));
+        }
         this.closeRoleEquipDetailPopup(false);
         this.closeRoleEquipReplacePopup(false);
-        this.refreshRolePagePower(HomeConfig.ROLE_ASSETS[this.profile.gender]);
+        this.refreshRolePagePower(this.getCurrentRoleAssetConfig(this.profile.gender));
         this.showToast(`\u5df2\u66ff\u6362\uff1a${this.getCatalogDisplayName(item)}`);
     }
     protected syncRoleEquipmentSlot(config: RoleEquipmentSlotConfig): void {

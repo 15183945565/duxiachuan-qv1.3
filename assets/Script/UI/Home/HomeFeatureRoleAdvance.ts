@@ -449,7 +449,7 @@ export abstract class HomeFeatureRoleAdvance extends HomeFeatureRoleAdvanceHost 
 
         this.refreshRoleInventoryViews(false);
         this.playRoleAdvanceExpEffect(1, true);
-        this.refreshRolePagePower(HomeConfig.ROLE_ASSETS[this.profile.gender]);
+        this.refreshRolePagePower(this.getCurrentRoleAssetConfig(this.profile.gender));
         this.openRoleProgressSuccessPopup('breakthrough', before, this.getRoleSnapshot());
     }
     protected handleRoleAdvanceExpOrbClick(index: number): void {
@@ -493,7 +493,7 @@ export abstract class HomeFeatureRoleAdvance extends HomeFeatureRoleAdvanceHost 
 
         this.refreshRoleInventoryViews(false);
         this.playRoleAdvanceExpEffect(beforeExpRatio, leveled);
-        this.refreshRolePagePower(HomeConfig.ROLE_ASSETS[this.profile.gender]);
+        this.refreshRolePagePower(this.getCurrentRoleAssetConfig(this.profile.gender));
         if (leveled && successKind) {
             this.openRoleProgressSuccessPopup(successKind, before, this.getRoleSnapshot());
         } else if (this.isRoleBreakthroughPending()) {

@@ -19,6 +19,7 @@ interface MagicBattleDamageParticipant {
     isPlayer: boolean;
     skelPath?: string;
     duelScale?: number;
+    attackAnimations?: readonly string[];
     damageMultiplier: number;
     damage: number;
     hp: number;
@@ -192,7 +193,8 @@ export abstract class HomeFeatureMagicBattleDamage extends HomeFeatureMagicBattl
                 name: '\u7537\u89d2\u8272',
                 isPlayer: false,
                 skelPath: HomeConfig.ROLE_ASSETS.male.skelPath,
-                duelScale: HomeConfig.MAGIC_BATTLE_DUEL_NPC_SCALE,
+                duelScale: HomeConfig.ROLE_ASSETS.male.mapScale,
+                attackAnimations: HomeConfig.BATTLE_ROLE_NORMAL_ATTACK_ANIMATIONS.male,
                 damageMultiplier: 0.5,
                 damage: 0,
                 hp: HomeConfig.MAGIC_MAP_PLAYER_MAX_HP,
@@ -205,7 +207,8 @@ export abstract class HomeFeatureMagicBattleDamage extends HomeFeatureMagicBattl
                 name: '\u5973\u89d2\u8272',
                 isPlayer: false,
                 skelPath: HomeConfig.ROLE_ASSETS.female.skelPath,
-                duelScale: HomeConfig.MAGIC_BATTLE_DUEL_NPC_SCALE,
+                duelScale: HomeConfig.ROLE_ASSETS.female.mapScale,
+                attackAnimations: HomeConfig.BATTLE_ROLE_NORMAL_ATTACK_ANIMATIONS.female,
                 damageMultiplier: 2,
                 damage: 0,
                 hp: HomeConfig.MAGIC_MAP_PLAYER_MAX_HP,

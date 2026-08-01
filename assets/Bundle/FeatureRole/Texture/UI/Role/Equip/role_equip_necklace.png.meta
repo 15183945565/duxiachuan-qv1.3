@@ -3,8 +3,109 @@
   "importer": "image",
   "imported": true,
   "uuid": "446117c5-bc44-4e49-b6ec-e17c2c91960f",
-  "files": [".json", ".png"],
+  "files": [
+    ".json",
+    ".png"
+  ],
   "subMetas": {
+    "f9941": {
+      "importer": "sprite-frame",
+      "uuid": "446117c5-bc44-4e49-b6ec-e17c2c91960f@f9941",
+      "displayName": "role_equip_necklace",
+      "id": "f9941",
+      "name": "spriteFrame",
+      "userData": {
+        "width": 76,
+        "height": 82,
+        "rawWidth": 76,
+        "rawHeight": 82,
+        "trimType": "none",
+        "trimThreshold": 1,
+        "rotated": false,
+        "offsetX": 0,
+        "offsetY": 0,
+        "isUuid": true,
+        "imageUuidOrDatabaseUri": "446117c5-bc44-4e49-b6ec-e17c2c91960f@6c48a",
+        "packable": true,
+        "pixelsToUnit": 100,
+        "pivotX": 0.5,
+        "pivotY": 0.5,
+        "trimX": 0,
+        "trimY": 0,
+        "borderTop": 0,
+        "borderBottom": 0,
+        "borderLeft": 0,
+        "borderRight": 0,
+        "meshType": 0,
+        "vertices": {
+          "rawPosition": [
+            -38,
+            -41,
+            0,
+            38,
+            -41,
+            0,
+            -38,
+            41,
+            0,
+            38,
+            41,
+            0
+          ],
+          "indexes": [
+            0,
+            1,
+            2,
+            2,
+            1,
+            3
+          ],
+          "uv": [
+            0,
+            82,
+            76,
+            82,
+            0,
+            0,
+            76,
+            0
+          ],
+          "nui": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "nuv": [
+            0,
+            0,
+            1,
+            0,
+            0,
+            1,
+            1,
+            1
+          ],
+          "minPos": [
+            -38,
+            -41,
+            0
+          ],
+          "maxPos": [
+            38,
+            41,
+            0
+          ]
+        },
+        "atlasUuid": ""
+      },
+      "ver": "1.0.12",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
     "6c48a": {
       "importer": "texture",
       "uuid": "446117c5-bc44-4e49-b6ec-e17c2c91960f@6c48a",
@@ -24,12 +125,14 @@
       },
       "ver": "1.0.22",
       "imported": true,
-      "files": [".json"],
+      "files": [
+        ".json"
+      ],
       "subMetas": {}
     }
   },
   "userData": {
-    "type": "texture",
+    "type": "sprite-frame",
     "fixAlphaTransparencyArtifacts": false,
     "hasAlpha": true,
     "redirect": "446117c5-bc44-4e49-b6ec-e17c2c91960f@6c48a"

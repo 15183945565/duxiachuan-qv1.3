@@ -219,22 +219,16 @@ for (const { fullPath } of atlasFiles) {
 }
 
 const spineAnimationContracts = [
-    {
-        path: 'Spine/CharacterSelect/Female/beauty_chennv.json',
-        animations: ['click1', 'idle'],
-    },
-    {
-        path: 'Spine/CharacterSelect/Male/beauty_langke.json',
-        animations: ['click1', 'idle'],
-    },
-    {
-        path: 'Spine/Role/男角色/H30066.json',
-        animations: ['action1', 'action2', 'hurt', 'run', 'stand2'],
-    },
-    {
-        path: 'Spine/Role/女角色/H30027.json',
-        animations: ['action1', 'action2', 'hurt', 'run', 'stand2'],
-    },
+    ...['Level01_20', 'Level21_30', 'Level31_40', 'Level41_50'].flatMap((level) => [
+        {
+            path: `Spine/RoleWeapon/${level}/Male/skeleton.json`,
+            animations: ['ready', 'run', 'skill0', 'hit1', 'dead'],
+        },
+        {
+            path: `Spine/RoleWeapon/${level}/Female/skeleton.json`,
+            animations: ['ready', 'run', 'skill2', 'hit1', 'dead'],
+        },
+    ]),
     {
         path: 'Spine/Common/Cloud/172464265161517.json',
         animations: ['idle'],

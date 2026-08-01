@@ -3,7 +3,10 @@
   "importer": "image",
   "imported": true,
   "uuid": "b02a55f2-2108-4ed3-b18a-1a464a4ec903",
-  "files": [".json", ".png"],
+  "files": [
+    ".json",
+    ".png"
+  ],
   "subMetas": {
     "6c48a": {
       "importer": "texture",
@@ -24,7 +27,9 @@
       },
       "ver": "1.0.22",
       "imported": true,
-      "files": [".json"],
+      "files": [
+        ".json"
+      ],
       "subMetas": {}
     }
   },

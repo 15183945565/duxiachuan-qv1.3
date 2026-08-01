@@ -117,6 +117,7 @@ export abstract class HomeViewBase extends Component {
     ];
     protected resBundle: AssetManager.Bundle | null = null;
     protected readonly roleSkeletonData = new Map<RoleGender, sp.SkeletonData>();
+    protected readonly roleSkeletonPaths = new Map<RoleGender, string>();
     protected readonly idleTweens: Tween<Node>[] = [];
     protected readonly transitionDotTweens: Array<Tween<Node> | Tween<UIOpacity>> = [];
     protected readonly buttonBaseScales = new WeakMap<Node, Vec3>();
@@ -1064,6 +1065,10 @@ export abstract class HomeViewBase extends Component {
     protected abstract createSpriteFrame(asset: ImageAsset | Texture2D | SpriteFrame): SpriteFrame;
     protected abstract loadTransitionSkeletonData(): Promise<void>;
     protected abstract applyCurrentRole(): void;
+    protected abstract getCurrentRoleAssetConfig(gender: RoleGender): RoleAssetConfig;
+    protected abstract ensureRoleSkeletonData(gender: RoleGender): Promise<sp.SkeletonData | null>;
+    protected abstract getRoleSkeletonData(gender: RoleGender): sp.SkeletonData | null;
+    protected abstract refreshCurrentRoleSkeletonFromEquipment(): Promise<void>;
     protected abstract hasRoleVisual(gender: RoleGender): boolean;
     protected abstract isUsingRoleSkel(gender: RoleGender): boolean;
     protected abstract getRoleMapScale(gender: RoleGender): number;

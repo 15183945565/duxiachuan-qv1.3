@@ -41,9 +41,9 @@
       "name": "spriteFrame",
       "userData": {
         "width": 750,
-        "height": 1660,
+        "height": 1338,
         "rawWidth": 750,
-        "rawHeight": 1660,
+        "rawHeight": 1338,
         "trimType": "none",
         "trimThreshold": 1,
         "rotated": false,
@@ -65,16 +65,16 @@
         "vertices": {
           "rawPosition": [
             -375,
-            -830,
+            -669,
             0,
             375,
-            -830,
+            -669,
             0,
             -375,
-            830,
+            669,
             0,
             375,
-            830,
+            669,
             0
           ],
           "indexes": [
@@ -87,9 +87,9 @@
           ],
           "uv": [
             0,
-            1660,
+            1338,
             750,
-            1660,
+            1338,
             0,
             0,
             750,
@@ -107,12 +107,12 @@
           ],
           "minPos": [
             -375,
-            -830,
+            -669,
             0
           ],
           "maxPos": [
             375,
-            830,
+            669,
             0
           ]
         },

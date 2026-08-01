@@ -277,7 +277,7 @@ export abstract class HomeViewRoleBag extends HomeViewBase {
             this.rolePageNameLabel.node.active = false;
         }
         this.refreshRoleAdvancePage();
-        this.refreshRolePagePower(HomeConfig.ROLE_ASSETS[this.profile.gender]);
+        this.refreshRolePagePower(this.getCurrentRoleAssetConfig(this.profile.gender));
     }
     protected refreshRoleBottomTabState(activeTab: RolePageTab): void {
         this.roleBottomTabButtons.forEach((buttonConfig) => {

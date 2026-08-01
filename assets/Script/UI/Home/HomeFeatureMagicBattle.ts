@@ -100,15 +100,14 @@ export abstract class HomeFeatureMagicBattle extends HomeFeatureMagicBattleHost 
                 this.loadSkeletonAsset(monster.isBoss ? HomeConfig.MAGIC_MAP_BOSS_MONSTER_SKEL_PATH : HomeConfig.MAGIC_MAP_SMALL_MONSTER_SKEL_PATH),
             ]);
             if (!this.magicMonsterBattlePanel.active || this.magicBattleTarget !== monster) return;
-            if (!this.roleSkeletonData.has(this.profile.gender)) {
-                await this.loadSkeletonData(HomeConfig.ROLE_ASSETS[this.profile.gender]);
-            }
-            const roleData = this.roleSkeletonData.get(this.profile.gender);
+            const roleData = await this.ensureRoleSkeletonData(this.profile.gender);
             if (!roleData || !this.magicBattleRoleSkeleton || !this.magicBattleMonsterSkeleton) {
                 throw new Error('Magic battle skeleton node is missing');
             }
     
             this.magicBattleRoleSkeleton.skeletonData = roleData;
+            const roleScale = this.getRoleMapScale(this.profile.gender);
+            this.magicBattleRoleSkeleton.node.setScale(roleScale, roleScale, 1);
             this.magicBattleMonsterSkeleton.skeletonData = monsterData;
             this.setSkeletonVisible(this.magicBattleBackgroundSkeleton, false);
             this.setSkeletonVisible(this.magicBattleRoleSkeleton, true);
@@ -143,7 +142,7 @@ export abstract class HomeFeatureMagicBattle extends HomeFeatureMagicBattleHost 
         if (this.magicBattleAttackTimer <= 0) {
             const roleDuration = this.playMagicBattleOneShot(
                 this.magicBattleRoleSkeleton,
-                HomeConfig.BATTLE_ROLE_NORMAL_ATTACK_ANIMATIONS,
+                HomeConfig.BATTLE_ROLE_NORMAL_ATTACK_ANIMATIONS[this.profile.gender],
                 HomeConfig.IDLE_ANIMATIONS,
                 HomeConfig.BATTLE_ROLE_ATTACK_TIME_SCALE,
             );

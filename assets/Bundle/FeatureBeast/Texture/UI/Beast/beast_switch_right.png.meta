@@ -1,139 +1,135 @@
 {
-    "ver":  "1.0.27",
-    "importer":  "image",
-    "imported":  true,
-    "uuid":  "f11aaa94-7fdd-4ce8-9a36-e9f86c159649",
-    "files":  [
-                  ".json",
-                  ".png"
-              ],
-    "subMetas":  {
-                     "6c48a":  {
-                                   "importer":  "texture",
-                                   "uuid":  "f11aaa94-7fdd-4ce8-9a36-e9f86c159649@6c48a",
-                                   "displayName":  "beast_switch_right",
-                                   "id":  "6c48a",
-                                   "name":  "texture",
-                                   "userData":  {
-                                                    "wrapModeS":  "clamp-to-edge",
-                                                    "wrapModeT":  "clamp-to-edge",
-                                                    "minfilter":  "linear",
-                                                    "magfilter":  "linear",
-                                                    "mipfilter":  "none",
-                                                    "premultiplyAlpha":  false,
-                                                    "anisotropy":  0,
-                                                    "isUuid":  true,
-                                                    "imageUuidOrDatabaseUri":  "f11aaa94-7fdd-4ce8-9a36-e9f86c159649",
-                                                    "visible":  false
-                                                },
-                                   "ver":  "1.0.22",
-                                   "imported":  true,
-                                   "files":  [
-                                                 ".json"
-                                             ],
-                                   "subMetas":  {
-
-                                                }
-                               },
-                     "f9941":  {
-                                   "importer":  "sprite-frame",
-                                   "uuid":  "f11aaa94-7fdd-4ce8-9a36-e9f86c159649@f9941",
-                                   "displayName":  "beast_switch_right",
-                                   "id":  "f9941",
-                                   "name":  "spriteFrame",
-                                   "userData":  {
-                                                    "width":  17,
-                                                    "height":  32,
-                                                    "rawWidth":  17,
-                                                    "rawHeight":  32,
-                                                    "trimType":  "none",
-                                                    "trimThreshold":  1,
-                                                    "rotated":  false,
-                                                    "offsetX":  0,
-                                                    "offsetY":  0,
-                                                    "isUuid":  true,
-                                                    "imageUuidOrDatabaseUri":  "f11aaa94-7fdd-4ce8-9a36-e9f86c159649@6c48a",
-                                                    "packable":  true,
-                                                    "pixelsToUnit":  100,
-                                                    "pivotX":  0.5,
-                                                    "pivotY":  0.5,
-                                                    "trimX":  0,
-                                                    "trimY":  0,
-                                                    "borderTop":  0,
-                                                    "borderBottom":  0,
-                                                    "borderLeft":  0,
-                                                    "borderRight":  0,
-                                                    "meshType":  0,
-                                                    "vertices":  {
-                                                                     "rawPosition":  [
-                                                                                         -8.5,
-                                                                                         -16,
-                                                                                         0,
-                                                                                         8.5,
-                                                                                         -16,
-                                                                                         0,
-                                                                                         -8.5,
-                                                                                         16,
-                                                                                         0,
-                                                                                         8.5,
-                                                                                         16,
-                                                                                         0
-                                                                                     ],
-                                                                     "indexes":  [
-                                                                                     0,
-                                                                                     1,
-                                                                                     2,
-                                                                                     2,
-                                                                                     1,
-                                                                                     3
-                                                                                 ],
-                                                                     "uv":  [
-                                                                                0,
-                                                                                32,
-                                                                                17,
-                                                                                32,
-                                                                                0,
-                                                                                0,
-                                                                                17,
-                                                                                0
-                                                                            ],
-                                                                     "nuv":  [
-                                                                                 0,
-                                                                                 0,
-                                                                                 1,
-                                                                                 0,
-                                                                                 0,
-                                                                                 1,
-                                                                                 1,
-                                                                                 1
-                                                                             ],
-                                                                     "minPos":  [
-                                                                                    -8.5,
-                                                                                    -16,
-                                                                                    0
-                                                                                ],
-                                                                     "maxPos":  [
-                                                                                    8.5,
-                                                                                    16,
-                                                                                    0
-                                                                                ]
-                                                                 },
-                                                    "atlasUuid":  ""
-                                                },
-                                   "ver":  "1.0.12",
-                                   "imported":  true,
-                                   "files":  [
-                                                 ".json"
-                                             ],
-                                   "subMetas":  {
-
-                                                }
-                               }
-                 },
-    "userData":  {
-                     "hasAlpha":  true,
-                     "type":  "sprite-frame",
-                     "redirect":  "f11aaa94-7fdd-4ce8-9a36-e9f86c159649@6c48a",
-                     "fixAlphaTransparencyArtifacts":  false
-                 }
+  "ver": "1.0.27",
+  "importer": "image",
+  "imported": true,
+  "uuid": "f11aaa94-7fdd-4ce8-9a36-e9f86c159649",
+  "files": [
+    ".json",
+    ".png"
+  ],
+  "subMetas": {
+    "6c48a": {
+      "importer": "texture",
+      "uuid": "f11aaa94-7fdd-4ce8-9a36-e9f86c159649@6c48a",
+      "displayName": "beast_switch_right",
+      "id": "6c48a",
+      "name": "texture",
+      "userData": {
+        "wrapModeS": "clamp-to-edge",
+        "wrapModeT": "clamp-to-edge",
+        "minfilter": "linear",
+        "magfilter": "linear",
+        "mipfilter": "none",
+        "premultiplyAlpha": false,
+        "anisotropy": 0,
+        "isUuid": true,
+        "imageUuidOrDatabaseUri": "f11aaa94-7fdd-4ce8-9a36-e9f86c159649",
+        "visible": false
+      },
+      "ver": "1.0.22",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "f9941": {
+      "importer": "sprite-frame",
+      "uuid": "f11aaa94-7fdd-4ce8-9a36-e9f86c159649@f9941",
+      "displayName": "beast_switch_right",
+      "id": "f9941",
+      "name": "spriteFrame",
+      "userData": {
+        "width": 17,
+        "height": 32,
+        "rawWidth": 17,
+        "rawHeight": 32,
+        "trimType": "none",
+        "trimThreshold": 1,
+        "rotated": false,
+        "offsetX": 0,
+        "offsetY": 0,
+        "isUuid": true,
+        "imageUuidOrDatabaseUri": "f11aaa94-7fdd-4ce8-9a36-e9f86c159649@6c48a",
+        "packable": true,
+        "pixelsToUnit": 100,
+        "pivotX": 0.5,
+        "pivotY": 0.5,
+        "trimX": 0,
+        "trimY": 0,
+        "borderTop": 0,
+        "borderBottom": 0,
+        "borderLeft": 0,
+        "borderRight": 0,
+        "meshType": 0,
+        "vertices": {
+          "rawPosition": [
+            -8.5,
+            -16,
+            0,
+            8.5,
+            -16,
+            0,
+            -8.5,
+            16,
+            0,
+            8.5,
+            16,
+            0
+          ],
+          "indexes": [
+            0,
+            1,
+            2,
+            2,
+            1,
+            3
+          ],
+          "uv": [
+            0,
+            32,
+            17,
+            32,
+            0,
+            0,
+            17,
+            0
+          ],
+          "nuv": [
+            0,
+            0,
+            1,
+            0,
+            0,
+            1,
+            1,
+            1
+          ],
+          "minPos": [
+            -8.5,
+            -16,
+            0
+          ],
+          "maxPos": [
+            8.5,
+            16,
+            0
+          ]
+        },
+        "atlasUuid": ""
+      },
+      "ver": "1.0.12",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    }
+  },
+  "userData": {
+    "hasAlpha": true,
+    "type": "sprite-frame",
+    "redirect": "f11aaa94-7fdd-4ce8-9a36-e9f86c159649@6c48a",
+    "fixAlphaTransparencyArtifacts": false
+  }
 }

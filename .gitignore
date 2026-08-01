@@ -18,6 +18,10 @@
 /generated_icon_tmp/
 /generated_home_icons/
 
+# Accidental nested asset copies from manual migrations
+/assets/Bundle/assets/
+/assets/Bundle/assets.meta
+
 # Local preview/export scratch images in the project root
 /*.png
 /*.jpg

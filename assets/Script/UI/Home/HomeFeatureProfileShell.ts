@@ -15,6 +15,7 @@ import { applySimKaiFont } from '../Common/UIFont';
 import * as HomeConfig from './HomeConfig';
 import type { RoleProfile } from './HomeTypes';
 import { HomeViewBase } from './HomeViewBase';
+import { closeProfileBillPanel, openProfileBillPanel } from './HomeProfileBillPanel';
 import { closeProfileDaoYouPanel, openProfileDaoYouPanel } from './HomeProfileDaoYouPanel';
 
 /**
@@ -58,6 +59,7 @@ export abstract class HomeFeatureProfileShell extends HomeViewBase {
         const panel = this.ensureProfilePopup();
         panel.active = true;
         closeProfileDaoYouPanel(this);
+        closeProfileBillPanel(this);
         this.ensureInputBlocker(panel);
         panel.setSiblingIndex((panel.parent?.children.length || 1) - 1);
         this.refreshRootLayerOrder();
@@ -66,6 +68,7 @@ export abstract class HomeFeatureProfileShell extends HomeViewBase {
     }
     protected closeProfilePopup(): void {
         closeProfileDaoYouPanel(this);
+        closeProfileBillPanel(this);
         this.closeProfileSettingsPopup();
         this.closeProfileAvatarFramePopup();
         if (this.profilePopupRoot?.isValid) {
@@ -204,6 +207,10 @@ export abstract class HomeFeatureProfileShell extends HomeViewBase {
                         this.openProfileSettingsPopup();
                         return;
                     }
+                    if (action.buttonName === 'ProfileBillButton') {
+                        openProfileBillPanel(this);
+                        return;
+                    }
                     this.showToast(action.message);
                 });
             }
@@ -335,6 +342,10 @@ export abstract class HomeFeatureProfileShell extends HomeViewBase {
                     this.openProfileSettingsPopup();
                     return;
                 }
+                if (action.name === 'ProfileBillButton') {
+                    openProfileBillPanel(this);
+                    return;
+                }
                 this.showToast(action.message);
             });
         });
@@ -408,7 +419,7 @@ export abstract class HomeFeatureProfileShell extends HomeViewBase {
         if (this.playerNameLabel) {
             this.playerNameLabel.string = this.profile.name;
         }
-        this.refreshRolePageNameLabel(HomeConfig.ROLE_ASSETS[this.profile.gender]);
+        this.refreshRolePageNameLabel(this.getCurrentRoleAssetConfig(this.profile.gender));
         this.refreshProfilePopupLabels();
     }
     protected loadProfile(): RoleProfile {

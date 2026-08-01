@@ -275,7 +275,7 @@ export abstract class HomeFeatureProfileAvatarFrame extends HomeViewBase {
     }
     protected applyEquippedProfileAvatarFrameVisual(): void {
         const item = HomeConfig.PROFILE_AVATAR_FRAME_ITEMS.find((entry) => entry.id === this.profileAvatarFrameEquipped);
-        const keepFrameBelowAvatar = (frame: Node, avatarName: string): void => {
+        const placeFrameAroundAvatar = (frame: Node, avatarName: string, aboveAvatar: boolean, topOverlayNames: string[]): void => {
             const parent = frame.parent;
             if (!parent) return;
             const avatar = parent.getChildByName(avatarName);
@@ -283,22 +283,49 @@ export abstract class HomeFeatureProfileAvatarFrame extends HomeViewBase {
                 frame.setSiblingIndex(0);
                 return;
             }
-            if (frame.getSiblingIndex() > avatar.getSiblingIndex()) {
+
+            if (aboveAvatar) {
+                frame.setPosition(avatar.position.x, avatar.position.y, frame.position.z);
+                frame.setSiblingIndex(Math.min(parent.children.length - 1, avatar.getSiblingIndex() + 1));
+            } else if (frame.getSiblingIndex() > avatar.getSiblingIndex()) {
                 frame.setSiblingIndex(avatar.getSiblingIndex());
             }
+
+            topOverlayNames.forEach((name) => {
+                const overlay = parent.getChildByName(name);
+                if (overlay?.isValid) {
+                    const anchorIndex = aboveAvatar ? frame.getSiblingIndex() : avatar.getSiblingIndex();
+                    overlay.setSiblingIndex(Math.min(parent.children.length - 1, anchorIndex + 1));
+                }
+            });
         };
-        const apply = (nodeName: string, avatarName: string, fallbackSize: number, scale: number): void => {
+        const resolveScaleByAvatar = (avatar: Node | null, fallbackSize: number, baseScale: number, avatarRatio: number): number => {
+            if (!avatar?.isValid || avatarRatio <= 0) return baseScale;
+            const transform = avatar.getComponent(UITransform);
+            const avatarSize = transform?.contentSize;
+            const avatarMax = Math.max(avatarSize?.width || 0, avatarSize?.height || 0);
+            if (avatarMax <= 0) return baseScale;
+            return Math.max(baseScale, (avatarMax * avatarRatio) / (fallbackSize * 2));
+        };
+        const apply = (nodeName: string, avatarName: string, fallbackSize: number, scale: number, topOverlayNames: string[] = [], avatarRatio = 0): void => {
             const node = this.findNode(nodeName);
             if (!node?.isValid) return;
-            keepFrameBelowAvatar(node, avatarName);
+            const avatar = node.parent?.getChildByName(avatarName) || null;
+            const fittedScale = resolveScaleByAvatar(avatar, fallbackSize, scale, avatarRatio);
+            if (avatarRatio > 0) {
+                const frameSize = Math.ceil(fallbackSize * 2 * fittedScale);
+                (node.getComponent(UITransform) || node.addComponent(UITransform)).setContentSize(frameSize, frameSize);
+            }
             if (!item) {
+                placeFrameAroundAvatar(node, avatarName, false, topOverlayNames);
                 this.clearProfileAvatarFrameSkeleton(node, `${nodeName}Spine`, HomeConfig.UI_HOME_PROFILE_FRAME, fallbackSize);
                 return;
             }
             node.active = true;
-            this.applyProfileAvatarFrameSkeleton(node, `${nodeName}Spine`, item, item.preview, fallbackSize, scale);
+            placeFrameAroundAvatar(node, avatarName, true, topOverlayNames);
+            this.applyProfileAvatarFrameSkeleton(node, `${nodeName}Spine`, item, item.preview, fallbackSize, fittedScale, false, false, false);
         };
-        apply('AvatarFrame', 'AvatarIcon', 88, HomeConfig.PROFILE_AVATAR_FRAME_HUD_SPINE_SCALE);
+        apply('AvatarFrame', 'AvatarIcon', 88, HomeConfig.PROFILE_AVATAR_FRAME_HUD_SPINE_SCALE, ['LabelLevel'], HomeConfig.PROFILE_AVATAR_FRAME_HUD_TO_AVATAR_RATIO);
         apply('ProfileAvatarFrame', 'ProfileAvatarIcon', 104, HomeConfig.PROFILE_AVATAR_FRAME_POPUP_SPINE_SCALE);
     }
     protected applyProfileAvatarFramePreviewSkeleton(parent: Node, item: ProfileAvatarFrameItem): void {
@@ -376,6 +403,7 @@ export abstract class HomeFeatureProfileAvatarFrame extends HomeViewBase {
         scale: number,
         useSelf = false,
         keepParentSprite = false,
+        showFallbackWhileLoading = true,
     ): void {
         const spineInfo = this.ensureProfileAvatarFrameSkeletonChild(parent, childName, fallbackSize, scale, useSelf);
         const spineNode = spineInfo.node;
@@ -387,14 +415,23 @@ export abstract class HomeFeatureProfileAvatarFrame extends HomeViewBase {
         if (useSelf) {
             if (sprite) sprite.enabled = true;
         } else {
-            if (sprite) sprite.enabled = true;
-            this.applyUiSkinKeepingEditorSize(parent, fallbackSkin, fallbackSize, fallbackSize);
-            sprite = parent.getComponent(Sprite);
+            if (showFallbackWhileLoading || keepParentSprite) {
+                if (sprite) sprite.enabled = true;
+                this.applyUiSkinKeepingEditorSize(parent, fallbackSkin, fallbackSize, fallbackSize);
+                sprite = parent.getComponent(Sprite);
+            } else {
+                this.skinApplyVersions.set(parent, ++this.skinApplyVersion);
+                if (sprite) {
+                    sprite.enabled = false;
+                    sprite.spriteFrame = null;
+                }
+            }
         }
 
         const skeleton = spineNode.getComponent(sp.Skeleton) || spineNode.addComponent(sp.Skeleton);
         skeleton.enabled = false;
-        if (spineInfo.created) spineNode.setScale(scale, scale, 1);
+        spineNode.setPosition(0, 0, 0);
+        spineNode.setScale(scale, scale, 1);
 
         void this.loadProfileAvatarFrameSkeletonAsset(item)
             .then((data) => {
@@ -415,8 +452,10 @@ export abstract class HomeFeatureProfileAvatarFrame extends HomeViewBase {
                 if (!parent.isValid || !spineNode.isValid || this.profileAvatarFrameSkeletonVersions.get(spineNode) !== version) return;
                 console.warn('[MainHomeView] profile avatar frame spine load failed', item.spine, err);
                 if (!useSelf) spineNode.active = false;
-                if (sprite) sprite.enabled = true;
-                this.applyUiSkinKeepingEditorSize(parent, fallbackSkin, fallbackSize, fallbackSize);
+                if (sprite) sprite.enabled = showFallbackWhileLoading || keepParentSprite;
+                if (showFallbackWhileLoading || keepParentSprite) {
+                    this.applyUiSkinKeepingEditorSize(parent, fallbackSkin, fallbackSize, fallbackSize);
+                }
             });
     }
 }

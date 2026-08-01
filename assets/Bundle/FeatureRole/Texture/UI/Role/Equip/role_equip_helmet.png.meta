@@ -3,8 +3,109 @@
   "importer": "image",
   "imported": true,
   "uuid": "5929aece-5356-4493-9045-e71896b7dc73",
-  "files": [".json", ".png"],
+  "files": [
+    ".json",
+    ".png"
+  ],
   "subMetas": {
+    "f9941": {
+      "importer": "sprite-frame",
+      "uuid": "5929aece-5356-4493-9045-e71896b7dc73@f9941",
+      "displayName": "role_equip_helmet",
+      "id": "f9941",
+      "name": "spriteFrame",
+      "userData": {
+        "width": 64,
+        "height": 82,
+        "rawWidth": 64,
+        "rawHeight": 82,
+        "trimType": "none",
+        "trimThreshold": 1,
+        "rotated": false,
+        "offsetX": 0,
+        "offsetY": 0,
+        "isUuid": true,
+        "imageUuidOrDatabaseUri": "5929aece-5356-4493-9045-e71896b7dc73@6c48a",
+        "packable": true,
+        "pixelsToUnit": 100,
+        "pivotX": 0.5,
+        "pivotY": 0.5,
+        "trimX": 0,
+        "trimY": 0,
+        "borderTop": 0,
+        "borderBottom": 0,
+        "borderLeft": 0,
+        "borderRight": 0,
+        "meshType": 0,
+        "vertices": {
+          "rawPosition": [
+            -32,
+            -41,
+            0,
+            32,
+            -41,
+            0,
+            -32,
+            41,
+            0,
+            32,
+            41,
+            0
+          ],
+          "indexes": [
+            0,
+            1,
+            2,
+            2,
+            1,
+            3
+          ],
+          "uv": [
+            0,
+            82,
+            64,
+            82,
+            0,
+            0,
+            64,
+            0
+          ],
+          "nui": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "nuv": [
+            0,
+            0,
+            1,
+            0,
+            0,
+            1,
+            1,
+            1
+          ],
+          "minPos": [
+            -32,
+            -41,
+            0
+          ],
+          "maxPos": [
+            32,
+            41,
+            0
+          ]
+        },
+        "atlasUuid": ""
+      },
+      "ver": "1.0.12",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
     "6c48a": {
       "importer": "texture",
       "uuid": "5929aece-5356-4493-9045-e71896b7dc73@6c48a",
@@ -24,12 +125,14 @@
       },
       "ver": "1.0.22",
       "imported": true,
-      "files": [".json"],
+      "files": [
+        ".json"
+      ],
       "subMetas": {}
     }
   },
   "userData": {
-    "type": "texture",
+    "type": "sprite-frame",
     "fixAlphaTransparencyArtifacts": false,
     "hasAlpha": true,
     "redirect": "5929aece-5356-4493-9045-e71896b7dc73@6c48a"

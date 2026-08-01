@@ -25,6 +25,7 @@ interface MagicBattleDamageParticipant {
     isPlayer: boolean;
     skelPath?: string;
     duelScale?: number;
+    attackAnimations?: readonly string[];
     damageMultiplier: number;
     damage: number;
     hp: number;
@@ -285,11 +286,8 @@ export abstract class HomeFeatureMagicBattleDuel extends HomeFeatureMagicBattleD
         this.refreshMagicBattleDuelPopup(target, '\u51b3\u6597\u51c6\u5907\u4e2d');
 
         try {
-            if (!this.roleSkeletonData.has(this.profile.gender)) {
-                await this.loadSkeletonData(HomeConfig.ROLE_ASSETS[this.profile.gender]);
-            }
-            const roleData = this.roleSkeletonData.get(this.profile.gender);
-            const targetData = await this.loadSkeletonAsset(target.skelPath || HomeConfig.ROLE_ASSETS.male.skelPath);
+            const roleData = await this.ensureRoleSkeletonData(this.profile.gender);
+            const targetData = await this.loadSkeletonAsset(target.skelPath || HomeConfig.getRoleAssetForWeaponLevel('male', 1).skelPath);
             if (version !== this.magicBattleDuelVersion || this.magicBattleDuelTargetId !== targetId) return;
             if (!roleData || !this.magicBattleDuelPlayerSkeleton?.isValid || !this.magicBattleDuelTargetSkeleton?.isValid) {
                 throw new Error('Magic battle duel skeleton node is missing');
@@ -298,9 +296,10 @@ export abstract class HomeFeatureMagicBattleDuel extends HomeFeatureMagicBattleD
             this.prepareSkeletonRenderer(this.magicBattleDuelPlayerSkeleton);
             this.magicBattleDuelPlayerSkeleton.skeletonData = roleData;
             this.magicBattleDuelPlayerSkeleton.node.setPosition(0, HomeConfig.MAGIC_BATTLE_DUEL_VISUAL_Y, 0);
+            const playerScale = this.getRoleMapScale(this.profile.gender);
             this.magicBattleDuelPlayerSkeleton.node.setScale(
-                HomeConfig.MAGIC_BATTLE_DUEL_PLAYER_SCALE,
-                HomeConfig.MAGIC_BATTLE_DUEL_PLAYER_SCALE,
+                playerScale,
+                playerScale,
                 1,
             );
             this.setSkeletonVisible(this.magicBattleDuelPlayerSkeleton, true);
@@ -373,7 +372,12 @@ export abstract class HomeFeatureMagicBattleDuel extends HomeFeatureMagicBattleD
             if (version !== this.magicBattleDuelVersion || this.magicBattleDuelTargetId !== targetId) return;
             round += 1;
             this.refreshMagicBattleDuelPopup(target, `${this.profile.name || '\u6211'}\u53d1\u8d77\u653b\u51fb`);
-            this.playMagicBattleDuelStrike(this.magicBattleDuelPlayerSkeleton, this.magicBattleDuelTargetSkeleton, true);
+            this.playMagicBattleDuelStrike(
+                this.magicBattleDuelPlayerSkeleton,
+                this.magicBattleDuelTargetSkeleton,
+                true,
+                HomeConfig.BATTLE_ROLE_NORMAL_ATTACK_ANIMATIONS[this.profile.gender],
+            );
             const damage = playerWins && round >= HomeConfig.MAGIC_BATTLE_DUEL_DURATION
                 ? this.magicBattleDuelTargetHp
                 : Math.min(this.magicBattleDuelTargetHp, playerDamage);
@@ -392,7 +396,12 @@ export abstract class HomeFeatureMagicBattleDuel extends HomeFeatureMagicBattleD
         const runTargetAttack = (): void => {
             if (version !== this.magicBattleDuelVersion || this.magicBattleDuelTargetId !== targetId) return;
             this.refreshMagicBattleDuelPopup(target, `${target.name}\u53d1\u8d77\u653b\u51fb`);
-            this.playMagicBattleDuelStrike(this.magicBattleDuelTargetSkeleton, this.magicBattleDuelPlayerSkeleton, false);
+            this.playMagicBattleDuelStrike(
+                this.magicBattleDuelTargetSkeleton,
+                this.magicBattleDuelPlayerSkeleton,
+                false,
+                target.attackAnimations || HomeConfig.BATTLE_ROLE_NORMAL_ATTACK_ANIMATIONS.male,
+            );
             const damage = !playerWins && round >= HomeConfig.MAGIC_BATTLE_DUEL_DURATION
                 ? this.magicBattleDuelPlayerHp
                 : Math.min(this.magicBattleDuelPlayerHp, Math.ceil(targetDamage * (playerWins ? 0.45 : 1)));
@@ -414,6 +423,7 @@ export abstract class HomeFeatureMagicBattleDuel extends HomeFeatureMagicBattleD
         attacker: sp.Skeleton | null,
         defender: sp.Skeleton | null,
         attackerTowardRight: boolean,
+        attackAnimations: readonly string[],
     ): void {
         if (attacker?.isValid && attacker.skeletonData) {
             const node = attacker.node;
@@ -426,7 +436,7 @@ export abstract class HomeFeatureMagicBattleDuel extends HomeFeatureMagicBattleD
                 .start();
             this.playMagicBattleOneShot(
                 attacker,
-                HomeConfig.BATTLE_ROLE_NORMAL_ATTACK_ANIMATIONS,
+                attackAnimations,
                 HomeConfig.IDLE_ANIMATIONS,
                 HomeConfig.BATTLE_ROLE_ATTACK_TIME_SCALE,
             );

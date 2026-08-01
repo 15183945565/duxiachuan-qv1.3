@@ -3,7 +3,10 @@
   "importer": "image",
   "imported": true,
   "uuid": "9dcbbba9-e059-48ec-8cfd-1fe7f6f984f4",
-  "files": [".json", ".png"],
+  "files": [
+    ".json",
+    ".png"
+  ],
   "subMetas": {
     "6c48a": {
       "importer": "texture",
@@ -25,7 +28,9 @@
       },
       "ver": "1.0.22",
       "imported": true,
-      "files": [".json"],
+      "files": [
+        ".json"
+      ],
       "subMetas": {}
     },
     "f9941": {
@@ -58,18 +63,66 @@
         "borderRight": 0,
         "meshType": 0,
         "vertices": {
-          "rawPosition": [-47.5, -47.5, 0, 47.5, -47.5, 0, -47.5, 47.5, 0, 47.5, 47.5, 0],
-          "indexes": [0, 1, 2, 2, 1, 3],
-          "uv": [0, 95, 95, 95, 0, 0, 95, 0],
-          "nuv": [0, 0, 1, 0, 0, 1, 1, 1],
-          "minPos": [-47.5, -47.5, 0],
-          "maxPos": [47.5, 47.5, 0]
+          "rawPosition": [
+            -47.5,
+            -47.5,
+            0,
+            47.5,
+            -47.5,
+            0,
+            -47.5,
+            47.5,
+            0,
+            47.5,
+            47.5,
+            0
+          ],
+          "indexes": [
+            0,
+            1,
+            2,
+            2,
+            1,
+            3
+          ],
+          "uv": [
+            0,
+            95,
+            95,
+            95,
+            0,
+            0,
+            95,
+            0
+          ],
+          "nuv": [
+            0,
+            0,
+            1,
+            0,
+            0,
+            1,
+            1,
+            1
+          ],
+          "minPos": [
+            -47.5,
+            -47.5,
+            0
+          ],
+          "maxPos": [
+            47.5,
+            47.5,
+            0
+          ]
         },
         "atlasUuid": ""
       },
       "ver": "1.0.12",
       "imported": true,
-      "files": [".json"],
+      "files": [
+        ".json"
+      ],
       "subMetas": {}
     }
   },

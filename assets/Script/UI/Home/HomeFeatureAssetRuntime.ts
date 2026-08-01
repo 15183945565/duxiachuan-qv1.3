@@ -30,10 +30,10 @@ export abstract class HomeFeatureAssetRuntime extends HomeViewBase {
             });
     
             if (HomeConfig.ENABLE_ROLE_SKEL_ANIMATION) {
-                await this.loadSkeletonData(HomeConfig.ROLE_ASSETS.male).catch((err) => {
+                await this.loadSkeletonData(this.getCurrentRoleAssetConfig('male')).catch((err) => {
                     console.warn('[MainHomeView] male skel load failed', err);
                 });
-                await this.loadSkeletonData(HomeConfig.ROLE_ASSETS.female).catch((err) => {
+                await this.loadSkeletonData(this.getCurrentRoleAssetConfig('female')).catch((err) => {
                     console.warn('[MainHomeView] female skel load failed', err);
                 });
                 this.applyCurrentRole();
@@ -152,6 +152,7 @@ export abstract class HomeFeatureAssetRuntime extends HomeViewBase {
     
             const apply = (asset: sp.SkeletonData): void => {
                 this.roleSkeletonData.set(config.gender, asset);
+                this.roleSkeletonPaths.set(config.gender, config.skelPath);
                 resolve();
             };
     

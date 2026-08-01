@@ -1,0 +1,44 @@
+import { CONFIRM_UI_ROOT, MAIL_UI_ROOT, NOTICE_UI_ROOT, RANK_UI_ROOT } from './HomeBaseConfig';
+
+export const UI_FRAME_NOTICE = `${NOTICE_UI_ROOT}/notice_board_bg`;
+export const UI_FRAME_NOTICE_CONTENT = `${NOTICE_UI_ROOT}/notice_content_bg`;
+export const UI_NOTICE_BTN_CLOSE = `${NOTICE_UI_ROOT}/notice_btn_close`;
+export const UI_FRAME_MAIL = `${MAIL_UI_ROOT}/mail_board_bg`;
+export const UI_FRAME_MAIL_DETAIL = `${MAIL_UI_ROOT}/mail_detail_bg`;
+export const UI_FRAME_MAIL_ROW = `${MAIL_UI_ROOT}/mail_row_bg`;
+export const UI_FRAME_MAIL_TAB_ACTIVE = `${MAIL_UI_ROOT}/mail_tab_active`;
+export const UI_FRAME_MAIL_TAB_NORMAL = `${MAIL_UI_ROOT}/mail_tab_normal`;
+export const UI_MAIL_ATTACH_ICON = `${MAIL_UI_ROOT}/mail_attach_icon`;
+export const UI_MAIL_ATTACH_SLOT = `${MAIL_UI_ROOT}/mail_attach_slot`;
+export const UI_MAIL_UNREAD_DOT = `${MAIL_UI_ROOT}/mail_unread_dot`;
+
+export const UI_CONFIRM_POPUP_BG = `${CONFIRM_UI_ROOT}/confirm_popup_bg`;
+export const UI_CONFIRM_TITLE_BG = `${CONFIRM_UI_ROOT}/confirm_title_bg`;
+export const UI_CONFIRM_MESSAGE_BG = `${CONFIRM_UI_ROOT}/confirm_message_bg`;
+export const UI_CONFIRM_QUANTITY_BG = `${CONFIRM_UI_ROOT}/confirm_quantity_bg`;
+export const UI_CONFIRM_MINUS_BUTTON = `${CONFIRM_UI_ROOT}/confirm_minus_btn`;
+export const UI_CONFIRM_PLUS_BUTTON = `${CONFIRM_UI_ROOT}/confirm_plus_btn`;
+export const UI_CONFIRM_CANCEL_BUTTON = `${CONFIRM_UI_ROOT}/confirm_cancel_btn`;
+export const UI_CONFIRM_OK_BUTTON = `${CONFIRM_UI_ROOT}/confirm_ok_btn`;
+export const UI_CONFIRM_BUTTON_BG = `${CONFIRM_UI_ROOT}/confirm_button_bg`;
+export const UI_CONFIRM_MAGIC_BUTTON = `${CONFIRM_UI_ROOT}/confirm_magic_button`;
+
+export const UI_RANK_BG = `${RANK_UI_ROOT}/rank_bg`;
+export const UI_RANK_BACK = `${RANK_UI_ROOT}/rank_back`;
+export const UI_RANK_TAB_ACTIVE = `${RANK_UI_ROOT}/rank_tab_active`;
+export const UI_RANK_TAB_NORMAL = `${RANK_UI_ROOT}/rank_tab_normal`;
+export const UI_RANK_CARD_1 = `${RANK_UI_ROOT}/rank_card_1`;
+export const UI_RANK_CARD_2 = `${RANK_UI_ROOT}/rank_card_2`;
+export const UI_RANK_CARD_3 = `${RANK_UI_ROOT}/rank_card_3`;
+export const UI_RANK_BADGE_1 = `${RANK_UI_ROOT}/rank_badge_1`;
+export const UI_RANK_BADGE_2 = `${RANK_UI_ROOT}/rank_badge_2`;
+export const UI_RANK_BADGE_3 = `${RANK_UI_ROOT}/rank_badge_3`;
+export const UI_RANK_ROW_BG = `${RANK_UI_ROOT}/rank_row_bg`;
+export const UI_BTN_CLOSE = `${MAIL_UI_ROOT}/btn_close`;
+export const UI_MAIL_BTN_CLOSE = `${MAIL_UI_ROOT}/mail_btn_close`;
+export const UI_BTN_CLAIM = `${MAIL_UI_ROOT}/btn_claim`;
+export const UI_BTN_DELETE = `${MAIL_UI_ROOT}/btn_delete`;
+export const BOTTOM_ENTRY_BACK_BUTTON_WIDTH = 95;
+export const BOTTOM_ENTRY_BACK_BUTTON_HEIGHT = 90;
+export const BOTTOM_ENTRY_BACK_BUTTON_X = -300;
+export const BOTTOM_ENTRY_BACK_BUTTON_Y = -720;

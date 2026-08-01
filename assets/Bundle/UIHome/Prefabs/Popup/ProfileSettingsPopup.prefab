@@ -1646,10 +1646,10 @@
         "__id__": 42
       },
       {
-        "__id__": 45
+        "__id__": 48
       },
       {
-        "__id__": 48
+        "__id__": 45
       }
     ],
     "_active": true,
@@ -1712,8 +1712,8 @@
     "_prefab": null,
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": 11.718000000000075,
-      "y": 0.7139999999999986,
+      "x": 16,
+      "y": 0,
       "z": 0
     },
     "_lrot": {
@@ -1776,15 +1776,15 @@
     "_dstBlendFactor": 4,
     "_color": {
       "__type__": "cc.Color",
-      "r": 219,
-      "g": 215,
-      "b": 199,
+      "r": 82,
+      "g": 55,
+      "b": 42,
       "a": 255
     },
     "_string": "关",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
-    "_actualFontSize": 22,
+    "_actualFontSize": 24,
     "_fontSize": 24,
     "_fontFamily": "SIMKAI",
     "_lineHeight": 32,
@@ -1847,14 +1847,14 @@
     "_prefab": null,
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": 11.718000000000075,
-      "y": 0.7139999999999986,
+      "x": 16,
+      "y": 0,
       "z": 0
     },
     "_lrot": {
       "__type__": "cc.Quat",
       "x": 0,
-      "y": 0.7139999999999986,
+      "y": 0,
       "z": 0,
       "w": 1
     },
@@ -1911,15 +1911,15 @@
     "_dstBlendFactor": 4,
     "_color": {
       "__type__": "cc.Color",
-      "r": 219,
-      "g": 215,
-      "b": 199,
+      "r": 82,
+      "g": 55,
+      "b": 42,
       "a": 255
     },
     "_string": "关",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
-    "_actualFontSize": 22,
+    "_actualFontSize": 24,
     "_fontSize": 24,
     "_fontFamily": "SIMKAI",
     "_lineHeight": 32,
@@ -1970,7 +1970,7 @@
       "__id__": 41
     },
     "_children": [],
-    "_active": true,
+    "_active": false,
     "_components": [
       {
         "__id__": 49
@@ -2046,15 +2046,15 @@
     "_dstBlendFactor": 4,
     "_color": {
       "__type__": "cc.Color",
-      "r": 219,
-      "g": 215,
-      "b": 199,
+      "r": 82,
+      "g": 55,
+      "b": 42,
       "a": 255
     },
     "_string": "开",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
-    "_actualFontSize": 22,
+    "_actualFontSize": 24,
     "_fontSize": 24,
     "_fontFamily": "SIMKAI",
     "_lineHeight": 32,

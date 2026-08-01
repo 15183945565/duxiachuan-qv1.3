@@ -351,15 +351,15 @@ export abstract class HomeFeatureDuelActorRuntime extends HomeFeatureDuelActorRu
         };
         const skeletonData = await this.loadSkeletonAsset(pathMap[kind]);
         this.duelJianghuSkeletonData.set(kind, skeletonData);
-        if (kind === 'common') this.duelJianghuSkeletonData.set('player', skeletonData);
-        if (kind === 'common') this.duelJianghuSkeletonData.set('lobbyCommon', skeletonData);
-        if (kind === 'player') this.duelJianghuSkeletonData.set('common', skeletonData);
-        if (kind === 'player') this.duelJianghuSkeletonData.set('lobbyCommon', skeletonData);
-        if (kind === 'lobbyCommon') this.duelJianghuSkeletonData.set('common', skeletonData);
-        if (kind === 'lobbyCommon') this.duelJianghuSkeletonData.set('player', skeletonData);
+        if (kind === 'common' || kind === 'lobbyCommon' || kind === 'player') {
+            this.duelJianghuSkeletonData.set('common', skeletonData);
+            this.duelJianghuSkeletonData.set('lobbyCommon', skeletonData);
+            this.duelJianghuSkeletonData.set('player', skeletonData);
+        }
         return skeletonData;
     }
     protected getDuelJianghuActorScale(kind: DuelJianghuActorKind): number {
+        if (kind === 'player') return HomeConfig.DUEL_JIANGHU_COMMON_ACTOR_SCALE;
         if (kind === 'assassin' || kind === 'doubleMale' || kind === 'doubleFemale' || kind === 'rebel') {
             return HomeConfig.DUEL_JIANGHU_KILLER_ACTOR_SCALE;
         }
@@ -369,24 +369,25 @@ export abstract class HomeFeatureDuelActorRuntime extends HomeFeatureDuelActorRu
     protected playDuelJianghuActorAnimation(actor: DuelJianghuActorRuntime, animation: DuelJianghuActorAnimation, loop: boolean): number {
         if (!actor.skeleton || !actor.skeleton.node.isValid) return 0;
         const candidates = animation === 'stand'
-            ? ['stand', 'stand2', 'idle', 'walk']
+            ? ['ready', 'style', 'stand', 'stand2', 'idle', 'walk']
             : animation === 'walk'
-                ? ['walk', 'run', 'stand', 'stand2']
+                ? ['run', 'walk', 'ready', 'stand', 'stand2']
                 : animation === 'hurt'
-                    ? ['hurt', 'hit', 'damage', 'stand']
+                    ? ['hit1', 'hit2', 'hit3', 'hurt', 'hit', 'damage', 'ready', 'stand']
                     : animation === 'dead'
-                        ? ['dead', 'death', 'die', 'hurt', 'stand']
-                        : ['attack', 'animation', 'stand', 'walk'];
+                        ? ['dead', 'death', 'die', 'hurt', 'ready', 'stand']
+                        : ['attack', 'skill', 'animation', 'stand', 'walk'];
         const duration = this.playDuelJianghuSkeletonAnimation(actor.skeleton, candidates, loop);
+        if (duration < 0 && animation === 'attack' && actor.kind === 'player') return 0;
         if (duration < 0 && (animation === 'attack' || animation === 'hurt' || animation === 'dead')) {
             const fallback = animation === 'dead' || animation === 'hurt'
-                ? ['stand', 'stand2', 'idle']
-                : ['walk', 'run', 'stand', 'stand2'];
+                ? ['ready', 'style', 'stand', 'stand2', 'idle']
+                : ['attack', 'animation', 'stand', 'walk'];
             this.playDuelJianghuSkeletonAnimation(actor.skeleton, fallback, true);
         }
         return Math.max(0, duration);
     }
-    protected playDuelJianghuSkeletonAnimation(target: sp.Skeleton, candidates: string[], loop: boolean): number {
+    protected playDuelJianghuSkeletonAnimation(target: sp.Skeleton, candidates: readonly string[], loop: boolean): number {
         if (!target.skeletonData) return -1;
 
         for (const animation of candidates) {

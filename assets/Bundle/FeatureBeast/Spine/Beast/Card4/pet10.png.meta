@@ -1,44 +1,42 @@
 {
-    "ver":  "1.0.27",
-    "importer":  "image",
-    "imported":  true,
-    "uuid":  "24822d39-b197-4b43-9608-335fada52300",
-    "files":  [
-                  ".json",
-                  ".png"
-              ],
-    "subMetas":  {
-                     "6c48a":  {
-                                   "importer":  "texture",
-                                   "uuid":  "24822d39-b197-4b43-9608-335fada52300@6c48a",
-                                   "displayName":  "pet10",
-                                   "id":  "6c48a",
-                                   "name":  "texture",
-                                   "userData":  {
-                                                    "wrapModeS":  "repeat",
-                                                    "wrapModeT":  "repeat",
-                                                    "minfilter":  "linear",
-                                                    "magfilter":  "linear",
-                                                    "mipfilter":  "none",
-                                                    "anisotropy":  0,
-                                                    "isUuid":  true,
-                                                    "imageUuidOrDatabaseUri":  "24822d39-b197-4b43-9608-335fada52300",
-                                                    "visible":  false
-                                                },
-                                   "ver":  "1.0.22",
-                                   "imported":  true,
-                                   "files":  [
-                                                 ".json"
-                                             ],
-                                   "subMetas":  {
-
-                                                }
-                               }
-                 },
-    "userData":  {
-                     "type":  "texture",
-                     "fixAlphaTransparencyArtifacts":  false,
-                     "hasAlpha":  true,
-                     "redirect":  "24822d39-b197-4b43-9608-335fada52300@6c48a"
-                 }
+  "ver": "1.0.27",
+  "importer": "image",
+  "imported": true,
+  "uuid": "24822d39-b197-4b43-9608-335fada52300",
+  "files": [
+    ".json",
+    ".png"
+  ],
+  "subMetas": {
+    "6c48a": {
+      "importer": "texture",
+      "uuid": "24822d39-b197-4b43-9608-335fada52300@6c48a",
+      "displayName": "pet10",
+      "id": "6c48a",
+      "name": "texture",
+      "userData": {
+        "wrapModeS": "repeat",
+        "wrapModeT": "repeat",
+        "minfilter": "linear",
+        "magfilter": "linear",
+        "mipfilter": "none",
+        "anisotropy": 0,
+        "isUuid": true,
+        "imageUuidOrDatabaseUri": "24822d39-b197-4b43-9608-335fada52300",
+        "visible": false
+      },
+      "ver": "1.0.22",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    }
+  },
+  "userData": {
+    "type": "texture",
+    "fixAlphaTransparencyArtifacts": false,
+    "hasAlpha": true,
+    "redirect": "24822d39-b197-4b43-9608-335fada52300@6c48a"
+  }
 }

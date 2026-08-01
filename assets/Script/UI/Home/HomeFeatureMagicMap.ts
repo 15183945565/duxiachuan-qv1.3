@@ -69,7 +69,9 @@ export abstract class HomeFeatureMagicMap extends HomeFeatureMagicMapHost {
         if (this.magicMapPlayerAnchor) {
             this.magicMapPlayerSpawnPosition = this.clampMagicMapGroundPosition(this.magicMapPlayerAnchor.position, false);
             this.magicMapPlayerAnchor.setPosition(this.magicMapPlayerSpawnPosition);
-            const playerVisual = this.ensureMagicSkeletonVisual(this.magicMapPlayerAnchor, 'MagicMapPlayerVisual', HomeConfig.MAGIC_MAP_PLAYER_SCALE);
+            const playerScale = this.getRoleMapScale(this.profile.gender);
+            const playerVisual = this.ensureMagicSkeletonVisual(this.magicMapPlayerAnchor, 'MagicMapPlayerVisual', playerScale);
+            this.setMagicVisualFacing(playerVisual.node, playerScale, playerVisual.node.scale.x >= 0);
             this.magicMapPlayerVisual = playerVisual.node;
             this.magicMapPlayerSkeleton = playerVisual.skeleton;
             this.setupMagicPlayerHealthInfo();
@@ -153,7 +155,7 @@ export abstract class HomeFeatureMagicMap extends HomeFeatureMagicMapHost {
             this.magicBattleRoleSkeleton = this.ensureMagicSkeletonVisual(
                 battleRoleAnchor,
                 'MagicBattleRoleVisual',
-                HomeConfig.BATTLE_ROLE_SCALE,
+                this.getRoleMapScale(this.profile.gender),
             ).skeleton;
         }
         if (battleMonsterAnchor) {
@@ -375,7 +377,7 @@ export abstract class HomeFeatureMagicMap extends HomeFeatureMagicMapHost {
     
         Tween.stopAllByTarget(this.magicMapPlayerAnchor);
         Tween.stopAllByTarget(this.magicMapWorld);
-        this.setMagicVisualFacing(this.magicMapPlayerVisual, HomeConfig.MAGIC_MAP_PLAYER_SCALE, target.x > start.x);
+        this.setMagicVisualFacing(this.magicMapPlayerVisual, this.getRoleMapScale(this.profile.gender), target.x > start.x);
         if (!this.magicMapPlayerMoving) {
             this.magicMapPlayerMoving = true;
             this.playSkeletonAnimation(this.magicMapPlayerSkeleton, HomeConfig.WALK_ANIMATIONS, true);
@@ -463,13 +465,13 @@ export abstract class HomeFeatureMagicMap extends HomeFeatureMagicMapHost {
     
         this.magicMapSmallMonsterData = smallData;
         this.magicMapBossMonsterData = bossData;
-        if (!this.roleSkeletonData.has(this.profile.gender)) {
-            await this.loadSkeletonData(HomeConfig.ROLE_ASSETS[this.profile.gender]);
-        }
-        const roleData = this.roleSkeletonData.get(this.profile.gender);
+        const roleData = await this.ensureRoleSkeletonData(this.profile.gender);
         if (roleData && this.magicMapPlayerSkeleton?.isValid) {
             this.prepareSkeletonRenderer(this.magicMapPlayerSkeleton);
             this.magicMapPlayerSkeleton.skeletonData = roleData;
+            if (this.magicMapPlayerVisual?.isValid) {
+                this.setMagicVisualFacing(this.magicMapPlayerVisual, this.getRoleMapScale(this.profile.gender), this.magicMapPlayerVisual.scale.x >= 0);
+            }
             this.setSkeletonVisible(this.magicMapPlayerSkeleton, true);
             this.playSkeletonAnimation(this.magicMapPlayerSkeleton, HomeConfig.IDLE_ANIMATIONS, true);
         }

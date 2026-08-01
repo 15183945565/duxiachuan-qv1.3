@@ -34,14 +34,23 @@ interface ShareTaskRuntime {
     openSharedFlowPopup(popupName: string, content?: { title?: string; message?: string }): void;
     showToast(message: string): void;
     refreshRootLayerOrder(): void;
+    prepareHomeEntry(entryName: string): Promise<void>;
+    withTransitionLoading?(action: () => void | Promise<void>): Promise<void>;
     openProfilePopup?: () => void;
 }
 
 const ROW_W = 609;
 const ROW_H = 113;
-const ROW_GAP = 16;
+const ROW_SCALE = 1.1;
+const ROW_VISIBLE_GAP = 28;
 const VIEW_W = 650;
 const VIEW_H = 760;
+const ROW_TEXT_X = -15;
+const ROW_TEXT_Y = 22;
+const ROW_PROGRESS_X = -50;
+const ROW_PROGRESS_Y = -19;
+const PROGRESS_W = 300;
+const PROGRESS_H = 18;
 
 export function bindShareTaskPanel(host: HomeViewBase, panel: Node): void {
     const api = host as unknown as ShareTaskRuntime;
@@ -65,10 +74,21 @@ export function handleShareTaskAction(host: HomeViewBase, panel: Node, taskId?: 
         claimShareTaskReward(host, panel, task.id);
         return;
     }
-    panel.active = false;
-    api.openProfilePopup?.();
-    openProfileDaoYouPanel(host);
-    api.showToast('\u8bf7\u7ee7\u7eed\u57f9\u517b\u9053\u53cb\u5b8c\u6210\u5206\u4eab\u4efb\u52a1');
+    const openTarget = async (): Promise<void> => {
+        await api.prepareHomeEntry('BtnProfile');
+        if (!panel.isValid) return;
+        panel.active = false;
+        api.openProfilePopup?.();
+        openProfileDaoYouPanel(host);
+        api.showToast('\u8bf7\u7ee7\u7eed\u57f9\u517b\u9053\u53cb\u5b8c\u6210\u5206\u4eab\u4efb\u52a1');
+    };
+    const runner = api.withTransitionLoading
+        ? api.withTransitionLoading(openTarget)
+        : openTarget();
+    void runner.catch((error) => {
+        console.error('[MainHomeView] failed to open share task target', error);
+        api.showToast('\u9053\u53cb\u9875\u8d44\u6e90\u52a0\u8f7d\u5931\u8d25');
+    });
 }
 
 export function claimShareTaskReward(host: HomeViewBase, panel: Node, taskId?: string): void {
@@ -102,12 +122,13 @@ export function refreshShareTaskPanel(host: HomeViewBase, panel: Node): void {
         const fill = api.findNode(`ShareTaskProgressFill_${task.id}`, panel);
         if (fill) {
             const transform = fill.getComponent(UITransform) || fill.addComponent(UITransform);
-            const currentSize = transform.contentSize;
-            const progressBgSize = getEditorNodeSize(fill.parent, 300, 18);
-            const maxWidth = Math.max(0, progressBgSize.width - 14);
+            const progressBgSize = getEditorNodeSize(fill.parent, PROGRESS_W, PROGRESS_H);
+            const maxWidth = Math.max(0, progressBgSize.width);
             const ratio = Math.max(0, Math.min(1, progress / task.requiredCount));
             const width = ratio * maxWidth;
-            transform.setContentSize(width, currentSize.height > 0 ? currentSize.height : 17);
+            transform.setAnchorPoint(0, 0.5);
+            transform.setContentSize(width, progressBgSize.height > 0 ? progressBgSize.height : PROGRESS_H);
+            fill.setPosition(-progressBgSize.width / 2, 0, fill.position.z);
             (fill.getComponent(UIOpacity) || fill.addComponent(UIOpacity)).opacity = ratio > 0 ? 255 : 0;
         }
         const button = api.findNode(`ShareTaskActionButton_${task.id}`, panel);
@@ -134,18 +155,24 @@ function ensureShareTaskLayout(api: ShareTaskRuntime, panel: Node): void {
         HorizontalTextAlignment.CENTER,
         2,
     );
-    const board = ensureSkin(api, panel, 'ShareTaskBoard', 701, 835, 0, -166, HomeConfig.UI_SHARE_BOARD);
+    const board = ensureNode(api, panel, 'ShareTaskBoard', 701, 835, 0, -166);
+    hideDecorativeSprite(board);
     board.setSiblingIndex(3);
     const view = ensureNode(api, board, 'ShareTaskScrollView', VIEW_W, VIEW_H, 0, 0);
-    const contentH = Math.max(VIEW_H, HomeConfig.SHARE_TASKS.length * ROW_H + (HomeConfig.SHARE_TASKS.length - 1) * ROW_GAP + 20);
+    const visualRowH = ROW_H * ROW_SCALE;
+    const rowStep = visualRowH + ROW_VISIBLE_GAP;
+    const minimumContentH = Math.max(VIEW_H, HomeConfig.SHARE_TASKS.length * visualRowH + (HomeConfig.SHARE_TASKS.length - 1) * ROW_VISIBLE_GAP + 20);
+    const existingContent = view.getChildByName('ShareTaskScrollContent');
+    const contentH = Math.max(minimumContentH, existingContent ? getEditorNodeSize(existingContent, VIEW_W, minimumContentH).height : 0);
     const content = ensureNode(api, view, 'ShareTaskScrollContent', VIEW_W, contentH, 0, (VIEW_H - contentH) / 2);
-    setupScroll(view, content);
-    const topY = contentH / 2 - ROW_H / 2 - 10;
-    HomeConfig.SHARE_TASKS.forEach((task, index) => ensureShareTaskRow(api, content, task, topY - index * (ROW_H + ROW_GAP)));
+    setupFixedTaskList(view, content);
+    const topY = contentH / 2 - visualRowH / 2 - 10;
+    HomeConfig.SHARE_TASKS.forEach((task, index) => ensureShareTaskRow(api, content, task, topY - index * rowStep));
 }
 
 function ensureShareTaskRow(api: ShareTaskRuntime, parent: Node, task: ShareTask, y: number): void {
     const row = ensureSkin(api, parent, `ShareTaskRow_${task.id}`, ROW_W, ROW_H, 0, y, HomeConfig.UI_SHARE_TASK_ROW_BG);
+    row.setScale(ROW_SCALE, ROW_SCALE, 1);
     ensureSkin(api, row, `ShareTaskYuanbaoIcon_${task.id}`, 40, 37, -266, 13, HomeConfig.UI_SHARE_YUANBAO);
     ensureStyledLabel(
         api,
@@ -167,20 +194,20 @@ function ensureShareTaskRow(api: ShareTaskRuntime, parent: Node, task: ShareTask
         `ShareTaskText_${task.id}`,
         `${task.requiredCount}\u4e2a${task.label}\u6218\u573a\u7b49\u7ea7\u8fbe\u5230${task.requiredLevel}\u7ea7`,
         22,
-        -50,
-        23,
+        ROW_TEXT_X,
+        ROW_TEXT_Y,
         370,
         34,
         new Color(87, 62, 42, 255),
         HorizontalTextAlignment.LEFT,
         0,
     );
-    const progressBg = ensureSkin(api, row, `ShareTaskProgressBg_${task.id}`, 300, 18, -50, -24, HomeConfig.UI_SHARE_PROGRESS_BG);
-    const fillWasMissing = !progressBg.getChildByName(`ShareTaskProgressFill_${task.id}`);
-    const fill = ensureSkin(api, progressBg, `ShareTaskProgressFill_${task.id}`, 286, 17, -143, 0, HomeConfig.UI_SHARE_PROGRESS_FILL);
-    if (fillWasMissing) {
-        (fill.getComponent(UITransform) || fill.addComponent(UITransform)).setAnchorPoint(0, 0.5);
-    }
+    const progressBg = ensureSkin(api, row, `ShareTaskProgressBg_${task.id}`, PROGRESS_W, PROGRESS_H, ROW_PROGRESS_X, ROW_PROGRESS_Y, HomeConfig.UI_SHARE_PROGRESS_BG);
+    const fill = ensureSkin(api, progressBg, `ShareTaskProgressFill_${task.id}`, PROGRESS_W, PROGRESS_H, -PROGRESS_W / 2, 0, HomeConfig.UI_SHARE_PROGRESS_FILL);
+    const fillTransform = fill.getComponent(UITransform) || fill.addComponent(UITransform);
+    fillTransform.setAnchorPoint(0, 0.5);
+    const progressBgSize = getEditorNodeSize(progressBg, PROGRESS_W, PROGRESS_H);
+    fill.setPosition(-progressBgSize.width / 2, 0, fill.position.z);
     ensureStyledLabel(
         api,
         progressBg,
@@ -239,6 +266,13 @@ function ensureSkin(api: ShareTaskRuntime, parent: Node, name: string, width: nu
     return node;
 }
 
+function hideDecorativeSprite(node: Node): void {
+    const sprite = node.getComponent(Sprite);
+    if (!sprite) return;
+    sprite.enabled = false;
+    sprite.spriteFrame = null;
+}
+
 function ensureLabel(api: ShareTaskRuntime, parent: Node, name: string, text: string, fontSize: number, x: number, y: number, width: number, height: number): Label {
     const existingNode = parent.getChildByName(name);
     let label = existingNode?.getComponent(Label) || null;
@@ -291,15 +325,20 @@ function styleLabel(label: Label, color: Color, align: HorizontalTextAlignment, 
     label.outlineWidth = outlineWidth;
 }
 
-function setupScroll(view: Node, content: Node): void {
-    const mask = view.getComponent(Mask) || view.addComponent(Mask);
-    mask.type = Mask.Type.GRAPHICS_RECT;
-    const scroll = view.getComponent(ScrollView) || view.addComponent(ScrollView);
+function setupFixedTaskList(view: Node, content: Node): void {
+    const mask = view.getComponent(Mask);
+    if (mask) {
+        mask.type = Mask.Type.GRAPHICS_RECT;
+        mask.enabled = false;
+    }
+    const scroll = view.getComponent(ScrollView);
+    if (!scroll) return;
     scroll.content = content;
     scroll.horizontal = false;
-    scroll.vertical = true;
-    scroll.elastic = true;
-    scroll.inertia = true;
+    scroll.vertical = false;
+    scroll.elastic = false;
+    scroll.inertia = false;
+    scroll.enabled = false;
 }
 
 function setLabel(node: Node | null, text: string): void {

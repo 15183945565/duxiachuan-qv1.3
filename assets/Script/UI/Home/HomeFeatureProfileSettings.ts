@@ -19,6 +19,8 @@ import { HomeViewBase } from './HomeViewBase';
  * Owns profile audio settings, editor bindings, sliders, mute state, and persistence.
  */
 export abstract class HomeFeatureProfileSettings extends HomeViewBase {
+    private static readonly PROFILE_SETTINGS_TOGGLE_TEXT_COLOR = new Color(82, 55, 42, 255);
+
     protected openProfileSettingsPopup(): void {
         const popup = this.ensureProfileSettingsPopup();
         popup.active = true;
@@ -133,12 +135,14 @@ export abstract class HomeFeatureProfileSettings extends HomeViewBase {
         label.horizontalAlign = HorizontalTextAlignment.LEFT;
         const toggle = this.createSkinnedNode('ProfileSettingsMuteToggle', board, 86, 39, -176, y, HomeConfig.UI_PROFILE_SETTINGS_TOGGLE_OFF);
         toggle.setSiblingIndex(3);
-        const offValue = this.createLabel(toggle, 'ProfileSettingsMuteOffLabel', '\u5173', 24, HomeConfig.PROFILE_SETTINGS_MUTE_OFF_LABEL_X, 0, 52, 30, new Color(219, 215, 199, 255));
+        const offValue = this.createLabel(toggle, 'ProfileSettingsMuteOffLabel', '\u5173', 24, HomeConfig.PROFILE_SETTINGS_MUTE_OFF_LABEL_X, 0, 52, 30, HomeFeatureProfileSettings.PROFILE_SETTINGS_TOGGLE_TEXT_COLOR);
         offValue.horizontalAlign = HorizontalTextAlignment.CENTER;
         offValue.verticalAlign = VerticalTextAlignment.CENTER;
-        const onValue = this.createLabel(toggle, 'ProfileSettingsMuteOnLabel', '\u5f00', 24, HomeConfig.PROFILE_SETTINGS_MUTE_ON_LABEL_X, 0, 52, 30, new Color(219, 215, 199, 255));
+        offValue.node.setRotationFromEuler(0, 0, 0);
+        const onValue = this.createLabel(toggle, 'ProfileSettingsMuteOnLabel', '\u5f00', 24, HomeConfig.PROFILE_SETTINGS_MUTE_ON_LABEL_X, 0, 52, 30, HomeFeatureProfileSettings.PROFILE_SETTINGS_TOGGLE_TEXT_COLOR);
         onValue.horizontalAlign = HorizontalTextAlignment.CENTER;
         onValue.verticalAlign = VerticalTextAlignment.CENTER;
+        onValue.node.setRotationFromEuler(0, 0, 0);
         onValue.node.active = false;
     }
     protected bindProfileSettingsSlider(key: 'Music' | 'Effect', setter: (value: number) => void): void {
@@ -260,14 +264,20 @@ export abstract class HomeFeatureProfileSettings extends HomeViewBase {
             if (offValue) {
                 applySimKaiFont(offValue);
                 offValue.string = '\u5173';
-                offValue.color = new Color(219, 215, 199, 255);
+                offValue.color = HomeFeatureProfileSettings.PROFILE_SETTINGS_TOGGLE_TEXT_COLOR;
                 offValue.node.active = !this.profileSettingsMuted;
+                offValue.node.setPosition(HomeConfig.PROFILE_SETTINGS_MUTE_OFF_LABEL_X, 0, 0);
+                offValue.node.setRotationFromEuler(0, 0, 0);
+                offValue.node.setSiblingIndex((offValue.node.parent?.children.length || 1) - 1);
             }
             if (onValue) {
                 applySimKaiFont(onValue);
                 onValue.string = '\u5f00';
-                onValue.color = new Color(219, 215, 199, 255);
+                onValue.color = HomeFeatureProfileSettings.PROFILE_SETTINGS_TOGGLE_TEXT_COLOR;
                 onValue.node.active = this.profileSettingsMuted;
+                onValue.node.setPosition(HomeConfig.PROFILE_SETTINGS_MUTE_ON_LABEL_X, 0, 0);
+                onValue.node.setRotationFromEuler(0, 0, 0);
+                onValue.node.setSiblingIndex((onValue.node.parent?.children.length || 1) - 1);
             }
             const legacyValue = this.findNode('ProfileSettingsMuteValueLabel', board);
             if (legacyValue) legacyValue.active = false;
@@ -278,7 +288,8 @@ export abstract class HomeFeatureProfileSettings extends HomeViewBase {
         if (legacyValue) {
             applySimKaiFont(legacyValue);
             legacyValue.string = this.profileSettingsMuted ? '\u5f00' : '\u5173';
-            legacyValue.color = new Color(219, 215, 199, 255);
+            legacyValue.color = HomeFeatureProfileSettings.PROFILE_SETTINGS_TOGGLE_TEXT_COLOR;
+            legacyValue.node.setRotationFromEuler(0, 0, 0);
             legacyValue.node.setPosition(
                 this.profileSettingsMuted
                     ? HomeConfig.PROFILE_SETTINGS_MUTE_ON_LABEL_X

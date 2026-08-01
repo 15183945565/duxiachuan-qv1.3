@@ -42,10 +42,29 @@ for (const file of files) {
 }
 
 const homeConfigPath = path.join(scriptRoot, 'UI', 'Home', 'HomeConfig.ts');
-const homeConfig = fs.readFileSync(homeConfigPath, 'utf8');
-const exportedConfigNames = new Set(
-    [...homeConfig.matchAll(/export\s+const\s+([A-Z][A-Z0-9_]*)/g)].map((match) => match[1]),
-);
+
+function collectHomeConfigExports(file, visited = new Set()) {
+    const resolvedFile = path.resolve(file);
+    if (visited.has(resolvedFile)) return new Set();
+    visited.add(resolvedFile);
+
+    const source = fs.readFileSync(resolvedFile, 'utf8');
+    const names = new Set(
+        [...source.matchAll(/export\s+const\s+([A-Z][A-Z0-9_]*)/g)].map((match) => match[1]),
+    );
+
+    for (const match of source.matchAll(/export\s+\*\s+from\s+['"]([^'"]+)['"]/g)) {
+        const importPath = match[1];
+        if (!importPath.startsWith('.')) continue;
+        const childFile = path.resolve(path.dirname(resolvedFile), `${importPath}.ts`);
+        if (!fs.existsSync(childFile)) continue;
+        for (const name of collectHomeConfigExports(childFile, visited)) names.add(name);
+    }
+
+    return names;
+}
+
+const exportedConfigNames = collectHomeConfigExports(homeConfigPath);
 const missingConfigNames = new Set();
 for (const file of files) {
     if (file === homeConfigPath) continue;

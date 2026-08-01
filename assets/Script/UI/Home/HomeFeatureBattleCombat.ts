@@ -78,7 +78,8 @@ export abstract class HomeFeatureBattleCombat extends HomeViewBase {
     
         const roleNode = this.createNode('BattleCombatRole', this.battleCombatLayer, HomeConfig.ROLE_RENDER_SIZE, HomeConfig.ROLE_RENDER_SIZE, HomeConfig.BATTLE_ROLE_POSITION.x, HomeConfig.BATTLE_ROLE_POSITION.y);
         roleNode.setSiblingIndex(2);
-        roleNode.setScale(HomeConfig.BATTLE_ROLE_SCALE, HomeConfig.BATTLE_ROLE_SCALE, 1);
+        const roleScale = this.getRoleMapScale(this.profile.gender);
+        roleNode.setScale(roleScale, roleScale, 1);
         this.battleCombatRoleSkeleton = roleNode.addComponent(sp.Skeleton);
         this.prepareSkeletonRenderer(this.battleCombatRoleSkeleton);
         this.setSkeletonVisible(this.battleCombatRoleSkeleton, false);
@@ -147,9 +148,7 @@ export abstract class HomeFeatureBattleCombat extends HomeViewBase {
     
         this.battleMonsterSkeletonData = monsterData;
     
-        if (!this.roleSkeletonData.has(this.profile.gender)) {
-            await this.loadSkeletonData(HomeConfig.ROLE_ASSETS[this.profile.gender]);
-        }
+        await this.ensureRoleSkeletonData(this.profile.gender);
     }
     protected playBattleCombatSequence(): void {
         if (!this.battleCombatLayer?.active) return;
@@ -161,12 +160,13 @@ export abstract class HomeFeatureBattleCombat extends HomeViewBase {
         this.battleCurrentWave = 0;
         this.battleWaveEnding = false;
     
-        const roleData = this.roleSkeletonData.get(this.profile.gender);
+        const roleData = this.getRoleSkeletonData(this.profile.gender);
         if (roleData && this.battleCombatRoleSkeleton?.isValid) {
             this.prepareSkeletonRenderer(this.battleCombatRoleSkeleton);
             this.battleCombatRoleSkeleton.skeletonData = roleData;
             this.battleCombatRoleSkeleton.node.setPosition(HomeConfig.BATTLE_ROLE_POSITION);
-            this.battleCombatRoleSkeleton.node.setScale(HomeConfig.BATTLE_ROLE_SCALE, HomeConfig.BATTLE_ROLE_SCALE, 1);
+            const roleScale = this.getRoleMapScale(this.profile.gender);
+            this.battleCombatRoleSkeleton.node.setScale(roleScale, roleScale, 1);
             this.battleCombatRoleSkeleton.timeScale = 1;
             this.setSkeletonVisible(this.battleCombatRoleSkeleton, true);
             this.playSkeletonAnimation(this.battleCombatRoleSkeleton, HomeConfig.IDLE_ANIMATIONS, true);
@@ -380,7 +380,7 @@ export abstract class HomeFeatureBattleCombat extends HomeViewBase {
         const fallbackDuration = this.getBattleRoleAttackFallbackDuration(isSkill);
         if (!target?.isValid || !target.skeletonData) return fallbackDuration;
     
-        const candidates = HomeConfig.BATTLE_ROLE_NORMAL_ATTACK_ANIMATIONS;
+        const candidates = HomeConfig.BATTLE_ROLE_NORMAL_ATTACK_ANIMATIONS[this.profile.gender];
         for (const animation of candidates) {
             try {
                 target.clearTracks();

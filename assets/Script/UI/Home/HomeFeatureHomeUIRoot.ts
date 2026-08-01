@@ -191,8 +191,8 @@ export abstract class HomeFeatureHomeUIRoot extends HomeViewBase {
     
         [
             'MainTopHudBg',
-            'AvatarFrame',
             'AvatarIcon',
+            'AvatarFrame',
             'LabelLevel',
             'NameBar',
             'LabelPlayerName',

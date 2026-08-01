@@ -4,7 +4,7 @@ import {
     sp,
 } from 'cc';
 import * as HomeConfig from './HomeConfig';
-import type { RoleGender } from './HomeTypes';
+import type { RoleAssetConfig, RoleGender } from './HomeTypes';
 import { HomeViewBase } from './HomeViewBase';
 
 /**
@@ -12,8 +12,15 @@ import { HomeViewBase } from './HomeViewBase';
  */
 export abstract class HomeFeatureRoleVisualRuntime extends HomeViewBase {
     protected applyCurrentRole(): void {
-        const skeletonData = HomeConfig.ENABLE_ROLE_SKEL_ANIMATION ? this.roleSkeletonData.get(this.profile.gender) : null;
+        const skeletonData = HomeConfig.ENABLE_ROLE_SKEL_ANIMATION ? this.getRoleSkeletonData(this.profile.gender) : null;
         if (!skeletonData) {
+            if (HomeConfig.ENABLE_ROLE_SKEL_ANIMATION) {
+                void this.ensureRoleSkeletonData(this.profile.gender)
+                    .then((asset) => {
+                        if (asset) this.applyCurrentRole();
+                    })
+                    .catch((err) => console.warn('[MainHomeView] role skel load failed', err));
+            }
             this.setSkeletonVisible(this.mapSkeleton, false);
             this.setSkeletonVisible(this.previewSkeleton, false);
             this.setSkeletonVisible(this.rolePageSkeleton, false);
@@ -35,16 +42,42 @@ export abstract class HomeFeatureRoleVisualRuntime extends HomeViewBase {
         this.refreshRolePageRole();
     }
     protected hasRoleVisual(gender: RoleGender): boolean {
-        return HomeConfig.ENABLE_ROLE_SKEL_ANIMATION && this.roleSkeletonData.has(gender);
+        return HomeConfig.ENABLE_ROLE_SKEL_ANIMATION && !!this.getRoleSkeletonData(gender);
     }
     protected isUsingRoleSkel(gender: RoleGender): boolean {
-        return HomeConfig.ENABLE_ROLE_SKEL_ANIMATION && this.roleSkeletonData.has(gender);
+        return HomeConfig.ENABLE_ROLE_SKEL_ANIMATION && !!this.getRoleSkeletonData(gender);
+    }
+    protected getCurrentRoleAssetConfig(gender: RoleGender): RoleAssetConfig {
+        return HomeConfig.getRoleAssetForWeaponLevel(gender, this.getCurrentRoleWeaponLevel());
+    }
+    protected getRoleSkeletonData(gender: RoleGender): sp.SkeletonData | null {
+        const config = this.getCurrentRoleAssetConfig(gender);
+        if (this.roleSkeletonPaths.get(gender) !== config.skelPath) return null;
+        return this.roleSkeletonData.get(gender) || null;
+    }
+    protected async ensureRoleSkeletonData(gender: RoleGender): Promise<sp.SkeletonData | null> {
+        if (!HomeConfig.ENABLE_ROLE_SKEL_ANIMATION) return null;
+
+        const config = this.getCurrentRoleAssetConfig(gender);
+        if (this.roleSkeletonPaths.get(gender) !== config.skelPath || !this.roleSkeletonData.has(gender)) {
+            await this.loadSkeletonData(config);
+        }
+        return this.roleSkeletonData.get(gender) || null;
+    }
+    protected async refreshCurrentRoleSkeletonFromEquipment(): Promise<void> {
+        await this.ensureRoleSkeletonData(this.profile.gender);
+        this.applyCurrentRole();
+    }
+    protected getCurrentRoleWeaponLevel(): number {
+        const state = this as unknown as { roleEquipmentLevels?: Map<string, number> };
+        const level = state.roleEquipmentLevels?.get('weapon') || 1;
+        return Math.max(1, Math.min(50, Math.floor(level)));
     }
     protected getRoleMapScale(gender: RoleGender): number {
-        return HomeConfig.ROLE_ASSETS[gender].mapScale;
+        return this.getCurrentRoleAssetConfig(gender).mapScale;
     }
     protected getRolePreviewScale(gender: RoleGender): number {
-        return HomeConfig.ROLE_ASSETS[gender].previewScale;
+        return this.getCurrentRoleAssetConfig(gender).previewScale;
     }
     protected setSkeletonVisible(target: sp.Skeleton | null, visible: boolean): void {
         if (!target) return;
@@ -142,7 +175,7 @@ export abstract class HomeFeatureRoleVisualRuntime extends HomeViewBase {
         const isMapRole = node === this.roleSpineNode;
     
         const signedScale = isMapRole ? scale * this.roleFacing : scale;
-        const config = HomeConfig.ROLE_ASSETS[gender];
+        const config = this.getCurrentRoleAssetConfig(gender);
         const offsetX = isMapRole
             ? config.mapOffsetX
             : config.previewOffsetX;

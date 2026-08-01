@@ -14,7 +14,7 @@ export abstract class HomeFeatureRoleDisplay extends HomeViewBase {
     protected refreshRolePageRole(): void {
         if (!this.rolePageSkeleton?.isValid || !this.rolePagePanel?.active || this.rolePageActiveTab === 'advance') return;
     
-        const skeletonData = HomeConfig.ENABLE_ROLE_SKEL_ANIMATION ? this.roleSkeletonData.get(this.profile.gender) : null;
+        const skeletonData = HomeConfig.ENABLE_ROLE_SKEL_ANIMATION ? this.getRoleSkeletonData(this.profile.gender) : null;
         if (!skeletonData) {
             this.setSkeletonVisible(this.rolePageSkeleton, false);
             if (this.rolePageNameLabel?.node?.isValid) {
@@ -26,10 +26,10 @@ export abstract class HomeFeatureRoleDisplay extends HomeViewBase {
             return;
         }
     
-        const config = HomeConfig.ROLE_ASSETS[this.profile.gender];
+        const config = this.getCurrentRoleAssetConfig(this.profile.gender);
         this.applySkeleton(this.rolePageSkeleton, skeletonData, 'idle', true);
+        this.rolePageSkeleton.node.setScale(config.pageScale, config.pageScale, 1);
         if (!this.rolePageRoleUsesEditorTransform) {
-            this.rolePageSkeleton.node.setScale(config.pageScale, config.pageScale, 1);
             this.rolePageSkeleton.node.setPosition(config.pageOffsetX, config.pageOffsetY + HomeConfig.ROLE_PAGE_CONTENT_OFFSET_Y, 0);
         }
         this.refreshRolePageNameLabel(config);
@@ -144,4 +144,3 @@ export abstract class HomeFeatureRoleDisplay extends HomeViewBase {
         outlinedLabel.outlineWidth = outlineWidth;
     }
 }
-
