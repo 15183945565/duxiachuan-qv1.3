@@ -78,6 +78,8 @@ export const UI_CHARACTER_SELECT_FEMALE_NORMAL = `${CHARACTER_SELECT_UI_ROOT}/ch
 export const UI_CHARACTER_SELECT_FEMALE_ACTIVE = `${CHARACTER_SELECT_UI_ROOT}/character_select_female_active`;
 export const UI_CHARACTER_SELECT_MALE_NORMAL = `${CHARACTER_SELECT_UI_ROOT}/character_select_male_normal`;
 export const UI_CHARACTER_SELECT_MALE_ACTIVE = `${CHARACTER_SELECT_UI_ROOT}/character_select_male_active`;
+export const UI_CHARACTER_SELECT_FEMALE_PORTRAIT = `${CHARACTER_SELECT_UI_ROOT}/character_select_female_portrait`;
+export const UI_CHARACTER_SELECT_MALE_PORTRAIT = `${CHARACTER_SELECT_UI_ROOT}/character_select_male_portrait`;
 export const UI_CHARACTER_SELECT_FRAME_HIGHLIGHT = `${CHARACTER_SELECT_UI_ROOT}/character_select_frame_highlight`;
 export const UI_CHARACTER_SELECT_SPEECH_BUBBLE = `${CHARACTER_SELECT_UI_ROOT}/character_select_speech_bubble`;
 
@@ -105,6 +107,14 @@ export const CHARACTER_SELECT_ROLE_ANIMATIONS = ['ready', 'style', 'appear', 'cl
 export const CHARACTER_SELECT_ROLE_SCALE: Record<RoleGender, number> = {
     female: 4.2,
     male: 4.5,
+};
+export const CHARACTER_SELECT_ROLE_PORTRAIT_PATHS: Record<RoleGender, string> = {
+    female: UI_CHARACTER_SELECT_FEMALE_PORTRAIT,
+    male: UI_CHARACTER_SELECT_MALE_PORTRAIT,
+};
+export const CHARACTER_SELECT_ROLE_PORTRAIT_SIZE: Record<RoleGender, { width: number; height: number }> = {
+    female: { width: 760, height: 760 },
+    male: { width: 1040, height: 1040 },
 };
 export const CHARACTER_SELECT_ROLE_OFFSET: Record<RoleGender, { x: number; y: number }> = {
     female: { x: 0, y: -54.099 },
@@ -455,7 +465,7 @@ export const ROLE_ASSETS: Record<RoleGender, RoleAssetConfig> = {
         previewScale: 4.5,
         previewOffsetX: 0,
         previewOffsetY: -20,
-        pageScale: 4.5,
+        pageScale: 5.2,
         pageOffsetX: 0,
         pageOffsetY: 0,
     },
@@ -470,7 +480,7 @@ export const ROLE_ASSETS: Record<RoleGender, RoleAssetConfig> = {
         previewScale: 4.2,
         previewOffsetX: 0,
         previewOffsetY: -20,
-        pageScale: 4.2,
+        pageScale: 5.2,
         pageOffsetX: 0,
         pageOffsetY: 0,
     },

@@ -2,7 +2,7 @@
   "ver": "1.0.27",
   "importer": "image",
   "imported": true,
-  "uuid": "ff90f5ca-ffe9-4c14-996a-64852d69cc29",
+  "uuid": "2f46b323-2342-488b-a543-b13ec0f9e419",
   "files": [
     ".json",
     ".png"
@@ -10,7 +10,7 @@
   "subMetas": {
     "6c48a": {
       "importer": "texture",
-      "uuid": "ff90f5ca-ffe9-4c14-996a-64852d69cc29@6c48a",
+      "uuid": "2f46b323-2342-488b-a543-b13ec0f9e419@6c48a",
       "displayName": "bg_xianmeng_yun_16",
       "id": "6c48a",
       "name": "texture",
@@ -22,7 +22,7 @@
         "mipfilter": "none",
         "anisotropy": 0,
         "isUuid": true,
-        "imageUuidOrDatabaseUri": "ff90f5ca-ffe9-4c14-996a-64852d69cc29",
+        "imageUuidOrDatabaseUri": "2f46b323-2342-488b-a543-b13ec0f9e419",
         "visible": false
       },
       "ver": "1.0.22",
@@ -37,6 +37,6 @@
     "type": "texture",
     "fixAlphaTransparencyArtifacts": false,
     "hasAlpha": true,
-    "redirect": "ff90f5ca-ffe9-4c14-996a-64852d69cc29@6c48a"
+    "redirect": "2f46b323-2342-488b-a543-b13ec0f9e419@6c48a"
   }
 }

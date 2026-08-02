@@ -2,7 +2,7 @@
   "ver": "1.0.27",
   "importer": "image",
   "imported": true,
-  "uuid": "8319da57-9c1c-4fba-9d8e-7467b116c6aa",
+  "uuid": "31b2c6b4-5dc1-4415-aa26-f54c6e8b90ec",
   "files": [
     ".json",
     ".png"
@@ -10,7 +10,7 @@
   "subMetas": {
     "6c48a": {
       "importer": "texture",
-      "uuid": "8319da57-9c1c-4fba-9d8e-7467b116c6aa@6c48a",
+      "uuid": "31b2c6b4-5dc1-4415-aa26-f54c6e8b90ec@6c48a",
       "displayName": "bg_xianmeng_huaban_08",
       "id": "6c48a",
       "name": "texture",
@@ -22,7 +22,7 @@
         "mipfilter": "none",
         "anisotropy": 0,
         "isUuid": true,
-        "imageUuidOrDatabaseUri": "8319da57-9c1c-4fba-9d8e-7467b116c6aa",
+        "imageUuidOrDatabaseUri": "31b2c6b4-5dc1-4415-aa26-f54c6e8b90ec",
         "visible": false
       },
       "ver": "1.0.22",
@@ -37,6 +37,6 @@
     "type": "texture",
     "fixAlphaTransparencyArtifacts": false,
     "hasAlpha": true,
-    "redirect": "8319da57-9c1c-4fba-9d8e-7467b116c6aa@6c48a"
+    "redirect": "31b2c6b4-5dc1-4415-aa26-f54c6e8b90ec@6c48a"
   }
 }

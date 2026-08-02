@@ -2,7 +2,7 @@
   "ver": "1.0.27",
   "importer": "image",
   "imported": true,
-  "uuid": "30984cd6-5e7a-4f35-a08b-c29673883c23",
+  "uuid": "71079794-73cb-455d-a13e-1f2b9350fec1",
   "files": [
     ".json",
     ".png"
@@ -10,7 +10,7 @@
   "subMetas": {
     "6c48a": {
       "importer": "texture",
-      "uuid": "30984cd6-5e7a-4f35-a08b-c29673883c23@6c48a",
+      "uuid": "71079794-73cb-455d-a13e-1f2b9350fec1@6c48a",
       "displayName": "n_9",
       "id": "6c48a",
       "name": "texture",
@@ -23,7 +23,7 @@
         "premultiplyAlpha": false,
         "anisotropy": 0,
         "isUuid": true,
-        "imageUuidOrDatabaseUri": "30984cd6-5e7a-4f35-a08b-c29673883c23",
+        "imageUuidOrDatabaseUri": "71079794-73cb-455d-a13e-1f2b9350fec1",
         "visible": false
       },
       "ver": "1.0.22",
@@ -35,7 +35,7 @@
     },
     "f9941": {
       "importer": "sprite-frame",
-      "uuid": "30984cd6-5e7a-4f35-a08b-c29673883c23@f9941",
+      "uuid": "71079794-73cb-455d-a13e-1f2b9350fec1@f9941",
       "displayName": "n_9",
       "id": "f9941",
       "name": "spriteFrame",
@@ -50,7 +50,7 @@
         "offsetX": 0,
         "offsetY": 0,
         "isUuid": true,
-        "imageUuidOrDatabaseUri": "30984cd6-5e7a-4f35-a08b-c29673883c23@6c48a",
+        "imageUuidOrDatabaseUri": "71079794-73cb-455d-a13e-1f2b9350fec1@6c48a",
         "packable": true,
         "pixelsToUnit": 100,
         "pivotX": 0.5,
@@ -128,7 +128,7 @@
   },
   "userData": {
     "type": "sprite-frame",
-    "redirect": "30984cd6-5e7a-4f35-a08b-c29673883c23@6c48a",
+    "redirect": "71079794-73cb-455d-a13e-1f2b9350fec1@6c48a",
     "hasAlpha": true,
     "fixAlphaTransparencyArtifacts": false
   }

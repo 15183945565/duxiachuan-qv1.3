@@ -2,7 +2,7 @@
   "ver": "1.0.27",
   "importer": "image",
   "imported": true,
-  "uuid": "2968970c-8f9a-40b4-a11d-dc0495a7a46f",
+  "uuid": "102a7434-2f57-4991-bc44-26fb030b2812",
   "files": [
     ".json",
     ".png"
@@ -10,7 +10,7 @@
   "subMetas": {
     "6c48a": {
       "importer": "texture",
-      "uuid": "2968970c-8f9a-40b4-a11d-dc0495a7a46f@6c48a",
+      "uuid": "102a7434-2f57-4991-bc44-26fb030b2812@6c48a",
       "displayName": "battle_ticket_icon",
       "id": "6c48a",
       "name": "texture",
@@ -23,7 +23,7 @@
         "premultiplyAlpha": false,
         "anisotropy": 0,
         "isUuid": true,
-        "imageUuidOrDatabaseUri": "2968970c-8f9a-40b4-a11d-dc0495a7a46f",
+        "imageUuidOrDatabaseUri": "102a7434-2f57-4991-bc44-26fb030b2812",
         "visible": false
       },
       "ver": "1.0.22",
@@ -35,7 +35,7 @@
     },
     "f9941": {
       "importer": "sprite-frame",
-      "uuid": "2968970c-8f9a-40b4-a11d-dc0495a7a46f@f9941",
+      "uuid": "102a7434-2f57-4991-bc44-26fb030b2812@f9941",
       "displayName": "battle_ticket_icon",
       "id": "f9941",
       "name": "spriteFrame",
@@ -50,7 +50,7 @@
         "offsetX": 0,
         "offsetY": 0,
         "isUuid": true,
-        "imageUuidOrDatabaseUri": "2968970c-8f9a-40b4-a11d-dc0495a7a46f@6c48a",
+        "imageUuidOrDatabaseUri": "102a7434-2f57-4991-bc44-26fb030b2812@6c48a",
         "packable": true,
         "pixelsToUnit": 100,
         "pivotX": 0.5,
@@ -129,7 +129,7 @@
   "userData": {
     "hasAlpha": true,
     "type": "sprite-frame",
-    "redirect": "2968970c-8f9a-40b4-a11d-dc0495a7a46f@6c48a",
+    "redirect": "102a7434-2f57-4991-bc44-26fb030b2812@6c48a",
     "fixAlphaTransparencyArtifacts": false
   }
 }

@@ -2,7 +2,7 @@
   "ver": "1.0.27",
   "importer": "image",
   "imported": true,
-  "uuid": "ac6ccd2f-933e-4b32-b1ca-535e92951f45",
+  "uuid": "a2e61c8d-5192-4435-8958-5a6a32d0d7ec",
   "files": [
     ".json",
     ".png"
@@ -10,7 +10,7 @@
   "subMetas": {
     "6c48a": {
       "importer": "texture",
-      "uuid": "ac6ccd2f-933e-4b32-b1ca-535e92951f45@6c48a",
+      "uuid": "a2e61c8d-5192-4435-8958-5a6a32d0d7ec@6c48a",
       "displayName": "battle_material_3",
       "id": "6c48a",
       "name": "texture",
@@ -23,7 +23,7 @@
         "premultiplyAlpha": false,
         "anisotropy": 0,
         "isUuid": true,
-        "imageUuidOrDatabaseUri": "ac6ccd2f-933e-4b32-b1ca-535e92951f45",
+        "imageUuidOrDatabaseUri": "a2e61c8d-5192-4435-8958-5a6a32d0d7ec",
         "visible": false
       },
       "ver": "1.0.22",
@@ -35,7 +35,7 @@
     },
     "f9941": {
       "importer": "sprite-frame",
-      "uuid": "ac6ccd2f-933e-4b32-b1ca-535e92951f45@f9941",
+      "uuid": "a2e61c8d-5192-4435-8958-5a6a32d0d7ec@f9941",
       "displayName": "battle_material_3",
       "id": "f9941",
       "name": "spriteFrame",
@@ -50,7 +50,7 @@
         "offsetX": 0,
         "offsetY": 0,
         "isUuid": true,
-        "imageUuidOrDatabaseUri": "ac6ccd2f-933e-4b32-b1ca-535e92951f45@6c48a",
+        "imageUuidOrDatabaseUri": "a2e61c8d-5192-4435-8958-5a6a32d0d7ec@6c48a",
         "packable": true,
         "pixelsToUnit": 100,
         "pivotX": 0.5,
@@ -129,7 +129,7 @@
   "userData": {
     "hasAlpha": true,
     "type": "sprite-frame",
-    "redirect": "ac6ccd2f-933e-4b32-b1ca-535e92951f45@6c48a",
+    "redirect": "a2e61c8d-5192-4435-8958-5a6a32d0d7ec@6c48a",
     "fixAlphaTransparencyArtifacts": false
   }
 }

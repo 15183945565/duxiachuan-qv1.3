@@ -2,7 +2,7 @@
   "ver": "1.0.27",
   "importer": "image",
   "imported": true,
-  "uuid": "e24dc39b-7b11-4f85-94e8-6e2600ef527d",
+  "uuid": "d202edf7-92d2-416a-b78f-04ce72693bf3",
   "files": [
     ".json",
     ".png"
@@ -10,7 +10,7 @@
   "subMetas": {
     "6c48a": {
       "importer": "texture",
-      "uuid": "e24dc39b-7b11-4f85-94e8-6e2600ef527d@6c48a",
+      "uuid": "d202edf7-92d2-416a-b78f-04ce72693bf3@6c48a",
       "displayName": "bg_shenmoshilian_ren_05",
       "id": "6c48a",
       "name": "texture",
@@ -22,7 +22,7 @@
         "mipfilter": "none",
         "anisotropy": 0,
         "isUuid": true,
-        "imageUuidOrDatabaseUri": "e24dc39b-7b11-4f85-94e8-6e2600ef527d",
+        "imageUuidOrDatabaseUri": "d202edf7-92d2-416a-b78f-04ce72693bf3",
         "visible": false
       },
       "ver": "1.0.22",
@@ -37,6 +37,6 @@
     "type": "texture",
     "fixAlphaTransparencyArtifacts": false,
     "hasAlpha": true,
-    "redirect": "e24dc39b-7b11-4f85-94e8-6e2600ef527d@6c48a"
+    "redirect": "d202edf7-92d2-416a-b78f-04ce72693bf3@6c48a"
   }
 }

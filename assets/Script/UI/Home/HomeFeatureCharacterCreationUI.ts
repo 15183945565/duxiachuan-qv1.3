@@ -73,17 +73,31 @@ export abstract class HomeFeatureCharacterCreationUI extends HomeFeatureCharacte
         this.characterPreviewRoot.setSiblingIndex(2);
         (['female', 'male'] as RoleGender[]).forEach((gender) => {
             const offset = HomeConfig.CHARACTER_SELECT_ROLE_OFFSET[gender];
+            const portraitSize = HomeConfig.CHARACTER_SELECT_ROLE_PORTRAIT_SIZE[gender];
             const roleNodeName = `CharacterSelectRole_${gender}`;
             const roleNodeExisted = !!this.characterPreviewRoot?.getChildByName(roleNodeName);
-            const roleNode = this.getOrCreateEditorNode(roleNodeName, this.characterPreviewRoot!, 760, 1280, offset.x, offset.y);
+            const roleNode = this.getOrCreateEditorNode(roleNodeName, this.characterPreviewRoot!, portraitSize.width, portraitSize.height, offset.x, offset.y);
             if (!roleNodeExisted) {
-                roleNode.setScale(HomeConfig.CHARACTER_SELECT_ROLE_SCALE[gender], HomeConfig.CHARACTER_SELECT_ROLE_SCALE[gender], 1);
+                roleNode.setScale(1, 1, 1);
             }
+            const skeleton = roleNode.getComponent(sp.Skeleton);
+            if (skeleton) {
+                this.setSkeletonVisible(skeleton, false);
+                skeleton.skeletonData = null;
+                skeleton.enabled = false;
+            }
+            this.clearSpriteFrame(roleNode);
+            const portraitNodeName = `CharacterSelectRolePortrait_${gender}`;
+            const portraitNodeExisted = !!roleNode.getChildByName(portraitNodeName);
+            const portraitNode = this.getOrCreateEditorNode(portraitNodeName, roleNode, portraitSize.width, portraitSize.height, 0, 0);
+            if (!portraitNodeExisted) {
+                portraitNode.setPosition(0, 0, 0);
+                portraitNode.setScale(1, 1, 1);
+            }
+            portraitNode.active = true;
+            portraitNode.setSiblingIndex((roleNode.children.length || 1) - 1);
             roleNode.setSiblingIndex(gender === this.profile.gender ? 2 : 1);
-            const skeleton = roleNode.getComponent(sp.Skeleton) || roleNode.addComponent(sp.Skeleton);
-            this.prepareSkeletonRenderer(skeleton);
-            this.characterSelectRoleSkeletons.set(gender, skeleton);
-            this.loadCharacterSelectRoleSkeleton(gender, skeleton);
+            this.loadCharacterSelectRoleSkeleton(gender, portraitNode);
         });
 
         const speechBubble = this.getOrCreateEditorSkinnedNode('CharacterSelectSpeechBubble', this.characterPanel, 424, 214, -206, -90, HomeConfig.UI_CHARACTER_SELECT_SPEECH_BUBBLE);
@@ -200,9 +214,10 @@ export abstract class HomeFeatureCharacterCreationUI extends HomeFeatureCharacte
         card.setSiblingIndex(layout.siblingIndex);
         this.characterSelectCardRoots.set(gender, card);
 
-        const highlight = this.getOrCreateEditorSkinnedNode('CharacterSelectCardHighlight', card, layout.highlightWidth, layout.highlightHeight, 0, 0, HomeConfig.UI_CHARACTER_SELECT_FRAME_HIGHLIGHT);
-        highlight.active = gender === this.profile.gender;
-        highlight.setSiblingIndex(3);
+        const highlight = card.getChildByName('CharacterSelectCardHighlight');
+        if (highlight?.isValid) {
+            highlight.active = false;
+        }
 
         this.bindScaledClick(card, () => this.selectGender(gender));
     }
@@ -232,11 +247,6 @@ export abstract class HomeFeatureCharacterCreationUI extends HomeFeatureCharacte
         const transform = layoutNode?.getComponent(UITransform);
         if (!layoutNode?.isValid || !transform) return null;
 
-        const highlightNode = this.characterPanel
-            ?.getChildByName('CharacterSelectCardRoot')
-            ?.getChildByName(`CharacterSelectCard_${gender}`)
-            ?.getChildByName('CharacterSelectCardHighlight');
-        const highlightTransform = highlightNode?.getComponent(UITransform);
         const defaultLayout = this.getDefaultCharacterSelectCardLayout(gender, selected);
 
         return {
@@ -244,16 +254,16 @@ export abstract class HomeFeatureCharacterCreationUI extends HomeFeatureCharacte
             y: layoutNode.position.y,
             width: transform.contentSize.width > 0 ? transform.contentSize.width : defaultLayout.width,
             height: transform.contentSize.height > 0 ? transform.contentSize.height : defaultLayout.height,
-            highlightWidth: highlightTransform && highlightTransform.contentSize.width > 0 ? highlightTransform.contentSize.width : defaultLayout.highlightWidth,
-            highlightHeight: highlightTransform && highlightTransform.contentSize.height > 0 ? highlightTransform.contentSize.height : defaultLayout.highlightHeight,
+            highlightWidth: defaultLayout.highlightWidth,
+            highlightHeight: defaultLayout.highlightHeight,
             siblingIndex: selected ? 10 : 1,
         };
     }
     protected getDefaultCharacterSelectCardLayout(gender: RoleGender, selected: boolean): CharacterSelectCardLayout {
         if (selected) {
             return gender === 'female'
-                ? { x: -162, y: -315.127, width: 426, height: 214, highlightWidth: 492, highlightHeight: 264, siblingIndex: 10 }
-                : { x: 162, y: -315.127, width: 416, height: 214, highlightWidth: 492, highlightHeight: 264, siblingIndex: 10 };
+                ? { x: -162, y: -315.127, width: 384, height: 193, highlightWidth: 492, highlightHeight: 264, siblingIndex: 10 }
+                : { x: 162, y: -315.127, width: 374, height: 193, highlightWidth: 492, highlightHeight: 264, siblingIndex: 10 };
         }
 
         return gender === 'female'
@@ -273,16 +283,11 @@ export abstract class HomeFeatureCharacterCreationUI extends HomeFeatureCharacte
             card.setSiblingIndex(layout.siblingIndex);
 
             const opacity = card.getComponent(UIOpacity) || card.addComponent(UIOpacity);
-            opacity.opacity = selected ? 255 : 220;
+            opacity.opacity = 255;
 
             const highlight = card.getChildByName('CharacterSelectCardHighlight');
             if (highlight?.isValid) {
-                highlight.active = selected;
-                if (selected) {
-                    this.applyUiSkin(highlight, HomeConfig.UI_CHARACTER_SELECT_FRAME_HIGHLIGHT, layout.highlightWidth, layout.highlightHeight);
-                    highlight.setPosition(0, 0, 0);
-                    highlight.setSiblingIndex((card.children.length || 1) - 1);
-                }
+                highlight.active = false;
             }
 
             Tween.stopAllByTarget(card);
@@ -298,40 +303,20 @@ export abstract class HomeFeatureCharacterCreationUI extends HomeFeatureCharacte
 
         this.refreshCharacterSelectRoleVisibility();
     }
-    protected loadCharacterSelectRoleSkeleton(gender: RoleGender, skeleton: sp.Skeleton): void {
-        this.setSkeletonVisible(skeleton, false);
-        // Prefabs may still carry an editor-preview SkeletonData reference.
-        // Clear it before the async gender asset arrives so refresh cannot try
-        // the character-select animations against the main-role skeleton.
-        skeleton.skeletonData = null;
-        void this.loadSkeletonAsset(HomeConfig.CHARACTER_SELECT_ROLE_SKEL_PATHS[gender])
-            .then((asset) => {
-                if (!skeleton.isValid || this.characterSelectRoleSkeletons.get(gender) !== skeleton) return;
-
-                this.prepareSkeletonRenderer(skeleton);
-                skeleton.skeletonData = asset;
-                this.refreshCharacterSelectRoleVisibility();
-            })
-            .catch((err) => {
-                console.warn('[MainHomeView] character select role skel load failed', gender, err);
-            });
+    protected loadCharacterSelectRoleSkeleton(gender: RoleGender, roleNode: Node): void {
+        const size = HomeConfig.CHARACTER_SELECT_ROLE_PORTRAIT_SIZE[gender];
+        this.applyUiSkinKeepingEditorSize(roleNode, HomeConfig.CHARACTER_SELECT_ROLE_PORTRAIT_PATHS[gender], size.width, size.height);
+        roleNode.active = true;
+        this.refreshCharacterSelectRoleVisibility();
     }
     protected refreshCharacterSelectRoleVisibility(): void {
         (['female', 'male'] as RoleGender[]).forEach((gender) => {
-            const skeleton = this.characterSelectRoleSkeletons.get(gender);
-            if (!skeleton?.isValid) return;
+            const roleNode = this.characterPreviewRoot?.getChildByName(`CharacterSelectRole_${gender}`);
+            if (!roleNode?.isValid) return;
 
             const active = gender === this.profile.gender;
-            skeleton.node.setSiblingIndex(active ? 2 : 1);
-            skeleton.node.active = active;
-
-            if (!active || !skeleton.skeletonData) {
-                this.setSkeletonVisible(skeleton, false);
-                return;
-            }
-
-            this.setSkeletonVisible(skeleton, true);
-            this.playSkeletonAnimation(skeleton, HomeConfig.CHARACTER_SELECT_ROLE_ANIMATIONS, true);
+            roleNode.setSiblingIndex(active ? 2 : 1);
+            roleNode.active = active;
         });
     }
     protected setupHiddenNameEditBox(inputNode: Node): void {
@@ -441,7 +426,11 @@ export abstract class HomeFeatureCharacterCreationUI extends HomeFeatureCharacte
         const leftX = this.nameDisplayLabel.node.position.x - labelWidth / 2 + 4;
         const maxX = leftX + labelWidth - 8;
         const visibleLength = this.nameEditBox?.string.length || 0;
-        this.nameCursorNode.setPosition(Math.min(leftX + visibleLength * HomeConfig.CHARACTER_NAME_CURSOR_CHAR_WIDTH, maxX), 0, 0);
+        this.nameCursorNode.setPosition(
+            Math.min(leftX + visibleLength * HomeConfig.CHARACTER_NAME_CURSOR_CHAR_WIDTH, maxX),
+            this.nameDisplayLabel.node.position.y,
+            0,
+        );
     }
     protected blinkCharacterNameCursor(): void {
         if (!this.nameCursorNode) return;
