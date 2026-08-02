@@ -25,6 +25,9 @@ type DuelJianghuRoundPlan = DuelJianghuRoundOutcome & {
     specialKind?: DuelJianghuSpecialRoomKind;
     specialKindsByRoom?: Partial<Record<DuelJianghuRoomId, DuelJianghuSpecialRoomKind>>;
 };
+type DuelJianghuResultPopupNode = Node & {
+    __jianghuResultAutoCloseToken?: number;
+};
 
 abstract class HomeFeatureDuelRoundResolutionHost extends HomeViewBase {
     protected abstract duelJianghuCurrentInvestAmount: number;
@@ -33,12 +36,14 @@ abstract class HomeFeatureDuelRoundResolutionHost extends HomeViewBase {
     protected abstract duelJianghuRoundSerial: number;
     protected abstract duelJianghuSelectedRoomId: DuelJianghuRoomId | '';
 
+    protected abstract closeDuelJianghuResultPopup(page: Node): void;
     protected abstract duelJianghuCountdownTick(): void;
     protected abstract ensureDuelJianghuNpcCrowd(page: Node, force?: boolean): Promise<void>;
     protected abstract ensureDuelJianghuResultPopup(page: Node): Node;
     protected abstract moveDuelJianghuCommonActorsOut(page: Node, killedRoomIds?: DuelJianghuRoomId[]): Promise<void>;
     protected abstract playDuelJianghuKillerAppearBanner(page: Node): Promise<void>;
     protected abstract playDuelJianghuKillerSequence(page: Node, plan: DuelJianghuRoundPlan): Promise<void>;
+    protected abstract playDuelJianghuResultSound(success: boolean): void;
     protected abstract prepareDuelJianghuRoomActorsForRound(page: Node): Promise<void>;
     protected abstract removeDuelJianghuActors(page: Node, predicate?: (actor: DuelJianghuActorRuntime) => boolean): void;
     protected abstract startDuelJianghuCountdown(page: Node, reset: boolean): void;
@@ -64,11 +69,13 @@ export abstract class HomeFeatureDuelRoundResolution extends HomeFeatureDuelRoun
         await this.playDuelJianghuKillerSequence(page, plan);
         if (!page.active || serial !== this.duelJianghuRoundSerial) return;
 
-        await this.moveDuelJianghuCommonActorsOut(page, this.getDuelJianghuKilledRoomIds(plan));
+        const killedRoomIds = this.getDuelJianghuKilledRoomIds(plan);
+        await this.moveDuelJianghuCommonActorsOut(page, killedRoomIds);
         if (!page.active || serial !== this.duelJianghuRoundSerial) return;
 
         this.duelJianghuRoundActive = false;
         this.removeDuelJianghuActors(page, (actor) => actor.kind !== 'common' && actor.kind !== 'lobbyCommon' && actor.kind !== 'player');
+        if (plan.investAmount > 0) this.playDuelJianghuResultSound(plan.success);
         this.showDuelJianghuResultPopup(page, plan);
     }
     protected async playDuelJianghuPreviewRound(page: Node): Promise<void> {
@@ -91,7 +98,8 @@ export abstract class HomeFeatureDuelRoundResolution extends HomeFeatureDuelRoun
             await this.playDuelJianghuKillerSequence(page, plan);
             if (!page.active || this.duelJianghuRoundActive || serial !== this.duelJianghuRoundSerial) return;
 
-            await this.moveDuelJianghuCommonActorsOut(page, this.getDuelJianghuKilledRoomIds(plan));
+            const killedRoomIds = this.getDuelJianghuKilledRoomIds(plan);
+            await this.moveDuelJianghuCommonActorsOut(page, killedRoomIds);
             if (!page.active || this.duelJianghuRoundActive || serial !== this.duelJianghuRoundSerial) return;
 
             this.removeDuelJianghuActors(page, (actor) => actor.kind !== 'common' && actor.kind !== 'lobbyCommon' && actor.kind !== 'player');
@@ -132,8 +140,9 @@ export abstract class HomeFeatureDuelRoundResolution extends HomeFeatureDuelRoun
             const specialKindsByRoom = this.createDuelJianghuSpecialRoomKinds();
             const targetSpecialKind = specialKindsByRoom[target.id] || 'guardSoldier';
             const targetHasGeneral = targetSpecialKind === 'general';
-            const success = targetHasGeneral || target.id !== selected.id;
-            const rewardMultiplier = targetHasGeneral && target.id === selected.id ? 2.35 : 1.55;
+            const selectedTargetRoom = target.id === selected.id;
+            const success = targetHasGeneral ? selectedTargetRoom : !selectedTargetRoom;
+            const rewardMultiplier = targetHasGeneral ? 2.35 : 1.55;
             return {
                 success,
                 modeName: '\u53db\u95e8\u9006\u5f92',
@@ -152,8 +161,9 @@ export abstract class HomeFeatureDuelRoundResolution extends HomeFeatureDuelRoun
             const specialKindsByRoom = this.createDuelJianghuSpecialRoomKinds();
             const targetSpecialKind = specialKindsByRoom[target.id] || 'general';
             const targetHasGeneral = targetSpecialKind === 'general';
-            const success = targetHasGeneral || target.id !== selected.id;
-            const rewardMultiplier = targetHasGeneral && target.id === selected.id ? 2.35 : 1.55;
+            const selectedTargetRoom = target.id === selected.id;
+            const success = targetHasGeneral ? selectedTargetRoom : !selectedTargetRoom;
+            const rewardMultiplier = targetHasGeneral ? 2.35 : 1.55;
             return {
                 success,
                 modeName: '\u53db\u95e8\u9006\u5f92',
@@ -221,7 +231,7 @@ export abstract class HomeFeatureDuelRoundResolution extends HomeFeatureDuelRoun
         if (targetSpecialKind === 'general') {
             return targetId === selectedId
                 ? `\u53db\u95e8\u9006\u5f92\u95ef\u5165\u3010${selectedName}\u3011\uff0c\u88ab\u767e\u6218\u5c06\u519b\u53cd\u6740\u3002`
-                : `\u53db\u95e8\u9006\u5f92\u95ef\u5165\u3010${targetName}\u3011\uff0c\u88ab\u767e\u6218\u5c06\u519b\u53cd\u6740\uff0c\u4f60\u5728\u3010${selectedName}\u3011\u6210\u529f\u8eb2\u8fc7\u3002`;
+                : `\u53db\u95e8\u9006\u5f92\u95ef\u5165\u3010${targetName}\u3011\uff0c\u88ab\u767e\u6218\u5c06\u519b\u53cd\u6740\uff0c\u4f60\u5728\u3010${selectedName}\u3011\u672a\u5f97\u5e87\u62a4\uff0c\u672c\u671f\u8eb2\u907f\u5931\u8d25\u3002`;
         }
 
         return success
@@ -259,6 +269,18 @@ export abstract class HomeFeatureDuelRoundResolution extends HomeFeatureDuelRoun
         if (invest) invest.string = `\u6295\u5165 ${this.formatDuelJianghuYuanbaoAmount(outcome.investAmount)}`;
         const reward = popup.getChildByName('JianghuResultRewardLabel')?.getComponent(Label);
         if (reward) reward.string = `\u83b7\u5f97 ${this.formatDuelJianghuYuanbaoAmount(outcome.rewardAmount)}`;
+        this.scheduleDuelJianghuResultPopupAutoClose(page, popup);
+    }
+    private scheduleDuelJianghuResultPopupAutoClose(page: Node, popup: Node): void {
+        const resultPopup = popup as DuelJianghuResultPopupNode;
+        const token = Date.now() + Math.random();
+        resultPopup.__jianghuResultAutoCloseToken = token;
+        this.scheduleOnce(() => {
+            if (!page.isValid || !resultPopup.isValid || !page.active || !resultPopup.active) return;
+            if (resultPopup.__jianghuResultAutoCloseToken !== token) return;
+            resultPopup.__jianghuResultAutoCloseToken = undefined;
+            this.closeDuelJianghuResultPopup(page);
+        }, HomeConfig.DUEL_JIANGHU_RESULT_POPUP_AUTO_CLOSE_SECONDS);
     }
     protected formatDuelJianghuYuanbaoAmount(value: number): string {
         return value.toFixed(4).replace(/\.?0+$/, '');

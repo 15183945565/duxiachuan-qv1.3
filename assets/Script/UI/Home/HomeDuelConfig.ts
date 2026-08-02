@@ -2,6 +2,14 @@ import { DUEL_UI_ROOT, UI_HOME_AVATAR_FEMALE, UI_HOME_AVATAR_MALE, VIEW_HEIGHT, 
 
 export const UI_DUEL_PAGE_BG = `${DUEL_UI_ROOT}/duel_page_bg`;
 export const UI_DUEL_JIANGHU_TAOSHA_BG = `${DUEL_UI_ROOT}/duel_jianghu_taosha_bg`;
+export const DUEL_JIANGHU_TAOSHA_BGM_PATH = 'Audio/Duel/duel_jianghu_taosha_bgm';
+export const DUEL_JIANGHU_COUNTDOWN_3S_AUDIO_PATH = 'Audio/Duel/duel_jianghu_countdown_3s';
+export const DUEL_JIANGHU_SUCCESS_AUDIO_PATH = 'Audio/Duel/duel_jianghu_success';
+export const DUEL_JIANGHU_FAILURE_AUDIO_PATH = 'Audio/Duel/duel_jianghu_failure';
+export const DUEL_JIANGHU_AUDIO_DUCK_VOLUME_SCALE = 0.35;
+export const DUEL_JIANGHU_COUNTDOWN_AUDIO_FALLBACK_SECONDS = 3;
+export const DUEL_JIANGHU_SUCCESS_AUDIO_FALLBACK_SECONDS = 1.2;
+export const DUEL_JIANGHU_FAILURE_AUDIO_FALLBACK_SECONDS = 0.8;
 export const UI_DUEL_LUANSHI_ZHENGXIONG_BG = `${DUEL_UI_ROOT}/duel_luanshi_zhengxiong_bg`;
 export const UI_DUEL_LUANSHI_PK_HP_FRAME = `${DUEL_UI_ROOT}/duel_luanshi_pk_hp_frame`;
 export const UI_DUEL_LUANSHI_HP_WUDANG = `${DUEL_UI_ROOT}/duel_luanshi_hp_wudang`;
@@ -485,6 +493,7 @@ export const DUEL_JIANGHU_KILLER_APPEAR_Y = 120;
 export const DUEL_JIANGHU_KILLER_APPEAR_SECONDS = 2;
 export const DUEL_JIANGHU_RESULT_POPUP_WIDTH = 725;
 export const DUEL_JIANGHU_RESULT_POPUP_HEIGHT = 452;
+export const DUEL_JIANGHU_RESULT_POPUP_AUTO_CLOSE_SECONDS = 3;
 export const DUEL_JIANGHU_RESULT_TITLE_BG_WIDTH = 520;
 export const DUEL_JIANGHU_RESULT_TITLE_BG_HEIGHT = 118;
 export const DUEL_JIANGHU_SPINE_ROOT = 'Spine/Duel/JianghuTaosha';

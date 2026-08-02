@@ -19,9 +19,11 @@ abstract class HomeFeatureDuelRoundClockHost extends HomeViewBase {
 
     protected abstract playDuelJianghuPreviewRound(page: Node): Promise<void>;
     protected abstract prepareDuelJianghuRoomActorsForRound(page: Node): Promise<void>;
+    protected abstract playDuelJianghuCountdownSound(): void;
     protected abstract refreshDuelJianghuRoomInvestAmountDisplays(page: Node): void;
     protected abstract removeDuelJianghuActors(page: Node, predicate?: (actor: DuelJianghuActorRuntime) => boolean): void;
     protected abstract resolveDuelJianghuRound(page: Node, serial: number): Promise<void>;
+    protected abstract stopDuelJianghuBackgroundMusic(): void;
 }
 
 /**
@@ -48,6 +50,7 @@ export abstract class HomeFeatureDuelRoundClock extends HomeFeatureDuelRoundCloc
 
         this.duelJianghuCountdown = Math.max(0, this.duelJianghuCountdown - 1);
         this.updateDuelJianghuCountdownLabel(page);
+        if (this.duelJianghuCountdown === 3) this.playDuelJianghuCountdownSound();
         if (this.duelJianghuCountdown > 0) return;
 
         this.unschedule(this.duelJianghuCountdownTick);
@@ -78,6 +81,7 @@ export abstract class HomeFeatureDuelRoundClock extends HomeFeatureDuelRoundCloc
         this.duelJianghuCountdown = HomeConfig.DUEL_JIANGHU_ROUND_SECONDS;
         this.duelJianghuNpcSpawnInProgress = false;
         this.duelJianghuRoomInvestAmounts.clear();
+        this.stopDuelJianghuBackgroundMusic();
         if (page?.isValid) {
             const popup = page.getChildByName('JianghuResultPopup');
             if (popup) popup.active = false;

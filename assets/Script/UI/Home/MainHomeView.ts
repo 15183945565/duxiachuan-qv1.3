@@ -408,6 +408,19 @@ export class MainHomeView extends HomeViewWithShop {
     private mainHomeMusicSource: AudioSource | null = null;
     private mainHomeMusicClip: AudioClip | null = null;
     private mainHomeMusicPromise: Promise<AudioClip> | null = null;
+    private mainHomeMusicSuppressed = false;
+    private duelJianghuMusicSource: AudioSource | null = null;
+    private duelJianghuEffectSource: AudioSource | null = null;
+    private duelJianghuMusicClip: AudioClip | null = null;
+    private duelJianghuCountdownClip: AudioClip | null = null;
+    private duelJianghuSuccessClip: AudioClip | null = null;
+    private duelJianghuFailureClip: AudioClip | null = null;
+    private duelJianghuMusicPromise: Promise<AudioClip> | null = null;
+    private duelJianghuCountdownPromise: Promise<AudioClip> | null = null;
+    private duelJianghuSuccessPromise: Promise<AudioClip> | null = null;
+    private duelJianghuFailurePromise: Promise<AudioClip> | null = null;
+    private duelJianghuMusicActive = false;
+    private duelJianghuDuckCount = 0;
     private readonly homeUiResourceScope: ResourceScope = ResourceManager.instance.createScope('MainHomeView/ui-home');
     private readonly homeFeatureResourceScopes = new Map<string, ResourceScope>();
     private readonly homeUiMountPromises = new Map<string, Promise<Node>>();
@@ -611,6 +624,9 @@ export class MainHomeView extends HomeViewWithShop {
         this.stopBattleBackgroundAnimation();
         this.stopMagicMapWander();
         this.stopMagicMonsterBattle();
+        this.duelJianghuMusicActive = false;
+        this.duelJianghuMusicSource?.stop();
+        this.duelJianghuEffectSource?.stop();
         this.stopMainHomeMusic();
         this.homeUiMountPromises.clear();
         this.homeFeatureResourceScopes.forEach((scope) => scope.dispose());
@@ -637,12 +653,14 @@ export class MainHomeView extends HomeViewWithShop {
     }
 
     private playMainHomeMusic(): void {
+        if (this.mainHomeMusicSuppressed) return;
         if (!this.mainHomeMusicSource) this.setupMainHomeMusicSource();
         if (!this.mainHomeMusicSource) return;
 
         if (this.mainHomeMusicClip) {
             this.mainHomeMusicSource.clip = this.mainHomeMusicClip;
             this.mainHomeMusicSource.loop = true;
+            this.mainHomeMusicSource.volume = this.profileSettingsMuted ? 0 : this.profileSettingsMusicVolume;
             this.mainHomeMusicSource.play();
             return;
         }
@@ -651,9 +669,10 @@ export class MainHomeView extends HomeViewWithShop {
         void this.mainHomeMusicPromise
             .then((clip) => {
                 this.mainHomeMusicClip = clip;
-                if (!this.mainHomeMusicSource?.isValid) return;
+                if (this.mainHomeMusicSuppressed || !this.mainHomeMusicSource?.isValid) return;
                 this.mainHomeMusicSource.clip = clip;
                 this.mainHomeMusicSource.loop = true;
+                this.mainHomeMusicSource.volume = this.profileSettingsMuted ? 0 : this.profileSettingsMusicVolume;
                 this.mainHomeMusicSource.play();
             })
             .catch((err) => {
@@ -667,17 +686,221 @@ export class MainHomeView extends HomeViewWithShop {
     }
 
     protected onProfileAudioSettingsChanged(musicVolume: number, _effectVolume: number, muted: boolean): void {
-        if (!this.mainHomeMusicSource?.isValid) return;
-        this.mainHomeMusicSource.volume = muted ? 0 : musicVolume;
+        if (this.mainHomeMusicSource?.isValid) {
+            this.mainHomeMusicSource.volume = muted ? 0 : musicVolume;
+        }
+        this.refreshDuelJianghuMusicVolume();
     }
 
     private async loadMainHomeMusicClip(): Promise<AudioClip> {
+        return this.loadHomeAudioClip(HomeConfig.MAIN_HOME_MUSIC_PATH);
+    }
+
+    protected playDuelJianghuBackgroundMusic(): void {
+        this.duelJianghuMusicActive = true;
+        this.mainHomeMusicSuppressed = true;
+        this.stopMainHomeMusic();
+        this.preloadDuelJianghuEffectClips();
+        const source = this.getOrCreateDuelJianghuMusicSource();
+        if (!source) return;
+
+        if (this.duelJianghuMusicClip) {
+            source.clip = this.duelJianghuMusicClip;
+            source.loop = true;
+            this.refreshDuelJianghuMusicVolume();
+            source.play();
+            return;
+        }
+
+        this.duelJianghuMusicPromise = this.duelJianghuMusicPromise
+            || this.loadHomeAudioClip(HomeConfig.DUEL_JIANGHU_TAOSHA_BGM_PATH);
+        void this.duelJianghuMusicPromise
+            .then((clip) => {
+                this.duelJianghuMusicClip = clip;
+                if (!this.duelJianghuMusicActive || !source.isValid) return;
+                source.clip = clip;
+                source.loop = true;
+                this.refreshDuelJianghuMusicVolume();
+                source.play();
+            })
+            .catch((err) => {
+                console.warn('[MainHomeView] duel jianghu background music missing', err);
+            });
+    }
+
+    protected stopDuelJianghuBackgroundMusic(): void {
+        const shouldRestoreMainMusic = this.duelJianghuMusicActive || this.mainHomeMusicSuppressed;
+        this.duelJianghuMusicActive = false;
+        this.duelJianghuDuckCount = 0;
+        if (this.duelJianghuMusicSource?.isValid) {
+            this.duelJianghuMusicSource.stop();
+            this.refreshDuelJianghuMusicVolume();
+        }
+        this.mainHomeMusicSuppressed = false;
+        if (shouldRestoreMainMusic) this.playMainHomeMusic();
+    }
+
+    protected playDuelJianghuCountdownSound(): void {
+        this.playDuelJianghuEffect(
+            HomeConfig.DUEL_JIANGHU_COUNTDOWN_3S_AUDIO_PATH,
+            HomeConfig.DUEL_JIANGHU_COUNTDOWN_AUDIO_FALLBACK_SECONDS,
+            'countdown',
+        );
+    }
+
+    protected playDuelJianghuResultSound(success: boolean): void {
+        this.playDuelJianghuEffect(
+            success ? HomeConfig.DUEL_JIANGHU_SUCCESS_AUDIO_PATH : HomeConfig.DUEL_JIANGHU_FAILURE_AUDIO_PATH,
+            success
+                ? HomeConfig.DUEL_JIANGHU_SUCCESS_AUDIO_FALLBACK_SECONDS
+                : HomeConfig.DUEL_JIANGHU_FAILURE_AUDIO_FALLBACK_SECONDS,
+            success ? 'success' : 'failure',
+        );
+    }
+
+    private getOrCreateDuelJianghuMusicSource(): AudioSource | null {
+        if (this.duelJianghuMusicSource?.isValid) return this.duelJianghuMusicSource;
+
+        const audioNode = this.getOrCreateDuelJianghuAudioNode('DuelJianghuMusicAudio');
+        if (!audioNode) return null;
+        this.duelJianghuMusicSource = audioNode.getComponent(AudioSource) || audioNode.addComponent(AudioSource);
+        this.duelJianghuMusicSource.playOnAwake = false;
+        this.duelJianghuMusicSource.loop = true;
+        this.refreshDuelJianghuMusicVolume();
+        return this.duelJianghuMusicSource;
+    }
+
+    private getOrCreateDuelJianghuEffectSource(): AudioSource | null {
+        if (this.duelJianghuEffectSource?.isValid) return this.duelJianghuEffectSource;
+
+        const audioNode = this.getOrCreateDuelJianghuAudioNode('DuelJianghuEffectAudio');
+        if (!audioNode) return null;
+        this.duelJianghuEffectSource = audioNode.getComponent(AudioSource) || audioNode.addComponent(AudioSource);
+        this.duelJianghuEffectSource.playOnAwake = false;
+        this.duelJianghuEffectSource.loop = false;
+        this.duelJianghuEffectSource.volume = 1;
+        return this.duelJianghuEffectSource;
+    }
+
+    private getOrCreateDuelJianghuAudioNode(name: string): Node | null {
+        const parent = this.gameSceneLayer?.isValid ? this.gameSceneLayer : this.findNode('GameSceneLayer');
+        if (!parent?.isValid) {
+            console.warn(`[MainHomeView] GameSceneLayer missing for audio node: ${name}`);
+            return null;
+        }
+
+        const misplaced = this.node.getChildByName(name);
+        if (misplaced?.isValid && misplaced.parent !== parent) {
+            misplaced.setParent(parent);
+        }
+
+        let audioNode = parent.getChildByName(name);
+        if (!audioNode) {
+            audioNode = new Node(name);
+            audioNode.setParent(parent);
+        }
+        return audioNode;
+    }
+
+    private preloadDuelJianghuEffectClips(): void {
+        void this.getDuelJianghuEffectClipPromise(HomeConfig.DUEL_JIANGHU_COUNTDOWN_3S_AUDIO_PATH)
+            .catch((err) => console.warn('[MainHomeView] duel jianghu countdown audio preload failed', err));
+        void this.getDuelJianghuEffectClipPromise(HomeConfig.DUEL_JIANGHU_SUCCESS_AUDIO_PATH)
+            .catch((err) => console.warn('[MainHomeView] duel jianghu success audio preload failed', err));
+        void this.getDuelJianghuEffectClipPromise(HomeConfig.DUEL_JIANGHU_FAILURE_AUDIO_PATH)
+            .catch((err) => console.warn('[MainHomeView] duel jianghu failure audio preload failed', err));
+    }
+
+    private playDuelJianghuEffect(path: string, fallbackSeconds: number, label: string): void {
+        if (!this.duelJianghuMusicActive) return;
+        const source = this.getOrCreateDuelJianghuEffectSource();
+        if (!source) return;
+
+        const promise = this.getDuelJianghuEffectClipPromise(path);
+        void promise
+            .then((clip) => {
+                if (!this.duelJianghuMusicActive || !source.isValid) return;
+                const effectVolume = this.getDuelJianghuEffectVolume();
+                if (effectVolume <= 0) return;
+                this.duckDuelJianghuMusic(this.getAudioClipDuration(clip, fallbackSeconds));
+                source.playOneShot(clip, effectVolume);
+            })
+            .catch((err) => {
+                console.warn(`[MainHomeView] duel jianghu ${label} audio missing`, err);
+            });
+    }
+
+    private getDuelJianghuEffectClipPromise(path: string): Promise<AudioClip> {
+        if (path === HomeConfig.DUEL_JIANGHU_COUNTDOWN_3S_AUDIO_PATH) {
+            this.duelJianghuCountdownPromise = this.duelJianghuCountdownPromise
+                || this.loadHomeAudioClip(HomeConfig.DUEL_JIANGHU_COUNTDOWN_3S_AUDIO_PATH)
+                    .then((clip) => {
+                        this.duelJianghuCountdownClip = clip;
+                        return clip;
+                    });
+            return this.duelJianghuCountdownClip
+                ? Promise.resolve(this.duelJianghuCountdownClip)
+                : this.duelJianghuCountdownPromise;
+        }
+
+        if (path === HomeConfig.DUEL_JIANGHU_SUCCESS_AUDIO_PATH) {
+            this.duelJianghuSuccessPromise = this.duelJianghuSuccessPromise
+                || this.loadHomeAudioClip(HomeConfig.DUEL_JIANGHU_SUCCESS_AUDIO_PATH)
+                    .then((clip) => {
+                        this.duelJianghuSuccessClip = clip;
+                        return clip;
+                    });
+            return this.duelJianghuSuccessClip
+                ? Promise.resolve(this.duelJianghuSuccessClip)
+                : this.duelJianghuSuccessPromise;
+        }
+
+        this.duelJianghuFailurePromise = this.duelJianghuFailurePromise
+            || this.loadHomeAudioClip(HomeConfig.DUEL_JIANGHU_FAILURE_AUDIO_PATH)
+                .then((clip) => {
+                    this.duelJianghuFailureClip = clip;
+                    return clip;
+                });
+        return this.duelJianghuFailureClip
+            ? Promise.resolve(this.duelJianghuFailureClip)
+            : this.duelJianghuFailurePromise;
+    }
+
+    private duckDuelJianghuMusic(durationSeconds: number): void {
+        this.duelJianghuDuckCount += 1;
+        this.refreshDuelJianghuMusicVolume();
+        this.scheduleOnce(() => {
+            this.duelJianghuDuckCount = Math.max(0, this.duelJianghuDuckCount - 1);
+            this.refreshDuelJianghuMusicVolume();
+        }, durationSeconds);
+    }
+
+    private refreshDuelJianghuMusicVolume(): void {
+        if (!this.duelJianghuMusicSource?.isValid) return;
+        const duckScale = this.duelJianghuDuckCount > 0 ? HomeConfig.DUEL_JIANGHU_AUDIO_DUCK_VOLUME_SCALE : 1;
+        this.duelJianghuMusicSource.volume = (this.profileSettingsMuted ? 0 : this.profileSettingsMusicVolume) * duckScale;
+    }
+
+    private getDuelJianghuEffectVolume(): number {
+        return this.profileSettingsMuted ? 0 : this.profileSettingsEffectVolume;
+    }
+
+    private getAudioClipDuration(clip: AudioClip, fallbackSeconds: number): number {
+        const durationProperty = (clip as AudioClip & { duration?: number }).duration;
+        const getDuration = (clip as AudioClip & { getDuration?: () => number }).getDuration;
+        const duration = typeof getDuration === 'function' ? getDuration.call(clip) : durationProperty;
+        return typeof duration === 'number' && Number.isFinite(duration) && duration > 0
+            ? duration
+            : fallbackSeconds;
+    }
+
+    private async loadHomeAudioClip(path: string): Promise<AudioClip> {
         const bundle = await this.acquireHomeSharedBundle();
 
         return new Promise((resolve, reject) => {
-            bundle.load(HomeConfig.MAIN_HOME_MUSIC_PATH, AudioClip, (err, clip) => {
+            bundle.load(path, AudioClip, (err, clip) => {
                 if (err || !clip) {
-                    reject(err || new Error(`AudioClip not found: ${HomeConfig.MAIN_HOME_MUSIC_PATH}`));
+                    reject(err || new Error(`AudioClip not found: ${path}`));
                     return;
                 }
                 resolve(clip);

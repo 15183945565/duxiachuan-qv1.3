@@ -19,6 +19,7 @@ abstract class HomeFeatureDuelLobbyHost extends HomeViewBase {
     protected abstract buildDuelJianghuInvestControls(page: Node): void;
     protected abstract buildDuelJianghuSideButtons(page: Node): void;
     protected abstract ensureDuelJianghuReservedPage(page: Node, pageName: string, title: string): Node;
+    protected abstract playDuelJianghuBackgroundMusic(): void;
     protected abstract startDuelJianghuCountdown(page: Node, reset: boolean): void;
     protected abstract ensureDuelJianghuNpcCrowd(page: Node, force?: boolean): Promise<void>;
 }
@@ -234,6 +235,7 @@ export abstract class HomeFeatureDuelLobby extends HomeFeatureDuelLobbyHost {
         this.ensureDuelJianghuReservedPage(page, 'JianghuRecordPage', '\u6c5f\u6e56\u9003\u6740\u8bb0\u5f55');
         this.ensureDuelJianghuReservedPage(page, 'JianghuRankPage', '\u6c5f\u6e56\u9003\u6740\u6392\u884c');
         this.closeDuelJianghuReservedPages(page);
+        this.playDuelJianghuBackgroundMusic();
         this.startDuelJianghuCountdown(page, true);
         void this.ensureDuelJianghuNpcCrowd(page);
         page.setSiblingIndex((panel.children.length || 1) - 1);

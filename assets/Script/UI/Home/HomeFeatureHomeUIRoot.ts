@@ -32,6 +32,15 @@ export abstract class HomeFeatureHomeUIRoot extends HomeViewBase {
         this.refreshRootLayerOrder();
     }
     protected refreshRootLayerOrder(): void {
+        const gameLayer = this.gameSceneLayer?.isValid
+            ? this.gameSceneLayer
+            : this.node.getChildByName(UI_LAYER_NAMES.gameScene);
+        if (gameLayer?.isValid) {
+            ['DuelJianghuMusicAudio', 'DuelJianghuEffectAudio'].forEach((name) => {
+                const audioNode = this.node.getChildByName(name);
+                if (audioNode?.isValid) audioNode.setParent(gameLayer);
+            });
+        }
         this.assertDirectChildOrder(this.node, [...UI_ROOT_LAYER_ORDER]);
     }
     protected refreshBottomEntryChrome(): void {
