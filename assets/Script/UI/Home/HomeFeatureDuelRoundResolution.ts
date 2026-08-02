@@ -5,6 +5,7 @@ import { HomeViewBase } from './HomeViewBase';
 type DuelJianghuRoomConfig = typeof HomeConfig.DUEL_JIANGHU_ROOM_LABELS[number];
 type DuelJianghuRoomId = DuelJianghuRoomConfig['id'];
 type DuelJianghuActorKind = 'common' | 'lobbyCommon' | 'player' | 'assassin' | 'doubleMale' | 'doubleFemale' | 'rebel' | 'guardSoldier' | 'general';
+type DuelJianghuSpecialRoomKind = 'guardSoldier' | 'general';
 type DuelJianghuActorRuntime = {
     node: Node;
     kind: DuelJianghuActorKind;
@@ -21,7 +22,8 @@ type DuelJianghuRoundOutcome = {
 type DuelJianghuRoundPlan = DuelJianghuRoundOutcome & {
     targetRoomIds: DuelJianghuRoomId[];
     killerKinds: DuelJianghuActorKind[];
-    specialKind?: DuelJianghuActorKind;
+    specialKind?: DuelJianghuSpecialRoomKind;
+    specialKindsByRoom?: Partial<Record<DuelJianghuRoomId, DuelJianghuSpecialRoomKind>>;
 };
 
 abstract class HomeFeatureDuelRoundResolutionHost extends HomeViewBase {
@@ -35,6 +37,7 @@ abstract class HomeFeatureDuelRoundResolutionHost extends HomeViewBase {
     protected abstract ensureDuelJianghuNpcCrowd(page: Node, force?: boolean): Promise<void>;
     protected abstract ensureDuelJianghuResultPopup(page: Node): Node;
     protected abstract moveDuelJianghuCommonActorsOut(page: Node, killedRoomIds?: DuelJianghuRoomId[]): Promise<void>;
+    protected abstract playDuelJianghuKillerAppearBanner(page: Node): Promise<void>;
     protected abstract playDuelJianghuKillerSequence(page: Node, plan: DuelJianghuRoundPlan): Promise<void>;
     protected abstract prepareDuelJianghuRoomActorsForRound(page: Node): Promise<void>;
     protected abstract removeDuelJianghuActors(page: Node, predicate?: (actor: DuelJianghuActorRuntime) => boolean): void;
@@ -55,6 +58,9 @@ export abstract class HomeFeatureDuelRoundResolution extends HomeFeatureDuelRoun
         }
 
         const plan = this.createDuelJianghuRoundPlan(selected, this.duelJianghuCurrentInvestAmount);
+        await this.playDuelJianghuKillerAppearBanner(page);
+        if (!page.active || serial !== this.duelJianghuRoundSerial) return;
+
         await this.playDuelJianghuKillerSequence(page, plan);
         if (!page.active || serial !== this.duelJianghuRoundSerial) return;
 
@@ -79,6 +85,9 @@ export abstract class HomeFeatureDuelRoundResolution extends HomeFeatureDuelRoun
             const selected = this.pickDuelJianghuRooms(1)[0] || HomeConfig.DUEL_JIANGHU_ROOM_LABELS[0];
             if (!selected) return;
             const plan = this.createDuelJianghuRoundPlan(selected, Number(HomeConfig.DUEL_JIANGHU_INVEST_DEFAULT_AMOUNT));
+            await this.playDuelJianghuKillerAppearBanner(page);
+            if (!page.active || this.duelJianghuRoundActive || serial !== this.duelJianghuRoundSerial) return;
+
             await this.playDuelJianghuKillerSequence(page, plan);
             if (!page.active || this.duelJianghuRoundActive || serial !== this.duelJianghuRoundSerial) return;
 
@@ -120,36 +129,42 @@ export abstract class HomeFeatureDuelRoundResolution extends HomeFeatureDuelRoun
         }
         if (modeIndex === 2) {
             const target = this.pickDuelJianghuRooms(1)[0] || selected;
-            const success = target.id !== selected.id;
+            const specialKindsByRoom = this.createDuelJianghuSpecialRoomKinds();
+            const targetSpecialKind = specialKindsByRoom[target.id] || 'guardSoldier';
+            const targetHasGeneral = targetSpecialKind === 'general';
+            const success = targetHasGeneral || target.id !== selected.id;
+            const rewardMultiplier = targetHasGeneral && target.id === selected.id ? 2.35 : 1.55;
             return {
                 success,
                 modeName: '\u53db\u95e8\u9006\u5f92',
                 targetRoomIds: [target.id],
                 targetRoomNames: [target.name],
                 killerKinds: ['rebel'],
-                specialKind: 'guardSoldier',
+                specialKind: targetSpecialKind,
+                specialKindsByRoom,
                 investAmount,
-                rewardAmount: success ? Number((investAmount * 1.55).toFixed(4)) : 0,
-                description: success
-                    ? `\u53db\u95e8\u9006\u5f92\u6740\u5411\u3010${target.name}\u3011\u7684\u5217\u9635\u5175\u5352\uff0c\u4f60\u6240\u5728\u623f\u95f4\u672a\u88ab\u6ce2\u53ca\u3002`
-                    : `\u3010${selectedName}\u3011\u5237\u51fa\u5217\u9635\u5175\u5352\uff0c\u88ab\u53db\u95e8\u9006\u5f92\u51fb\u7834\u3002`,
+                rewardAmount: success ? Number((investAmount * rewardMultiplier).toFixed(4)) : 0,
+                description: this.getDuelJianghuRebelSpecialDescription(selectedName, selected.id, target.name, target.id, targetSpecialKind, success),
             };
         }
         if (modeIndex === 3) {
             const target = this.pickDuelJianghuRooms(1)[0] || selected;
-            const success = target.id === selected.id;
+            const specialKindsByRoom = this.createDuelJianghuSpecialRoomKinds();
+            const targetSpecialKind = specialKindsByRoom[target.id] || 'general';
+            const targetHasGeneral = targetSpecialKind === 'general';
+            const success = targetHasGeneral || target.id !== selected.id;
+            const rewardMultiplier = targetHasGeneral && target.id === selected.id ? 2.35 : 1.55;
             return {
                 success,
                 modeName: '\u53db\u95e8\u9006\u5f92',
                 targetRoomIds: [target.id],
                 targetRoomNames: [target.name],
                 killerKinds: ['rebel'],
-                specialKind: 'general',
+                specialKind: targetSpecialKind,
+                specialKindsByRoom,
                 investAmount,
-                rewardAmount: success ? Number((investAmount * 2.35).toFixed(4)) : 0,
-                description: success
-                    ? `\u3010${selectedName}\u3011\u5237\u51fa\u767e\u6218\u5c06\u519b\uff0c\u6210\u529f\u53cd\u6740\u53db\u95e8\u9006\u5f92\u3002`
-                    : `\u3010${target.name}\u3011\u7684\u767e\u6218\u5c06\u519b\u53cd\u6740\u9006\u5f92\uff0c\u5176\u4ed6\u623f\u95f4\u672c\u671f\u5931\u8d25\u3002`,
+                rewardAmount: success ? Number((investAmount * rewardMultiplier).toFixed(4)) : 0,
+                description: this.getDuelJianghuRebelSpecialDescription(selectedName, selected.id, target.name, target.id, targetSpecialKind, success),
             };
         }
 
@@ -178,12 +193,47 @@ export abstract class HomeFeatureDuelRoundResolution extends HomeFeatureDuelRoun
         }
         return output;
     }
+    protected createDuelJianghuSpecialRoomKinds(): Partial<Record<DuelJianghuRoomId, DuelJianghuSpecialRoomKind>> {
+        const output: Partial<Record<DuelJianghuRoomId, DuelJianghuSpecialRoomKind>> = {};
+        let generalCount = 0;
+        let guardCount = 0;
+        HomeConfig.DUEL_JIANGHU_ROOM_LABELS.forEach((room) => {
+            const kind: DuelJianghuSpecialRoomKind = Math.random() < 0.5 ? 'general' : 'guardSoldier';
+            output[room.id] = kind;
+            if (kind === 'general') generalCount += 1;
+            if (kind === 'guardSoldier') guardCount += 1;
+        });
+
+        if (HomeConfig.DUEL_JIANGHU_ROOM_LABELS.length > 1 && (generalCount === 0 || guardCount === 0)) {
+            const room = this.pickDuelJianghuRooms(1)[0];
+            if (room) output[room.id] = generalCount === 0 ? 'general' : 'guardSoldier';
+        }
+        return output;
+    }
+    protected getDuelJianghuRebelSpecialDescription(
+        selectedName: string,
+        selectedId: DuelJianghuRoomId,
+        targetName: string,
+        targetId: DuelJianghuRoomId,
+        targetSpecialKind: DuelJianghuSpecialRoomKind,
+        success: boolean,
+    ): string {
+        if (targetSpecialKind === 'general') {
+            return targetId === selectedId
+                ? `\u53db\u95e8\u9006\u5f92\u95ef\u5165\u3010${selectedName}\u3011\uff0c\u88ab\u767e\u6218\u5c06\u519b\u53cd\u6740\u3002`
+                : `\u53db\u95e8\u9006\u5f92\u95ef\u5165\u3010${targetName}\u3011\uff0c\u88ab\u767e\u6218\u5c06\u519b\u53cd\u6740\uff0c\u4f60\u5728\u3010${selectedName}\u3011\u6210\u529f\u8eb2\u8fc7\u3002`;
+        }
+
+        return success
+            ? `\u53db\u95e8\u9006\u5f92\u95ef\u5165\u3010${targetName}\u3011\uff0c\u51fb\u7834\u5217\u9635\u5175\u5352\uff0c\u4f60\u5728\u3010${selectedName}\u3011\u6210\u529f\u8eb2\u8fc7\u3002`
+            : `\u53db\u95e8\u9006\u5f92\u95ef\u5165\u3010${selectedName}\u3011\uff0c\u5217\u9635\u5175\u5352\u53cd\u6740\u5931\u8d25\u3002`;
+    }
     protected getDuelJianghuKilledRoomIds(plan: DuelJianghuRoundPlan): DuelJianghuRoomId[] {
         const targetRoomIds = new Set(plan.targetRoomIds);
-        if (plan.specialKind === 'general') {
-            return HomeConfig.DUEL_JIANGHU_ROOM_LABELS
-                .map((room) => room.id)
-                .filter((roomId) => !targetRoomIds.has(roomId));
+        if (plan.specialKindsByRoom) {
+            const targetRoomId = plan.targetRoomIds[0];
+            const targetSpecialKind = targetRoomId ? plan.specialKindsByRoom[targetRoomId] : undefined;
+            return targetSpecialKind === 'guardSoldier' ? Array.from(targetRoomIds) : [];
         }
         return Array.from(targetRoomIds);
     }
@@ -214,4 +264,3 @@ export abstract class HomeFeatureDuelRoundResolution extends HomeFeatureDuelRoun
         return value.toFixed(4).replace(/\.?0+$/, '');
     }
 }
-

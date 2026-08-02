@@ -30,8 +30,13 @@ export const UI_HOME_XIANSHI_ICON = `${HOME_UI_ROOT}/home_xianshi`;
 export const UI_HOME_JIFEN_ICON = `${HOME_UI_ROOT}/home_jifen`;
 export const UI_HOME_EXCHANGE_BUTTON = `${HOME_UI_ROOT}/home_exchange_btn`;
 export const UI_HOME_GIFT_SEND_BUTTON = `${HOME_UI_ROOT}/home_gift_send_btn`;
-export const UI_HOME_AVATAR = `${HOME_UI_ROOT}/home_avatar`;
+export const UI_HOME_AVATAR_MALE = `${HOME_UI_ROOT}/home_avatar_male`;
+export const UI_HOME_AVATAR_FEMALE = `${HOME_UI_ROOT}/home_avatar_female`;
+export const UI_HOME_AVATAR = UI_HOME_AVATAR_MALE;
 export const UI_HOME_PROFILE_FRAME = `${HOME_UI_ROOT}/home_profile_frame`;
+export function getHomeAvatarPath(gender: string): string {
+    return gender === 'female' ? UI_HOME_AVATAR_FEMALE : UI_HOME_AVATAR_MALE;
+}
 export const TRANSITION_LOADING_SKEL_PATH = 'Spine/Loading/\u52a0\u8f7d\u52a8\u753b/H30126';
 export const TRANSITION_LOADING_SCALE = 0.1;
 export const TRANSITION_LOADING_MASK_ALPHA = 200;

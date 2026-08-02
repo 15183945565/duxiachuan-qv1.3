@@ -1,4 +1,4 @@
-import { DUEL_UI_ROOT, VIEW_HEIGHT, VIEW_WIDTH } from './HomeBaseConfig';
+import { DUEL_UI_ROOT, UI_HOME_AVATAR_FEMALE, UI_HOME_AVATAR_MALE, VIEW_HEIGHT, VIEW_WIDTH } from './HomeBaseConfig';
 
 export const UI_DUEL_PAGE_BG = `${DUEL_UI_ROOT}/duel_page_bg`;
 export const UI_DUEL_JIANGHU_TAOSHA_BG = `${DUEL_UI_ROOT}/duel_jianghu_taosha_bg`;
@@ -28,16 +28,8 @@ export const UI_DUEL_LUANSHI_JOIN_GAIBANG = `${DUEL_LUANSHI_UI_ROOT}/join_gaiban
 export const UI_DUEL_LUANSHI_SKILL_SLOT = `${DUEL_LUANSHI_SKILL_ICON_UI_ROOT}/skill_slot`;
 export const DUEL_LUANSHI_SKILL_ICON_EFFECT_UI_ROOT = `${DUEL_LUANSHI_UI_ROOT}/SkillIconEffects`;
 export const DUEL_LUANSHI_AVATAR_ICON_PATHS = [
-    `${DUEL_LUANSHI_AVATAR_UI_ROOT}/avatar_01`,
-    `${DUEL_LUANSHI_AVATAR_UI_ROOT}/avatar_02`,
-    `${DUEL_LUANSHI_AVATAR_UI_ROOT}/avatar_03`,
-    `${DUEL_LUANSHI_AVATAR_UI_ROOT}/avatar_04`,
-    `${DUEL_LUANSHI_AVATAR_UI_ROOT}/avatar_06`,
-    `${DUEL_LUANSHI_AVATAR_UI_ROOT}/avatar_07`,
-    `${DUEL_LUANSHI_AVATAR_UI_ROOT}/avatar_08`,
-    `${DUEL_LUANSHI_AVATAR_UI_ROOT}/avatar_09`,
-    `${DUEL_LUANSHI_AVATAR_UI_ROOT}/avatar_10`,
-    `${DUEL_LUANSHI_AVATAR_UI_ROOT}/avatar_11`,
+    UI_HOME_AVATAR_FEMALE,
+    UI_HOME_AVATAR_MALE,
 ] as const;
 export const DUEL_LUANSHI_AVATAR_FRAME_EFFECT_PATHS = [
     `${DUEL_LUANSHI_AVATAR_FRAME_EFFECT_UI_ROOT}/frame_00`,
@@ -311,17 +303,24 @@ export const UI_DUEL_ROOM_NAME_CURRENCY_BG = `${DUEL_UI_ROOT}/duel_room_name_cur
 export const UI_DUEL_YUANBAO_ICON = `${DUEL_UI_ROOT}/duel_yuanbao_icon`;
 export const UI_DUEL_INVEST_BUTTON_BG = `${DUEL_UI_ROOT}/duel_invest_button_bg`;
 export const UI_DUEL_AMOUNT_INPUT_BG = `${DUEL_UI_ROOT}/duel_amount_input_bg`;
+export const UI_DUEL_JIANGHU_ROOM_INVEST_AMOUNT_BG = `${DUEL_UI_ROOT}/duel_jianghu_room_invest_amount_bg`;
 export const UI_DUEL_JIANGHU_KILLER_TIMER_BG = `${DUEL_UI_ROOT}/duel_jianghu_killer_timer_bg`;
 export const UI_DUEL_JIANGHU_PERIOD_BG = `${DUEL_UI_ROOT}/duel_jianghu_period_bg`;
 export const UI_DUEL_JIANGHU_ROOM_HIGHLIGHT_FRAME = `${DUEL_UI_ROOT}/duel_jianghu_room_highlight_frame`;
 export const UI_DUEL_JIANGHU_PLAYER_ARROW = `${DUEL_UI_ROOT}/duel_jianghu_player_arrow`;
+export const UI_DUEL_JIANGHU_KILLER_APPEAR_BG = `${DUEL_UI_ROOT}/duel_jianghu_killer_appear_bg`;
+export const UI_DUEL_JIANGHU_AMOUNT_SELECT_BUTTON = `${DUEL_UI_ROOT}/duel_jianghu_amount_select_button`;
+export const UI_DUEL_JIANGHU_AMOUNT_OPTION_NORMAL = `${DUEL_UI_ROOT}/duel_jianghu_amount_option_normal`;
+export const UI_DUEL_JIANGHU_AMOUNT_OPTION_SELECTED = `${DUEL_UI_ROOT}/duel_jianghu_amount_option_selected`;
 export const UI_DUEL_JIANGHU_RESULT_POPUP_BG = `${DUEL_UI_ROOT}/duel_jianghu_result_popup_bg`;
+export const UI_DUEL_JIANGHU_RESULT_TITLE_BG = `${DUEL_UI_ROOT}/duel_jianghu_result_title_bg`;
 export const UI_DUEL_JIANGHU_RECORD_ICON = `${DUEL_UI_ROOT}/duel_jianghu_record_icon`;
 export const UI_DUEL_JIANGHU_RANK_ICON = `${DUEL_UI_ROOT}/duel_jianghu_rank_icon`;
 export const DUEL_JIANGHU_RECORD_UI_ROOT = `${DUEL_UI_ROOT}/Record`;
 export const UI_DUEL_JIANGHU_RECORD_BG = `${DUEL_JIANGHU_RECORD_UI_ROOT}/duel_jianghu_record_bg`;
 export const UI_DUEL_JIANGHU_RECORD_STAT_PANEL = `${DUEL_JIANGHU_RECORD_UI_ROOT}/duel_jianghu_record_stat_panel`;
 export const UI_DUEL_JIANGHU_RECORD_TITLE_BAR = `${DUEL_JIANGHU_RECORD_UI_ROOT}/duel_jianghu_record_title_bar`;
+export const UI_DUEL_JIANGHU_RECORD_SECTION_TITLE_BAR = `${DUEL_JIANGHU_RECORD_UI_ROOT}/duel_jianghu_record_section_title_bar`;
 export const UI_DUEL_JIANGHU_RECORD_ROOM_CELL = `${DUEL_JIANGHU_RECORD_UI_ROOT}/duel_jianghu_record_room_cell`;
 export const UI_DUEL_JIANGHU_RECORD_PERSONAL_ROW = `${DUEL_JIANGHU_RECORD_UI_ROOT}/duel_jianghu_record_personal_row`;
 export const DUEL_JIANGHU_RECORD_PERSONAL_ROW_SCALE = 1.1;
@@ -333,8 +332,12 @@ export const UI_DUEL_JIANGHU_RANK_TOP1_BG = `${DUEL_JIANGHU_RANK_UI_ROOT}/duel_j
 export const UI_DUEL_JIANGHU_RANK_TOP2_BG = `${DUEL_JIANGHU_RANK_UI_ROOT}/duel_jianghu_rank_top2_bg`;
 export const UI_DUEL_JIANGHU_RANK_TOP3_BG = `${DUEL_JIANGHU_RANK_UI_ROOT}/duel_jianghu_rank_top3_bg`;
 export const UI_DUEL_JIANGHU_RANK_ROW_BG = `${DUEL_JIANGHU_RANK_UI_ROOT}/duel_jianghu_rank_row_bg`;
+export const UI_DUEL_JIANGHU_RANK_ROW_TOP1_BG = `${DUEL_JIANGHU_RANK_UI_ROOT}/duel_jianghu_rank_row_top1_bg`;
+export const UI_DUEL_JIANGHU_RANK_ROW_TOP2_BG = `${DUEL_JIANGHU_RANK_UI_ROOT}/duel_jianghu_rank_row_top2_bg`;
+export const UI_DUEL_JIANGHU_RANK_ROW_TOP3_BG = `${DUEL_JIANGHU_RANK_UI_ROOT}/duel_jianghu_rank_row_top3_bg`;
 export const UI_DUEL_JIANGHU_RANK_TAB_ACTIVE = `${DUEL_JIANGHU_RANK_UI_ROOT}/duel_jianghu_rank_tab_active`;
 export const UI_DUEL_JIANGHU_RANK_TAB_INACTIVE = `${DUEL_JIANGHU_RANK_UI_ROOT}/duel_jianghu_rank_tab_inactive`;
+export const UI_DUEL_JIANGHU_RANK_INVEST_TITLE_BAR = `${DUEL_JIANGHU_RANK_UI_ROOT}/duel_jianghu_rank_invest_title_bar`;
 export const DUEL_GAMEPLAY_TAG_WIDTH = 735;
 export const DUEL_GAMEPLAY_TAG_HEIGHT = 235;
 export const DUEL_GAMEPLAY_NAME_WIDTH = 280;
@@ -398,6 +401,14 @@ export const DUEL_JIANGHU_YUANBAO_AMOUNT_X = 116;
 export const DUEL_JIANGHU_YUANBAO_AMOUNT_Y = -36;
 export const DUEL_JIANGHU_ROOM_LABEL_WIDTH = 194;
 export const DUEL_JIANGHU_ROOM_LABEL_HEIGHT = 58;
+export const DUEL_JIANGHU_ROOM_INVEST_AMOUNT_WIDTH = 114;
+export const DUEL_JIANGHU_ROOM_INVEST_AMOUNT_HEIGHT = 32;
+export const DUEL_JIANGHU_ROOM_INVEST_AMOUNT_X = 0;
+export const DUEL_JIANGHU_ROOM_INVEST_AMOUNT_Y = -152;
+export const DUEL_JIANGHU_ROOM_INVEST_ICON_WIDTH = 24;
+export const DUEL_JIANGHU_ROOM_INVEST_ICON_HEIGHT = 22;
+export const DUEL_JIANGHU_ROOM_INVEST_ICON_X = -27;
+export const DUEL_JIANGHU_ROOM_INVEST_LABEL_X = 18;
 export const DUEL_JIANGHU_INVEST_DEFAULT_AMOUNT = '1';
 export const DUEL_JIANGHU_INVEST_ROOT_Y = -666;
 export const DUEL_JIANGHU_INVEST_INPUT_Y = 58;
@@ -406,6 +417,13 @@ export const DUEL_JIANGHU_INVEST_INPUT_WIDTH = 226;
 export const DUEL_JIANGHU_INVEST_INPUT_HEIGHT = 56;
 export const DUEL_JIANGHU_INVEST_BUTTON_WIDTH = 260;
 export const DUEL_JIANGHU_INVEST_BUTTON_HEIGHT = 92;
+export const DUEL_JIANGHU_INVEST_AMOUNTS = ['1', '10', '100'] as const;
+export const DUEL_JIANGHU_INVEST_SELECT_ARROW_SIZE = 38;
+export const DUEL_JIANGHU_INVEST_SELECT_ARROW_X = 82;
+export const DUEL_JIANGHU_INVEST_OPTION_WIDTH = DUEL_JIANGHU_INVEST_INPUT_WIDTH;
+export const DUEL_JIANGHU_INVEST_OPTION_HEIGHT = 42;
+export const DUEL_JIANGHU_INVEST_OPTION_START_Y = 114;
+export const DUEL_JIANGHU_INVEST_OPTION_GAP = 44;
 export const DUEL_JIANGHU_SIDE_BUTTON_ROOT_X = 304;
 export const DUEL_JIANGHU_SIDE_BUTTON_ROOT_Y = -558;
 export const DUEL_JIANGHU_SIDE_BUTTON_ROOT_WIDTH = 118;
@@ -460,8 +478,15 @@ export const DUEL_JIANGHU_COUNTER_HIT_DELAY = 0.32;
 export const DUEL_JIANGHU_KILLER_ATTACK_HURT_DELAY = 0.25;
 export const DUEL_JIANGHU_KILLER_ATTACK_REPEAT_COUNT = 3;
 export const DUEL_JIANGHU_KILLER_ATTACK_REPEAT_WAIT_TIME = 0.48;
+export const DUEL_JIANGHU_KILLER_APPEAR_WIDTH = 660;
+export const DUEL_JIANGHU_KILLER_APPEAR_HEIGHT = 150;
+export const DUEL_JIANGHU_KILLER_APPEAR_X = 0;
+export const DUEL_JIANGHU_KILLER_APPEAR_Y = 120;
+export const DUEL_JIANGHU_KILLER_APPEAR_SECONDS = 2;
 export const DUEL_JIANGHU_RESULT_POPUP_WIDTH = 725;
-export const DUEL_JIANGHU_RESULT_POPUP_HEIGHT = 505;
+export const DUEL_JIANGHU_RESULT_POPUP_HEIGHT = 452;
+export const DUEL_JIANGHU_RESULT_TITLE_BG_WIDTH = 520;
+export const DUEL_JIANGHU_RESULT_TITLE_BG_HEIGHT = 118;
 export const DUEL_JIANGHU_SPINE_ROOT = 'Spine/Duel/JianghuTaosha';
 export const DUEL_JIANGHU_SPINE_COMMON = `${DUEL_JIANGHU_SPINE_ROOT}/Common/cha_2042`;
 export const DUEL_JIANGHU_SPINE_ASSASSIN = `${DUEL_JIANGHU_SPINE_ROOT}/Assassin/cha_2052`;

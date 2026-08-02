@@ -7,8 +7,10 @@ import {
     Node,
     Overflow,
     Tween,
+    tween,
     UIOpacity,
     VerticalTextAlignment,
+    Vec3,
 } from 'cc';
 import { applySimKaiFont } from '../Common/UIFont';
 import * as HomeConfig from './HomeConfig';
@@ -23,6 +25,7 @@ abstract class HomeFeatureDuelSceneUIHost extends HomeViewBase {
     protected abstract duelJianghuRoundActive: boolean;
     protected abstract duelJianghuSelectedRoomId: DuelJianghuRoomId | '';
     protected abstract duelJianghuSelectedRoomName: string;
+    protected abstract readonly duelJianghuRoomInvestAmounts: Map<DuelJianghuRoomId, number>;
 
     protected abstract closeDuelJianghuResultPopup(page: Node): void;
     protected abstract getOrCreateEditorLabel(parent: Node, name: string, text: string, fontSize: number, x: number, y: number, width: number, height: number, color: Color): Label;
@@ -220,6 +223,94 @@ export abstract class HomeFeatureDuelSceneUI extends HomeFeatureDuelSceneUIHost 
 
         return this.getPointCurrencyText();
     }
+    protected isDuelJianghuReservedPageActive(page: Node): boolean {
+        return ['JianghuRecordPage', 'JianghuRankPage']
+            .some((pageName) => !!page.getChildByName(pageName)?.active);
+    }
+    protected hideDuelJianghuKillerAppearBanner(page: Node): void {
+        const banner = page.getChildByName('JianghuKillerAppearBanner');
+        if (!banner) return;
+
+        Tween.stopAllByTarget(banner);
+        const opacity = banner.getComponent(UIOpacity);
+        if (opacity) Tween.stopAllByTarget(opacity);
+        banner.active = false;
+    }
+    protected waitDuelJianghuKillerAppearDuration(): Promise<void> {
+        return new Promise((resolve) => {
+            this.scheduleOnce(() => resolve(), HomeConfig.DUEL_JIANGHU_KILLER_APPEAR_SECONDS);
+        });
+    }
+    protected playDuelJianghuKillerAppearBanner(page: Node): Promise<void> {
+        if (this.isDuelJianghuReservedPageActive(page)) {
+            this.hideDuelJianghuKillerAppearBanner(page);
+            return this.waitDuelJianghuKillerAppearDuration();
+        }
+
+        const banner = this.getOrCreateEditorNode(
+            'JianghuKillerAppearBanner',
+            page,
+            HomeConfig.VIEW_WIDTH,
+            HomeConfig.VIEW_HEIGHT,
+            0,
+            0,
+        );
+        banner.active = true;
+        banner.setSiblingIndex((page.children.length || 1) - 1);
+
+        const opacity = banner.getComponent(UIOpacity) || banner.addComponent(UIOpacity);
+        opacity.opacity = 255;
+        banner.setScale(1.56, 1.56, 1);
+        Tween.stopAllByTarget(banner);
+        Tween.stopAllByTarget(opacity);
+
+        const board = this.getOrCreateEditorSkinnedNode(
+            'JianghuKillerAppearBoard',
+            banner,
+            HomeConfig.DUEL_JIANGHU_KILLER_APPEAR_WIDTH,
+            HomeConfig.DUEL_JIANGHU_KILLER_APPEAR_HEIGHT,
+            HomeConfig.DUEL_JIANGHU_KILLER_APPEAR_X,
+            HomeConfig.DUEL_JIANGHU_KILLER_APPEAR_Y,
+            HomeConfig.UI_DUEL_JIANGHU_KILLER_APPEAR_BG,
+        );
+        board.active = true;
+        board.setSiblingIndex(0);
+
+        const title = this.getOrCreateDuelRoomLabel(
+            banner,
+            'JianghuKillerAppearLabel',
+            '\u6740\u624b\u51fa\u73b0',
+            58,
+            HomeConfig.DUEL_JIANGHU_KILLER_APPEAR_X,
+            HomeConfig.DUEL_JIANGHU_KILLER_APPEAR_Y + 2,
+            420,
+            80,
+            new Color(255, 232, 175, 255),
+        );
+        title.node.active = true;
+        title.string = '\u6740\u624b\u51fa\u73b0';
+        title.fontSize = 58;
+        title.lineHeight = 66;
+        title.horizontalAlign = HorizontalTextAlignment.CENTER;
+        title.overflow = Overflow.SHRINK;
+        this.setLabelOutline(title, new Color(98, 28, 14, 255), 4);
+        title.node.setSiblingIndex(1);
+
+        tween(banner)
+            .to(0.78, { scale: new Vec3(0.88, 0.88, 1) }, { easing: 'sineOut' })
+            .delay(0.48)
+            .to(0.74, { scale: new Vec3(1.72, 1.72, 1) }, { easing: 'backIn' })
+            .call(() => {
+                if (banner.isValid) banner.active = false;
+            })
+            .start();
+        tween(opacity)
+            .delay(1.26)
+            .to(0.74, { opacity: 0 })
+            .start();
+
+        return this.waitDuelJianghuKillerAppearDuration();
+    }
     protected buildDuelJianghuRoomLabels(page: Node): void {
         const roomsRoot = this.getOrCreateEditorNode('JianghuTaoshaRooms', page, HomeConfig.VIEW_WIDTH, HomeConfig.VIEW_HEIGHT, 0, 0);
         roomsRoot.active = true;
@@ -324,6 +415,49 @@ export abstract class HomeFeatureDuelSceneUI extends HomeFeatureDuelSceneUIHost 
             this.setLabelOutline(amountLabel, new Color(64, 31, 16, 255), 2);
             amountLabel.node.setSiblingIndex(4);
 
+            const investBg = this.getOrCreateEditorSkinnedNode(
+                'JianghuRoomInvestAmountBg',
+                room,
+                HomeConfig.DUEL_JIANGHU_ROOM_INVEST_AMOUNT_WIDTH,
+                HomeConfig.DUEL_JIANGHU_ROOM_INVEST_AMOUNT_HEIGHT,
+                HomeConfig.DUEL_JIANGHU_ROOM_INVEST_AMOUNT_X,
+                HomeConfig.DUEL_JIANGHU_ROOM_INVEST_AMOUNT_Y,
+                HomeConfig.UI_DUEL_JIANGHU_ROOM_INVEST_AMOUNT_BG,
+            );
+            investBg.active = true;
+            investBg.setSiblingIndex(5);
+
+            const investIcon = this.getOrCreateEditorSkinnedNode(
+                'JianghuRoomInvestYuanbaoIcon',
+                room,
+                HomeConfig.DUEL_JIANGHU_ROOM_INVEST_ICON_WIDTH,
+                HomeConfig.DUEL_JIANGHU_ROOM_INVEST_ICON_HEIGHT,
+                HomeConfig.DUEL_JIANGHU_ROOM_INVEST_ICON_X,
+                HomeConfig.DUEL_JIANGHU_ROOM_INVEST_AMOUNT_Y,
+                HomeConfig.UI_DUEL_YUANBAO_ICON,
+            );
+            investIcon.active = true;
+            investIcon.setSiblingIndex(6);
+
+            const investAmountLabelExisted = !!room.getChildByName('JianghuRoomInvestAmountLabel');
+            const investAmountLabel = this.getOrCreateDuelRoomLabel(
+                room,
+                'JianghuRoomInvestAmountLabel',
+                '0',
+                18,
+                HomeConfig.DUEL_JIANGHU_ROOM_INVEST_LABEL_X,
+                HomeConfig.DUEL_JIANGHU_ROOM_INVEST_AMOUNT_Y,
+                62,
+                26,
+                new Color(255, 246, 198, 255),
+            );
+            if (!investAmountLabelExisted) {
+                investAmountLabel.horizontalAlign = HorizontalTextAlignment.LEFT;
+                investAmountLabel.overflow = Overflow.SHRINK;
+            }
+            this.setLabelOutline(investAmountLabel, new Color(64, 31, 16, 255), 2);
+            investAmountLabel.node.setSiblingIndex(7);
+
             const selectRoom = (): void => {
                 if (this.duelJianghuPreviewActive) {
                     this.showToast('\u6740\u624b\u5df2\u51fa\u73b0\uff0c\u8bf7\u7b49\u5f85\u4e0b\u4e00\u671f');
@@ -351,6 +485,28 @@ export abstract class HomeFeatureDuelSceneUI extends HomeFeatureDuelSceneUIHost 
         });
 
         this.refreshDuelJianghuRoomHighlights(roomsRoot);
+        this.refreshDuelJianghuRoomInvestAmountDisplays(page);
+    }
+    protected refreshDuelJianghuRoomInvestAmountDisplays(page: Node): void {
+        const roomsRoot = page.getChildByName('JianghuTaoshaRooms');
+        if (!roomsRoot) return;
+
+        HomeConfig.DUEL_JIANGHU_ROOM_LABELS.forEach((config) => {
+            const room = roomsRoot.getChildByName(config.nodeName);
+            if (!room) return;
+
+            const amount = this.duelJianghuRoomInvestAmounts.get(config.id) || 0;
+            const label = room.getChildByName('JianghuRoomInvestAmountLabel')?.getComponent(Label);
+            if (label) label.string = this.formatDuelJianghuRoomInvestAmount(amount);
+
+            const bg = room.getChildByName('JianghuRoomInvestAmountBg');
+            const icon = room.getChildByName('JianghuRoomInvestYuanbaoIcon');
+            if (bg) bg.active = true;
+            if (icon) icon.active = true;
+        });
+    }
+    protected formatDuelJianghuRoomInvestAmount(value: number): string {
+        return value.toFixed(4).replace(/\.?0+$/, '') || '0';
     }
     protected refreshDuelJianghuRoomHighlights(roomsRoot: Node): void {
         HomeConfig.DUEL_JIANGHU_ROOM_LABELS.forEach((config) => {
@@ -410,6 +566,7 @@ export abstract class HomeFeatureDuelSceneUI extends HomeFeatureDuelSceneUIHost 
     protected openDuelJianghuReservedPage(page: Node, pageName: string, title: string): void {
         const reservedPage = this.ensureDuelJianghuReservedPage(page, pageName, title);
         this.closeDuelJianghuReservedPages(page);
+        this.hideDuelJianghuKillerAppearBanner(page);
         reservedPage.active = true;
         if (pageName === 'JianghuRecordPage') this.refreshDuelJianghuRecordPage(reservedPage);
         if (pageName === 'JianghuRankPage') this.refreshDuelJianghuRankPage(reservedPage);
@@ -566,6 +723,8 @@ export abstract class HomeFeatureDuelSceneUI extends HomeFeatureDuelSceneUIHost 
 
         const popup = this.ensureDuelJianghuResultPopup(page);
         popup.active = false;
+        const banner = page.getChildByName('JianghuKillerAppearBanner');
+        if (banner) banner.active = false;
     }
     protected ensureDuelJianghuResultPopup(page: Node): Node {
         const existed = !!page.getChildByName('JianghuResultPopup');
@@ -614,6 +773,17 @@ export abstract class HomeFeatureDuelSceneUI extends HomeFeatureDuelSceneUIHost 
             event.propagationStopped = true;
         }, this);
 
+        const titleBg = this.getOrCreateEditorSkinnedNode(
+            'JianghuResultTitleBg',
+            popup,
+            HomeConfig.DUEL_JIANGHU_RESULT_TITLE_BG_WIDTH,
+            HomeConfig.DUEL_JIANGHU_RESULT_TITLE_BG_HEIGHT,
+            0,
+            260,
+            HomeConfig.UI_DUEL_JIANGHU_RESULT_TITLE_BG,
+        );
+        titleBg.setSiblingIndex(2);
+
         const title = this.getOrCreateDuelRoomLabel(
             popup,
             'JianghuResultTitleLabel',
@@ -629,7 +799,7 @@ export abstract class HomeFeatureDuelSceneUI extends HomeFeatureDuelSceneUIHost 
         title.horizontalAlign = HorizontalTextAlignment.CENTER;
         title.overflow = Overflow.SHRINK;
         this.setLabelOutline(title, new Color(98, 35, 12, 255), 4);
-        title.node.setSiblingIndex(2);
+        title.node.setSiblingIndex(3);
 
         const mode = this.getOrCreateDuelRoomLabel(
             popup,
@@ -645,7 +815,7 @@ export abstract class HomeFeatureDuelSceneUI extends HomeFeatureDuelSceneUIHost 
         mode.horizontalAlign = HorizontalTextAlignment.CENTER;
         mode.overflow = Overflow.SHRINK;
         this.setLabelOutline(mode, new Color(70, 34, 18, 255), 2);
-        mode.node.setSiblingIndex(3);
+        mode.node.setSiblingIndex(4);
 
         const desc = this.getOrCreateDuelRoomLabel(
             popup,
@@ -662,7 +832,7 @@ export abstract class HomeFeatureDuelSceneUI extends HomeFeatureDuelSceneUIHost 
         desc.overflow = Overflow.RESIZE_HEIGHT;
         desc.enableWrapText = true;
         this.setLabelOutline(desc, new Color(55, 30, 16, 255), 2);
-        desc.node.setSiblingIndex(4);
+        desc.node.setSiblingIndex(5);
 
         const investIcon = this.getOrCreateEditorSkinnedNode(
             'JianghuResultInvestYuanbaoIcon',
@@ -673,7 +843,7 @@ export abstract class HomeFeatureDuelSceneUI extends HomeFeatureDuelSceneUIHost 
             5,
             HomeConfig.UI_DUEL_YUANBAO_ICON,
         );
-        investIcon.setSiblingIndex(5);
+        investIcon.setSiblingIndex(6);
         const investLabel = this.getOrCreateDuelRoomLabel(
             popup,
             'JianghuResultInvestLabel',
@@ -688,7 +858,7 @@ export abstract class HomeFeatureDuelSceneUI extends HomeFeatureDuelSceneUIHost 
         investLabel.horizontalAlign = HorizontalTextAlignment.LEFT;
         investLabel.overflow = Overflow.SHRINK;
         this.setLabelOutline(investLabel, new Color(70, 34, 18, 255), 2);
-        investLabel.node.setSiblingIndex(6);
+        investLabel.node.setSiblingIndex(7);
 
         const rewardIcon = this.getOrCreateEditorSkinnedNode(
             'JianghuResultRewardYuanbaoIcon',
@@ -699,7 +869,7 @@ export abstract class HomeFeatureDuelSceneUI extends HomeFeatureDuelSceneUIHost 
             5,
             HomeConfig.UI_DUEL_YUANBAO_ICON,
         );
-        rewardIcon.setSiblingIndex(7);
+        rewardIcon.setSiblingIndex(8);
         const rewardLabel = this.getOrCreateDuelRoomLabel(
             popup,
             'JianghuResultRewardLabel',
@@ -714,7 +884,7 @@ export abstract class HomeFeatureDuelSceneUI extends HomeFeatureDuelSceneUIHost 
         rewardLabel.horizontalAlign = HorizontalTextAlignment.LEFT;
         rewardLabel.overflow = Overflow.SHRINK;
         this.setLabelOutline(rewardLabel, new Color(70, 34, 18, 255), 2);
-        rewardLabel.node.setSiblingIndex(8);
+        rewardLabel.node.setSiblingIndex(9);
 
         const confirm = popup.getChildByName('BtnJianghuResultConfirm');
         if (confirm) {

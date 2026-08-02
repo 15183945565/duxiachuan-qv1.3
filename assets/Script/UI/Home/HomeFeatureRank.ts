@@ -189,7 +189,7 @@ export abstract class HomeFeatureRank extends HomeViewBase {
         const badgeFrame = rank === 1 ? HomeConfig.UI_RANK_BADGE_1 : rank === 2 ? HomeConfig.UI_RANK_BADGE_2 : HomeConfig.UI_RANK_BADGE_3;
         this.createSlicedSkinnedNode('RankTopCardSkin', card, width, height, 0, 0, frame).setSiblingIndex(0);
         this.createSkinnedNode('RankTopBadge', card, rank === 1 ? 72 : 64, 64, 0, height / 2 + 26, badgeFrame).setSiblingIndex(1);
-        this.createSkinnedNode('RankTopAvatarIcon', card, 92, 92, 0, -12, HomeConfig.UI_HOME_AVATAR).setSiblingIndex(2);
+        this.createSkinnedNode('RankTopAvatarIcon', card, 92, 92, 0, -12, this.getHomeAvatarSkin('female')).setSiblingIndex(2);
         const role = this.createLabel(card, 'RankTopRoleLabel', '', 24, 0, -82, width - 40, 36, new Color(255, 245, 215, 255));
         this.applyStrongTextStyle(role);
         const power = this.createLabel(card, 'RankTopPower', '\u6218\u529b 0', 25, 0, height / 2 - 88, width - 36, 42, new Color(255, 226, 142, 255));
@@ -216,7 +216,7 @@ export abstract class HomeFeatureRank extends HomeViewBase {
         const avatar = card.getChildByName('RankTopAvatarIcon');
         if (avatar) {
             const avatarSize = avatar.getComponent(UITransform)?.contentSize;
-            this.applyUiSkin(avatar, HomeConfig.UI_HOME_AVATAR, avatarSize?.width || 92, avatarSize?.height || 92);
+            this.applyUiSkin(avatar, this.getHomeAvatarSkin(data.gender), avatarSize?.width || 92, avatarSize?.height || 92);
         }
         this.setRankLabel(card, 'RankTopRoleLabel', data.gender === 'female' ? '\u5973\u89d2\u8272' : '\u7537\u89d2\u8272');
         this.setRankLabel(card, 'RankTopPower', `\u6218\u529b ${data.power}`);
@@ -231,7 +231,7 @@ export abstract class HomeFeatureRank extends HomeViewBase {
         skin.setSiblingIndex(0);
         const rankLabel = this.createLabel(row, 'RankRowNo', '4', 30, -278, 0, 76, 70, new Color(42, 43, 43, 255));
         this.applyRankListTextStyle(rankLabel);
-        this.createSkinnedNode('RankRowAvatarIcon', row, 70, 70, -196, 0, HomeConfig.UI_HOME_AVATAR).setSiblingIndex(1);
+        this.createSkinnedNode('RankRowAvatarIcon', row, 70, 70, -196, 0, this.getHomeAvatarSkin('female')).setSiblingIndex(1);
         const name = this.createLabel(row, 'RankRowName', '\u5c11\u4fa0', 28, -32, 0, 260, 62, new Color(30, 34, 35, 255));
         name.horizontalAlign = HorizontalTextAlignment.LEFT;
         this.applyRankListTextStyle(name);
@@ -287,7 +287,7 @@ export abstract class HomeFeatureRank extends HomeViewBase {
         const avatar = row.getChildByName('RankRowAvatarIcon');
         if (avatar) {
             const avatarSize = avatar.getComponent(UITransform)?.contentSize;
-            this.applyUiSkin(avatar, HomeConfig.UI_HOME_AVATAR, avatarSize?.width || 70, avatarSize?.height || 70);
+            this.applyUiSkin(avatar, this.getHomeAvatarSkin(data.gender), avatarSize?.width || 70, avatarSize?.height || 70);
         }
         this.setRankLabel(row, 'RankRowName', data.name);
         this.setRankLabel(row, 'RankRowPower', `\u6218\u529b ${data.power}`);

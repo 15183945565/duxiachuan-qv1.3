@@ -135,6 +135,7 @@ type BagDecomposeResult = {
 type DuelJianghuRoomConfig = typeof HomeConfig.DUEL_JIANGHU_ROOM_LABELS[number];
 type DuelJianghuRoomId = DuelJianghuRoomConfig['id'];
 type DuelJianghuActorKind = 'common' | 'lobbyCommon' | 'player' | 'assassin' | 'doubleMale' | 'doubleFemale' | 'rebel' | 'guardSoldier' | 'general';
+type DuelJianghuSpecialRoomKind = 'guardSoldier' | 'general';
 type DuelJianghuActorAnimation = 'walk' | 'stand' | 'attack' | 'hurt' | 'dead';
 type DuelJianghuActorRuntime = {
     node: Node;
@@ -153,7 +154,8 @@ type DuelJianghuRoundOutcome = {
 type DuelJianghuRoundPlan = DuelJianghuRoundOutcome & {
     targetRoomIds: DuelJianghuRoomId[];
     killerKinds: DuelJianghuActorKind[];
-    specialKind?: DuelJianghuActorKind;
+    specialKind?: DuelJianghuSpecialRoomKind;
+    specialKindsByRoom?: Partial<Record<DuelJianghuRoomId, DuelJianghuSpecialRoomKind>>;
 };
 type DuelJianghuConfrontPositions = {
     special: Vec3;
@@ -190,6 +192,7 @@ export abstract class HomeViewRoleBag extends HomeViewBase {
     protected duelJianghuNpcSpawnInProgress = false;
     protected duelJianghuPlayerActor: DuelJianghuActorRuntime | null = null;
     protected duelJianghuLobbyPlayerPromise: Promise<DuelJianghuActorRuntime | null> | null = null;
+    protected readonly duelJianghuRoomInvestAmounts = new Map<DuelJianghuRoomId, number>();
     protected duelJianghuRankMetric: DuelJianghuRankMetric = 'dodge';
     protected duelJianghuRankPeriod: DuelJianghuRankPeriod = 'today';
     protected readonly duelJianghuActors: DuelJianghuActorRuntime[] = [];
@@ -226,6 +229,7 @@ export abstract class HomeViewRoleBag extends HomeViewBase {
             duelJianghuNpcSpawnInProgress: false,
             duelJianghuPlayerActor: null,
             duelJianghuLobbyPlayerPromise: null,
+            duelJianghuRoomInvestAmounts: new Map<DuelJianghuRoomId, number>(),
             duelJianghuRankMetric: 'dodge',
             duelJianghuRankPeriod: 'today',
             duelJianghuActors: [],

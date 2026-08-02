@@ -8,7 +8,9 @@ import {
     Overflow,
     ScrollView,
     UITransform,
+    VerticalTextAlignment,
 } from 'cc';
+import { applyMicrosoftYaHeiFontToTree } from '../Common/UIFont';
 import * as HomeConfig from './HomeConfig';
 import { HomeViewBase } from './HomeViewBase';
 
@@ -17,7 +19,9 @@ type DuelJianghuRoomId = typeof HomeConfig.DUEL_JIANGHU_ROOM_LABELS[number]['id'
 type DuelJianghuRecordKillEntry = {
     period: number;
     roomName: string;
+    roomNames?: string[];
     killerName: string;
+    resultTags?: Array<'counterKill'>;
 };
 
 type DuelJianghuPersonalRecordEntry = {
@@ -28,6 +32,26 @@ type DuelJianghuPersonalRecordEntry = {
     success: boolean;
     investAmount: number;
     rewardAmount: number;
+};
+
+type DuelJianghuRecordLabelStyle = {
+    positionX: number;
+    positionY: number;
+    positionZ: number;
+    scaleX: number;
+    scaleY: number;
+    scaleZ: number;
+    width: number;
+    height: number;
+    fontSize: number;
+    lineHeight: number;
+    color: Color;
+    horizontalAlign: HorizontalTextAlignment;
+    verticalAlign: VerticalTextAlignment;
+    overflow: Overflow;
+    enableOutline: boolean;
+    outlineColor: Color;
+    outlineWidth: number;
 };
 
 abstract class HomeFeatureDuelRecordHost extends HomeViewBase {
@@ -71,10 +95,12 @@ export abstract class HomeFeatureDuelRecord extends HomeFeatureDuelRecordHost {
             backButton.off(Node.EventType.TOUCH_CANCEL);
         }
 
-        const titleBar = this.getOrCreateEditorSkinnedNode('JianghuRecordHeaderTitleBar', recordPage, 330, 72, 0, 680, HomeConfig.UI_DUEL_JIANGHU_RECORD_TITLE_BAR);
+        const titleBar = this.getOrCreateEditorSkinnedNode('JianghuRecordHeaderTitleBar', recordPage, 182, 36, 0, 680, HomeConfig.UI_DUEL_JIANGHU_RECORD_TITLE_BAR);
         titleBar.active = true;
         titleBar.setSiblingIndex(2);
-        const title = this.getOrCreateDuelRoomLabel(titleBar, 'JianghuRecordHeaderTitleLabel', '\u8bb0\u5f55', 38, 0, 4, 230, 58, new Color(60, 44, 30, 255));
+        const title = this.getOrCreateDuelRoomLabel(titleBar, 'JianghuRecordHeaderTitleLabel', '\u8bb0\u5f55', 27, 0, 2, 130, 32, new Color(60, 44, 30, 255));
+        title.fontSize = 27;
+        title.lineHeight = 33;
         title.horizontalAlign = HorizontalTextAlignment.CENTER;
         title.overflow = Overflow.SHRINK;
         this.setLabelOutline(title, new Color(255, 246, 214, 255), 2);
@@ -113,23 +139,23 @@ export abstract class HomeFeatureDuelRecord extends HomeFeatureDuelRecordHost {
         scrollView.horizontal = false;
         scrollView.vertical = true;
         scrollView.inertia = true;
-        scrollView.elastic = true;
+        scrollView.elastic = false;
         scrollView.cancelInnerEvents = true;
         scrollView.content = content;
         return scrollView;
     }
 
-    protected ensureDuelJianghuRecordSectionTitle(parent: Node, nodeName: string, text: string, y: number, width = 410): Node {
-        const titleBar = this.getOrCreateEditorSkinnedNode(nodeName, parent, width, 64, 0, y, HomeConfig.UI_DUEL_JIANGHU_RECORD_TITLE_BAR);
+    protected ensureDuelJianghuRecordSectionTitle(parent: Node, nodeName: string, text: string, y: number, width = 220): Node {
+        const titleBar = this.getOrCreateEditorSkinnedNode(nodeName, parent, width, 42, 0, y, HomeConfig.UI_DUEL_JIANGHU_RECORD_SECTION_TITLE_BAR);
         titleBar.active = true;
-        const label = this.getOrCreateDuelRoomLabel(titleBar, `${nodeName}Label`, text, 29, 0, 2, width - 58, 48, new Color(73, 57, 37, 255));
+        const label = this.getOrCreateDuelRoomLabel(titleBar, `${nodeName}Label`, text, 23, 0, 2, width - 28, 36, new Color(73, 57, 37, 255));
         label.string = text;
-        label.fontSize = 29;
-        label.lineHeight = 35;
+        label.fontSize = 23;
+        label.lineHeight = 29;
         label.color = new Color(73, 57, 37, 255);
         label.horizontalAlign = HorizontalTextAlignment.CENTER;
         label.overflow = Overflow.SHRINK;
-        this.setLabelOutline(label, new Color(255, 248, 220, 255), 1);
+        this.setLabelOutline(label, new Color(255, 248, 220, 255), 0.5);
         label.node.setSiblingIndex(0);
         return titleBar;
     }
@@ -188,41 +214,190 @@ export abstract class HomeFeatureDuelRecord extends HomeFeatureDuelRecordHost {
     protected ensureDuelJianghuRecordValueCell(parent: Node, name: string, x: number, y: number, width: number, height: number): Node {
         const cell = this.getOrCreateEditorSkinnedNode(name, parent, width, height, x, y, HomeConfig.UI_DUEL_JIANGHU_RECORD_ROOM_CELL);
         cell.active = true;
-        cell.setPosition(x, y, 0);
-        (cell.getComponent(UITransform) || cell.addComponent(UITransform)).setContentSize(width, height);
+        const nameLabelExisted = !!cell.getChildByName(`${name}NameLabel`);
         const nameLabel = this.getOrCreateDuelRoomLabel(cell, `${name}NameLabel`, '\u79d8\u5b9d\u5e7d\u9601', Math.min(24, Math.max(18, Math.floor(width / 7))), 0, 18, width - 22, 34, new Color(102, 66, 48, 255));
-        nameLabel.horizontalAlign = HorizontalTextAlignment.CENTER;
-        nameLabel.overflow = Overflow.SHRINK;
-        this.setLabelOutline(nameLabel, new Color(255, 246, 218, 255), 1);
+        if (!nameLabelExisted) {
+            nameLabel.horizontalAlign = HorizontalTextAlignment.CENTER;
+            nameLabel.overflow = Overflow.SHRINK;
+            this.setLabelOutline(nameLabel, new Color(255, 246, 218, 255), 0.5);
+        }
+        const valueLabelExisted = !!cell.getChildByName(`${name}ValueLabel`);
         const valueLabel = this.getOrCreateDuelRoomLabel(cell, `${name}ValueLabel`, '0', Math.min(24, Math.max(19, Math.floor(width / 7))), 0, -20, width - 24, 34, new Color(42, 36, 28, 255));
-        valueLabel.horizontalAlign = HorizontalTextAlignment.CENTER;
-        valueLabel.overflow = Overflow.SHRINK;
-        this.setLabelOutline(valueLabel, new Color(255, 246, 218, 255), 1);
+        if (!valueLabelExisted) {
+            valueLabel.horizontalAlign = HorizontalTextAlignment.CENTER;
+            valueLabel.overflow = Overflow.SHRINK;
+            this.setLabelOutline(valueLabel, new Color(255, 246, 218, 255), 0.5);
+        }
+        if (name.startsWith('JianghuRecordRecentCell_')) this.ensureDuelJianghuRecordRecentResultLabel(cell);
+        this.syncDuelJianghuRecordValueCellRootFromTemplate(cell);
         return cell;
     }
 
+    protected ensureDuelJianghuRecordRecentResultLabel(cell: Node): Label {
+        const name = `${cell.name}ResultLabel`;
+        const existed = !!cell.getChildByName(name);
+        const label = this.getOrCreateDuelRoomLabel(cell, name, '\uff08\u53cd\u6740\uff09', 17, 0, -34, 98, 24, new Color(184, 42, 32, 255));
+        if (!existed) {
+            label.horizontalAlign = HorizontalTextAlignment.CENTER;
+            label.overflow = Overflow.SHRINK;
+            this.clearDuelJianghuRecordLabelOutline(label);
+            label.node.active = false;
+        }
+        return label;
+    }
+
     protected ensureDuelJianghuRecordPersonalRow(parent: Node, name: string, y: number): Node {
+        const existing = parent.getChildByName(name);
         const row = this.getOrCreateEditorSkinnedNode(name, parent, 640, 142, 0, y, HomeConfig.UI_DUEL_JIANGHU_RECORD_PERSONAL_ROW);
         row.active = true;
-        row.setPosition(0, y, 0);
-        row.setScale(HomeConfig.DUEL_JIANGHU_RECORD_PERSONAL_ROW_SCALE, HomeConfig.DUEL_JIANGHU_RECORD_PERSONAL_ROW_SCALE, 1);
-        (row.getComponent(UITransform) || row.addComponent(UITransform)).setContentSize(640, 142);
+        if (!existing) row.setScale(HomeConfig.DUEL_JIANGHU_RECORD_PERSONAL_ROW_SCALE, HomeConfig.DUEL_JIANGHU_RECORD_PERSONAL_ROW_SCALE, 1);
         const labels = [
-            { suffix: 'PeriodLabel', text: '15472\u671f', fontSize: 24, x: -252, y: 42, width: 118, color: new Color(48, 42, 31, 255) },
-            { suffix: 'TimeLabel', text: '2026-07-21 12:00:00', fontSize: 22, x: -35, y: 42, width: 300, color: new Color(48, 42, 31, 255) },
-            { suffix: 'StatusLabel', text: '\u8eb2\u907f\u6210\u529f', fontSize: 25, x: 246, y: 42, width: 150, color: new Color(72, 150, 64, 255) },
-            { suffix: 'SelectLabel', text: '\u6211\u9009\u62e9\uff1a[\u609f\u9053\u9759\u575b]', fontSize: 21, x: -150, y: -10, width: 310, color: new Color(67, 52, 38, 255) },
-            { suffix: 'TargetLabel', text: '\u88ad\u51fb\uff1a[\u79d8\u5b9d\u5e7d\u9601]', fontSize: 21, x: 172, y: -10, width: 310, color: new Color(67, 52, 38, 255) },
-            { suffix: 'InvestLabel', text: '\u6295\u5165\u5143\u5b9d\uff1a1', fontSize: 21, x: -150, y: -52, width: 310, color: new Color(67, 52, 38, 255) },
-            { suffix: 'RewardLabel', text: '\u83b7\u5f97\u5143\u5b9d\uff1a1.2', fontSize: 21, x: 172, y: -52, width: 310, color: new Color(67, 52, 38, 255) },
+            { suffix: 'PeriodLabel', text: '15472\u671f', fontSize: 25, x: -252, y: 42, width: 118, color: new Color(42, 36, 27, 255) },
+            { suffix: 'TimeLabel', text: '2026-07-21 12:00:00', fontSize: 23, x: -35, y: 42, width: 300, color: new Color(42, 36, 27, 255) },
+            { suffix: 'StatusLabel', text: '\u8eb2\u907f\u6210\u529f', fontSize: 26, x: 246, y: 42, width: 150, color: new Color(42, 138, 50, 255) },
+            { suffix: 'SelectLabel', text: '\u6211\u9009\u62e9\uff1a[\u609f\u9053\u9759\u575b]', fontSize: 22, x: -150, y: -10, width: 310, color: new Color(43, 34, 25, 255) },
+            { suffix: 'TargetLabel', text: '\u88ad\u51fb\uff1a[\u79d8\u5b9d\u5e7d\u9601]', fontSize: 22, x: 172, y: -10, width: 310, color: new Color(43, 34, 25, 255) },
+            { suffix: 'InvestLabel', text: '\u6295\u5165\u5143\u5b9d\uff1a1', fontSize: 22, x: -150, y: -52, width: 310, color: new Color(43, 34, 25, 255) },
+            { suffix: 'RewardLabel', text: '\u83b7\u5f97\u5143\u5b9d\uff1a1.2', fontSize: 22, x: 172, y: -52, width: 310, color: new Color(43, 34, 25, 255) },
         ];
         labels.forEach((item) => {
+            const labelExisted = !!row.getChildByName(`${name}${item.suffix}`);
             const label = this.getOrCreateDuelRoomLabel(row, `${name}${item.suffix}`, item.text, item.fontSize, item.x, item.y, item.width, 34, item.color);
-            label.horizontalAlign = item.suffix === 'StatusLabel' ? HorizontalTextAlignment.CENTER : HorizontalTextAlignment.LEFT;
-            label.overflow = Overflow.SHRINK;
-            this.setLabelOutline(label, new Color(255, 247, 220, 255), 1);
+            if (!labelExisted) {
+                label.horizontalAlign = item.suffix === 'StatusLabel' ? HorizontalTextAlignment.CENTER : HorizontalTextAlignment.LEFT;
+                label.overflow = Overflow.SHRINK;
+                if (item.suffix === 'StatusLabel') this.clearDuelJianghuRecordLabelOutline(label);
+                else this.setLabelOutline(label, new Color(255, 247, 220, 255), 0.5);
+            }
         });
+        this.syncDuelJianghuRecordPersonalRowFromTemplate(parent, row);
         return row;
+    }
+
+    protected syncDuelJianghuRecordValueCellRootFromTemplate(cell: Node): void {
+        const template = this.getDuelJianghuRecordValueCellTemplate(cell);
+        if (!template || template === cell) return;
+        const templateTransform = template.getComponent(UITransform);
+        if (templateTransform) {
+            const transform = cell.getComponent(UITransform) || cell.addComponent(UITransform);
+            transform.setContentSize(templateTransform.contentSize.width, templateTransform.contentSize.height);
+        }
+        cell.setScale(template.scale.x, template.scale.y, template.scale.z);
+    }
+
+    protected syncDuelJianghuRecordPersonalRowFromTemplate(parent: Node, row: Node): void {
+        const template = parent.getChildByName('JianghuRecordPersonalRow_1');
+        if (!template || template === row) return;
+
+        const rowY = row.position.y;
+        row.setPosition(template.position.x, rowY, template.position.z);
+        row.setScale(template.scale.x, template.scale.y, template.scale.z);
+
+        const templateTransform = template.getComponent(UITransform);
+        if (templateTransform) {
+            const rowTransform = row.getComponent(UITransform) || row.addComponent(UITransform);
+            rowTransform.setContentSize(templateTransform.contentSize.width, templateTransform.contentSize.height);
+        }
+
+        [
+            'PeriodLabel',
+            'TimeLabel',
+            'StatusLabel',
+            'SelectLabel',
+            'TargetLabel',
+            'InvestLabel',
+            'RewardLabel',
+        ].forEach((suffix) => {
+            const source = template.getChildByName(`JianghuRecordPersonalRow_1${suffix}`)?.getComponent(Label);
+            const target = row.getChildByName(`${row.name}${suffix}`)?.getComponent(Label);
+            if (!source || !target) return;
+            this.applyDuelJianghuRecordLabelStyle(this.captureDuelJianghuRecordLabelStyle(source), target);
+        });
+    }
+
+    protected getDuelJianghuRecordValueCellTemplate(cell: Node): Node | null {
+        const parent = cell.parent;
+        if (!parent) return cell;
+        if (cell.name.startsWith('JianghuRecordStatsCell_')) return parent.getChildByName('JianghuRecordStatsCell_mibao_youge') || cell;
+        if (cell.name.startsWith('JianghuRecordRecentCell_')) return parent.getChildByName('JianghuRecordRecentCell_1') || cell;
+        if (cell.name.startsWith('JianghuRecordSummaryCell_')) return parent.getChildByName('JianghuRecordSummaryCell_Invest') || cell;
+        return cell;
+    }
+
+    protected applyDuelJianghuRecordValueCellStyle(cell: Node): void {
+        const template = this.getDuelJianghuRecordValueCellTemplate(cell);
+        if (!template) return;
+        const nameSource = template.getChildByName(`${template.name}NameLabel`)?.getComponent(Label);
+        const valueSource = template.getChildByName(`${template.name}ValueLabel`)?.getComponent(Label);
+        const nameStyle = nameSource ? this.captureDuelJianghuRecordLabelStyle(nameSource) : null;
+        const valueStyle = valueSource ? this.captureDuelJianghuRecordLabelStyle(valueSource) : null;
+        const nameLabel = cell.getChildByName(`${cell.name}NameLabel`)?.getComponent(Label);
+        const valueLabel = cell.getChildByName(`${cell.name}ValueLabel`)?.getComponent(Label);
+        this.applyDuelJianghuRecordLabelStyle(nameStyle, nameLabel);
+        this.applyDuelJianghuRecordLabelStyle(valueStyle, valueLabel);
+        const resultSource = template.getChildByName(`${template.name}ResultLabel`)?.getComponent(Label);
+        const resultLabel = cell.getChildByName(`${cell.name}ResultLabel`)?.getComponent(Label);
+        if (resultSource && resultLabel) this.applyDuelJianghuRecordLabelStyle(this.captureDuelJianghuRecordLabelStyle(resultSource), resultLabel);
+    }
+
+    protected captureDuelJianghuRecordLabelStyle(label: Label): DuelJianghuRecordLabelStyle {
+        const transform = label.node.getComponent(UITransform);
+        return {
+            positionX: label.node.position.x,
+            positionY: label.node.position.y,
+            positionZ: label.node.position.z,
+            scaleX: label.node.scale.x,
+            scaleY: label.node.scale.y,
+            scaleZ: label.node.scale.z,
+            width: transform?.contentSize.width || 0,
+            height: transform?.contentSize.height || 0,
+            fontSize: label.fontSize,
+            lineHeight: label.lineHeight,
+            color: this.cloneDuelJianghuRecordColor(label.color),
+            horizontalAlign: label.horizontalAlign,
+            verticalAlign: label.verticalAlign,
+            overflow: label.overflow,
+            enableOutline: label.enableOutline,
+            outlineColor: this.cloneDuelJianghuRecordColor(label.outlineColor),
+            outlineWidth: label.outlineWidth,
+        };
+    }
+
+    protected applyDuelJianghuRecordLabelStyle(style: DuelJianghuRecordLabelStyle | null, label: Label | null | undefined): void {
+        if (!style || !label) return;
+        this.applyDuelJianghuRecordLabelLayout(style, label);
+        this.applyDuelJianghuRecordLabelTextStyle(style, label);
+    }
+
+    protected applyDuelJianghuRecordLabelLayout(style: DuelJianghuRecordLabelStyle | null, label: Label | null | undefined): void {
+        if (!style || !label) return;
+        label.node.setPosition(style.positionX, style.positionY, style.positionZ);
+        label.node.setScale(style.scaleX, style.scaleY, style.scaleZ);
+        const transform = label.node.getComponent(UITransform) || label.node.addComponent(UITransform);
+        if (style.width > 0 && style.height > 0) transform.setContentSize(style.width, style.height);
+        label.horizontalAlign = style.horizontalAlign;
+        label.verticalAlign = style.verticalAlign;
+        label.overflow = style.overflow;
+    }
+
+    protected applyDuelJianghuRecordLabelTextStyle(style: DuelJianghuRecordLabelStyle | null, label: Label | null | undefined): void {
+        if (!style || !label) return;
+        label.fontSize = style.fontSize;
+        label.lineHeight = style.lineHeight;
+        label.color = this.cloneDuelJianghuRecordColor(style.color);
+        label.enableOutline = style.enableOutline;
+        label.outlineColor = this.cloneDuelJianghuRecordColor(style.outlineColor);
+        label.outlineWidth = style.outlineWidth;
+    }
+
+    protected cloneDuelJianghuRecordColor(color: Color): Color {
+        return new Color(color.r, color.g, color.b, color.a);
+    }
+
+    protected clearDuelJianghuRecordLabelOutline(label: Label | null | undefined): void {
+        if (!label) return;
+        label.enableOutline = false;
+        label.outlineWidth = 0;
     }
 
     protected ensureDuelJianghuRecordStatDetailPanel(recordPage: Node): Node {
@@ -234,7 +409,7 @@ export abstract class HomeFeatureDuelRecord extends HomeFeatureDuelRecordHost {
         const bg = this.getOrCreateEditorSkinnedNode('JianghuRecordStatDetailBg', detail, 690, 1320, 0, -24, HomeConfig.UI_DUEL_JIANGHU_RECORD_STAT_PANEL);
         bg.active = true;
         bg.setSiblingIndex(0);
-        this.ensureDuelJianghuRecordSectionTitle(detail, 'JianghuRecordStatDetailTitleBar', '\u8fd1100\u671f\u88ab\u6740\u7edf\u8ba1', 608, 430);
+        this.ensureDuelJianghuRecordSectionTitle(detail, 'JianghuRecordStatDetailTitleBar', '\u8fd1100\u671f\u88ab\u6740\u7edf\u8ba1', 608);
 
         const back = this.getOrCreateEditorSkinnedNode('JianghuRecordStatDetailBackButton', detail, 68, 68, -294, 610, HomeConfig.UI_RANK_BACK);
         back.active = true;
@@ -265,6 +440,7 @@ export abstract class HomeFeatureDuelRecord extends HomeFeatureDuelRecordHost {
         if (mainContent) this.refreshDuelJianghuRecordPersonalRows(mainContent, personalRecords);
         const detail = recordPage.getChildByName('JianghuRecordStatDetailPanel');
         if (detail) detail.active = false;
+        this.applyDuelJianghuRecordFont(recordPage);
     }
 
     protected refreshDuelJianghuRecordStatsPanel(panel: Node, stats: Array<{ roomName: string; count: number; roomId: DuelJianghuRoomId }>): void {
@@ -277,7 +453,7 @@ export abstract class HomeFeatureDuelRecord extends HomeFeatureDuelRecordHost {
     protected refreshDuelJianghuRecordRecentPanel(panel: Node, entries: DuelJianghuRecordKillEntry[]): void {
         entries.forEach((entry, index) => {
             const cell = panel.getChildByName(`JianghuRecordRecentCell_${index + 1}`);
-            this.setDuelJianghuRecordValueCell(cell, entry.roomName, `${entry.period}\u671f`);
+            this.setDuelJianghuRecordRecentCell(cell, entry);
         });
     }
 
@@ -296,7 +472,8 @@ export abstract class HomeFeatureDuelRecord extends HomeFeatureDuelRecordHost {
             const status = row.getChildByName(`${row.name}StatusLabel`)?.getComponent(Label);
             if (status) {
                 status.string = record.success ? '\u8eb2\u907f\u6210\u529f' : '\u8eb2\u907f\u5931\u8d25';
-                status.color = record.success ? new Color(72, 150, 64, 255) : new Color(188, 55, 42, 255);
+                status.color = record.success ? new Color(42, 138, 50, 255) : new Color(186, 46, 36, 255);
+                this.clearDuelJianghuRecordLabelOutline(status);
             }
             const period = row.getChildByName(`${row.name}PeriodLabel`)?.getComponent(Label);
             if (period) period.string = `${record.period}\u671f`;
@@ -335,24 +512,46 @@ export abstract class HomeFeatureDuelRecord extends HomeFeatureDuelRecordHost {
             const period = this.getOrCreateDuelRoomLabel(row, `${row.name}PeriodLabel`, `${entry.period}\u671f`, 22, -222, 0, 120, 42, new Color(64, 46, 32, 255));
             period.horizontalAlign = HorizontalTextAlignment.CENTER;
             period.overflow = Overflow.SHRINK;
-            this.setLabelOutline(period, new Color(255, 248, 220, 255), 1);
+            this.setLabelOutline(period, new Color(255, 248, 220, 255), 0.5);
             const room = this.getOrCreateDuelRoomLabel(row, `${row.name}RoomLabel`, `\u88ab\u6740\u623f\u95f4\uff1a${entry.roomName}`, 22, 10, 0, 270, 42, new Color(64, 46, 32, 255));
             room.horizontalAlign = HorizontalTextAlignment.LEFT;
             room.overflow = Overflow.SHRINK;
-            this.setLabelOutline(room, new Color(255, 248, 220, 255), 1);
+            this.setLabelOutline(room, new Color(255, 248, 220, 255), 0.5);
             const killer = this.getOrCreateDuelRoomLabel(row, `${row.name}KillerLabel`, entry.killerName, 21, 222, 0, 130, 42, new Color(126, 70, 42, 255));
             killer.horizontalAlign = HorizontalTextAlignment.CENTER;
             killer.overflow = Overflow.SHRINK;
-            this.setLabelOutline(killer, new Color(255, 248, 220, 255), 1);
+            this.setLabelOutline(killer, new Color(255, 248, 220, 255), 0.5);
         });
     }
 
     protected setDuelJianghuRecordValueCell(cell: Node | null | undefined, name: string, value: string): void {
         if (!cell) return;
+        this.applyDuelJianghuRecordValueCellStyle(cell);
         const nameLabel = cell.getChildByName(`${cell.name}NameLabel`)?.getComponent(Label);
         if (nameLabel) nameLabel.string = name;
         const valueLabel = cell.getChildByName(`${cell.name}ValueLabel`)?.getComponent(Label);
         if (valueLabel) valueLabel.string = value;
+    }
+
+    protected setDuelJianghuRecordRecentCell(cell: Node | null | undefined, entry: DuelJianghuRecordKillEntry): void {
+        if (!cell) return;
+        this.applyDuelJianghuRecordValueCellStyle(cell);
+        const roomNames = this.getDuelJianghuRecordEntryRoomNames(entry);
+        const isDoubleKill = roomNames.length > 1;
+        const hasCounterKill = (entry.resultTags || []).indexOf('counterKill') >= 0;
+        const nameLabel = cell.getChildByName(`${cell.name}NameLabel`)?.getComponent(Label);
+        if (nameLabel) {
+            nameLabel.string = roomNames.join('\n');
+            nameLabel.fontSize = isDoubleKill ? 17 : nameLabel.fontSize;
+            nameLabel.lineHeight = isDoubleKill ? 20 : nameLabel.lineHeight;
+        }
+        const valueLabel = cell.getChildByName(`${cell.name}ValueLabel`)?.getComponent(Label);
+        if (valueLabel) valueLabel.string = `${entry.period}\u671f`;
+        const resultLabel = this.ensureDuelJianghuRecordRecentResultLabel(cell);
+        resultLabel.string = '\uff08\u53cd\u6740\uff09';
+        resultLabel.color = new Color(184, 42, 32, 255);
+        this.clearDuelJianghuRecordLabelOutline(resultLabel);
+        resultLabel.node.active = hasCounterKill;
     }
 
     protected showDuelJianghuRecordStatDetail(recordPage: Node): void {
@@ -360,6 +559,7 @@ export abstract class HomeFeatureDuelRecord extends HomeFeatureDuelRecordHost {
         this.refreshDuelJianghuRecordStatDetailRows(recordPage, this.getDuelJianghuRecordKillHistory(100));
         detail.active = true;
         detail.setSiblingIndex((recordPage.children.length || 1) - 1);
+        this.applyDuelJianghuRecordFont(detail);
     }
 
     protected closeDuelJianghuRecordStatDetail(recordPage: Node): void {
@@ -371,8 +571,18 @@ export abstract class HomeFeatureDuelRecord extends HomeFeatureDuelRecordHost {
         return HomeConfig.DUEL_JIANGHU_ROOM_LABELS.map((room) => ({
             roomName: room.name,
             roomId: room.id,
-            count: history.filter((entry) => entry.roomName === room.name).length,
+            count: history.reduce((sum, entry) => sum + this.getDuelJianghuRecordEntryRoomNames(entry).filter((name) => name === room.name).length, 0),
         }));
+    }
+
+    protected getDuelJianghuRecordEntryRoomNames(entry: DuelJianghuRecordKillEntry): string[] {
+        const names = entry.roomNames?.filter((name) => !!name) || [];
+        if (names.length > 0) return names;
+        return entry.roomName ? [entry.roomName] : [];
+    }
+
+    protected applyDuelJianghuRecordFont(root: Node): void {
+        applyMicrosoftYaHeiFontToTree(root);
     }
 
     protected getDuelJianghuRecordKillHistory(limit: number): DuelJianghuRecordKillEntry[] {
@@ -381,10 +591,16 @@ export abstract class HomeFeatureDuelRecord extends HomeFeatureDuelRecordHost {
         const currentPeriod = Number(HomeConfig.DUEL_JIANGHU_CURRENT_PERIOD) || 15472;
         return Array.from({ length: limit }, (_, index) => {
             const room = rooms[(index * 3 + Math.floor(index / 4)) % rooms.length];
+            const nextRoom = rooms[(index * 3 + Math.floor(index / 4) + 2) % rooms.length];
+            const isCounterKill = index === 1 || (index > 10 && index % 17 === 0);
+            const isDoubleKill = index === 2 || (index > 10 && index % 19 === 0);
+            const roomNames = isDoubleKill ? [room.name, nextRoom.name] : [room.name];
             return {
                 period: currentPeriod - index,
                 roomName: room.name,
+                roomNames,
                 killerName: killers[index % killers.length],
+                resultTags: isCounterKill ? ['counterKill'] : undefined,
             };
         });
     }

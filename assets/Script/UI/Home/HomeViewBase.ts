@@ -431,6 +431,13 @@ export abstract class HomeViewBase extends Component {
         if (!Number.isFinite(value)) return 0;
         return Math.max(0, Math.min(1, value));
     }
+    protected getHomeAvatarSkin(gender: RoleGender = this.profile.gender): string {
+        return HomeConfig.getHomeAvatarPath(gender);
+    }
+    protected applyHomeAvatarSkin(node: Node | null | undefined, fallbackWidth: number, fallbackHeight: number, gender: RoleGender = this.profile.gender): void {
+        if (!node?.isValid) return;
+        this.applyUiSkinKeepingEditorSize(node, this.getHomeAvatarSkin(gender), fallbackWidth, fallbackHeight);
+    }
     protected async triggerEntry(entry: EntryButton): Promise<void> {
         await this.withTransitionLoading(async () => {
             await this.prepareHomeEntry(entry.nodeName);

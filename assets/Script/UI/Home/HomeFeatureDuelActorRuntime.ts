@@ -17,6 +17,7 @@ import { HomeViewBase } from './HomeViewBase';
 type DuelJianghuRoomConfig = typeof HomeConfig.DUEL_JIANGHU_ROOM_LABELS[number];
 type DuelJianghuRoomId = DuelJianghuRoomConfig['id'];
 type DuelJianghuActorKind = 'common' | 'lobbyCommon' | 'player' | 'assassin' | 'doubleMale' | 'doubleFemale' | 'rebel' | 'guardSoldier' | 'general';
+type DuelJianghuSpecialRoomKind = 'guardSoldier' | 'general';
 type DuelJianghuActorAnimation = 'walk' | 'stand' | 'attack' | 'hurt' | 'dead';
 type DuelJianghuActorRuntime = {
     node: Node;
@@ -35,7 +36,8 @@ type DuelJianghuRoundOutcome = {
 type DuelJianghuRoundPlan = DuelJianghuRoundOutcome & {
     targetRoomIds: DuelJianghuRoomId[];
     killerKinds: DuelJianghuActorKind[];
-    specialKind?: DuelJianghuActorKind;
+    specialKind?: DuelJianghuSpecialRoomKind;
+    specialKindsByRoom?: Partial<Record<DuelJianghuRoomId, DuelJianghuSpecialRoomKind>>;
 };
 type DuelJianghuConfrontPositions = {
     special: Vec3;
@@ -150,13 +152,25 @@ export abstract class HomeFeatureDuelActorRuntime extends HomeFeatureDuelActorRu
         const actorLayer = this.getDuelJianghuActorLayer(page);
         const confrontPositions = new Map<DuelJianghuRoomId, DuelJianghuConfrontPositions>();
         const specialActorByRoom = new Map<DuelJianghuRoomId, DuelJianghuActorRuntime>();
-        if (plan.specialKind) {
-            for (const roomId of plan.targetRoomIds) {
-                const positions = this.getDuelJianghuConfrontPositions(page, roomId);
-                confrontPositions.set(roomId, positions);
-                const special = await this.createDuelJianghuActor(plan.specialKind, actorLayer, `JianghuSpecial_${plan.specialKind}_${roomId}`, positions.special, roomId, '');
+        const specialRoomEntries: Array<{ roomId: DuelJianghuRoomId; kind: DuelJianghuSpecialRoomKind }> = [];
+        if (plan.specialKindsByRoom) {
+            HomeConfig.DUEL_JIANGHU_ROOM_LABELS.forEach((room) => {
+                const kind = plan.specialKindsByRoom?.[room.id];
+                if (kind) specialRoomEntries.push({ roomId: room.id, kind });
+            });
+        } else if (plan.specialKind) {
+            plan.targetRoomIds.forEach((roomId) => {
+                specialRoomEntries.push({ roomId, kind: plan.specialKind as DuelJianghuSpecialRoomKind });
+            });
+        }
+
+        if (specialRoomEntries.length > 0) {
+            for (const entry of specialRoomEntries) {
+                const positions = this.getDuelJianghuConfrontPositions(page, entry.roomId);
+                confrontPositions.set(entry.roomId, positions);
+                const special = await this.createDuelJianghuActor(entry.kind, actorLayer, `JianghuSpecial_${entry.kind}_${entry.roomId}`, positions.special, entry.roomId, '');
                 if (special) {
-                    specialActorByRoom.set(roomId, special);
+                    specialActorByRoom.set(entry.roomId, special);
                     this.faceDuelJianghuActorTo(special, positions.killer);
                 }
             }
@@ -167,7 +181,8 @@ export abstract class HomeFeatureDuelActorRuntime extends HomeFeatureDuelActorRu
             const killerKind = plan.killerKinds[index] || plan.killerKinds[0] || 'assassin';
             const positions = confrontPositions.get(roomId);
             const specialTarget = specialActorByRoom.get(roomId);
-            const onAttackHit = specialTarget && (plan.specialKind === 'guardSoldier' || plan.specialKind === 'general')
+            const targetSpecialKind = plan.specialKindsByRoom?.[roomId] || plan.specialKind;
+            const onAttackHit = specialTarget && (targetSpecialKind === 'guardSoldier' || targetSpecialKind === 'general')
                 ? () => {
                     if (!specialTarget.node.isValid) return;
                     if (positions) this.faceDuelJianghuActorTo(specialTarget, positions.killer);
@@ -180,10 +195,13 @@ export abstract class HomeFeatureDuelActorRuntime extends HomeFeatureDuelActorRu
         const specialActors = Array.from(specialActorByRoom.values())
             .filter((actor) => actor.node.isValid && (actor.kind === 'guardSoldier' || actor.kind === 'general'));
 
-        if (plan.specialKind === 'guardSoldier') {
-            specialActors.forEach((actor) => this.playDuelJianghuActorAnimation(actor, 'dead', false));
-        } else if (plan.specialKind === 'general') {
-            specialActors.forEach((actor) => {
+        const targetRoomId = plan.targetRoomIds[0];
+        const targetSpecialKind = targetRoomId ? (plan.specialKindsByRoom?.[targetRoomId] || plan.specialKind) : undefined;
+        const targetSpecialActors = specialActors.filter((actor) => actor.roomId === targetRoomId);
+        if (targetSpecialKind === 'guardSoldier') {
+            targetSpecialActors.forEach((actor) => this.playDuelJianghuActorAnimation(actor, 'dead', false));
+        } else if (targetSpecialKind === 'general') {
+            targetSpecialActors.forEach((actor) => {
                 const positions = actor.roomId ? confrontPositions.get(actor.roomId) : null;
                 if (positions) this.faceDuelJianghuActorTo(actor, positions.killer);
                 this.playDuelJianghuActorAnimation(actor, 'attack', false);
@@ -193,7 +211,7 @@ export abstract class HomeFeatureDuelActorRuntime extends HomeFeatureDuelActorRu
                 .filter((actor): actor is DuelJianghuActorRuntime => !!actor && actor.node.isValid && actor.kind === 'rebel')
                 .forEach((actor) => this.playDuelJianghuActorAnimation(actor, 'dead', false));
         }
-        if (plan.specialKind) await this.waitDuelJianghuSeconds(HomeConfig.DUEL_JIANGHU_ATTACK_WAIT_TIME);
+        if (targetSpecialKind) await this.waitDuelJianghuSeconds(HomeConfig.DUEL_JIANGHU_ATTACK_WAIT_TIME);
         const finishedKillers = new Set(killerActors.filter((actor): actor is DuelJianghuActorRuntime => !!actor && actor.node.isValid));
         this.removeDuelJianghuActors(page, (actor) => finishedKillers.has(actor));
     }
@@ -467,6 +485,11 @@ export abstract class HomeFeatureDuelActorRuntime extends HomeFeatureDuelActorRu
             moveNext();
         });
     }
+    protected getDuelJianghuDoorEntryMoveTime(from: Vec3, to: Vec3, stepTime: number): number {
+        const distance = Math.hypot(to.x - from.x, to.y - from.y);
+        const normalStepDistance = Math.max(1, Math.abs(HomeConfig.DUEL_JIANGHU_ROUTE_TURN1_X - HomeConfig.DUEL_JIANGHU_ROUTE_START_X));
+        return Math.max(0.08, (distance / normalStepDistance) * stepTime);
+    }
     protected async moveDuelJianghuActorIntoRoom(page: Node, actor: DuelJianghuActorRuntime, roomId: DuelJianghuRoomId, target: Vec3, stepTime: number, faceTarget?: Vec3, canContinue?: () => boolean): Promise<void> {
         if (!actor.node.isValid) return;
         const start = actor.node.position.clone();
@@ -474,14 +497,16 @@ export abstract class HomeFeatureDuelActorRuntime extends HomeFeatureDuelActorRu
         if (!actor.node.isValid || canContinue?.() === false) return;
 
         actor.roomId = roomId;
-        this.playDuelJianghuActorAnimation(actor, 'stand', true);
-        await this.waitDuelJianghuSeconds(HomeConfig.DUEL_JIANGHU_ROOM_DOOR_PAUSE_TIME);
-        if (!actor.node.isValid || canContinue?.() === false) return;
+        if (HomeConfig.DUEL_JIANGHU_ROOM_DOOR_PAUSE_TIME > 0) {
+            this.playDuelJianghuActorAnimation(actor, 'stand', true);
+            await this.waitDuelJianghuSeconds(HomeConfig.DUEL_JIANGHU_ROOM_DOOR_PAUSE_TIME);
+            if (!actor.node.isValid || canContinue?.() === false) return;
+        }
 
         await this.moveDuelJianghuActorAlongRoute(
             actor,
             this.compactDuelJianghuRoute(actor.node.position.clone(), [target.clone()]),
-            Math.max(0.2, stepTime * 0.72),
+            this.getDuelJianghuDoorEntryMoveTime(actor.node.position, target, stepTime),
         );
         if (!actor.node.isValid || canContinue?.() === false) return;
         if (faceTarget) this.faceDuelJianghuActorTo(actor, faceTarget);

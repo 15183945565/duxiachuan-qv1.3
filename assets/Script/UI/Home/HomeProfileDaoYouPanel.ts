@@ -310,7 +310,7 @@ function createRowTemplate(api: ProfileDaoYouRuntime, parent: Node): Node {
     row.setScale(ROW_SCALE, ROW_SCALE, 1);
     row.active = false;
     api.createSkinnedNode('ProfileDaoYouAvatarFrame', row, 86, 86, -246, 0, HomeConfig.UI_HOME_PROFILE_FRAME).setSiblingIndex(0);
-    api.createSkinnedNode('ProfileDaoYouAvatarIcon', row, 74, 74, -246, 0, HomeConfig.UI_HOME_AVATAR).setSiblingIndex(1);
+    api.createSkinnedNode('ProfileDaoYouAvatarIcon', row, 74, 74, -246, 0, HomeConfig.UI_HOME_AVATAR_FEMALE).setSiblingIndex(1);
     createStyledLabel(api, row, 'ProfileDaoYouRowName', '', 26, -54, 22, 288, 36, new Color(82, 55, 42, 255), HorizontalTextAlignment.LEFT, 0).setSiblingIndex(2);
     createStyledLabel(api, row, 'ProfileDaoYouRowLevel', '', 20, -54, -22, 288, 30, new Color(181, 54, 63, 255), HorizontalTextAlignment.LEFT, 0).setSiblingIndex(3);
     api.createSkinnedNode('ProfileDaoYouYuanbaoIcon', row, 44, 44, 150, 0, HomeConfig.UI_HOME_JIFEN_ICON).setSiblingIndex(4);
@@ -326,7 +326,7 @@ function fillProfileDaoYouRow(api: ProfileDaoYouRuntime, row: Node, member: Prof
         api.applyUiSkinKeepingEditorSize(row, HomeConfig.UI_PROFILE_DAOYOU_ROW_BG, HomeConfig.PROFILE_DAOYOU_ROW_WIDTH, HomeConfig.PROFILE_DAOYOU_ROW_HEIGHT);
     }
     ensureSkinnedChild(api, row, 'ProfileDaoYouAvatarFrame', 86, 86, -246, 0, HomeConfig.UI_HOME_PROFILE_FRAME);
-    ensureSkinnedChild(api, row, 'ProfileDaoYouAvatarIcon', 74, 74, -246, 0, HomeConfig.UI_HOME_AVATAR);
+    ensureSkinnedChild(api, row, 'ProfileDaoYouAvatarIcon', 74, 74, -246, 0, getProfileDaoYouAvatarPath(member));
     ensureSkinnedChild(api, row, 'ProfileDaoYouYuanbaoIcon', 44, 44, 150, 0, HomeConfig.UI_HOME_JIFEN_ICON);
 
     const name = ensureStyledLabel(
@@ -376,6 +376,12 @@ function fillProfileDaoYouRow(api: ProfileDaoYouRuntime, row: Node, member: Prof
         0,
     );
     yuanbao.string = `${member.yuanbao}`;
+}
+
+function getProfileDaoYouAvatarPath(member: ProfileDaoYouMember): string {
+    const match = member.id.match(/(\d+)$/);
+    const index = match ? Number(match[1]) : 1;
+    return HomeConfig.getHomeAvatarPath(index % 2 === 0 ? 'male' : 'female');
 }
 
 function setupProfileDaoYouScrollView(scrollNode: Node, content: Node): void {

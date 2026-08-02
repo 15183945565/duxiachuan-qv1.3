@@ -44,6 +44,8 @@ abstract class HomeFeatureCharacterCreationUIHost extends HomeViewBase {
  * 运行时状态仍由 Base/RoleBag 初始化器持有；本模块只负责创建页结构与交互表现。
  */
 export abstract class HomeFeatureCharacterCreationUI extends HomeFeatureCharacterCreationUIHost {
+    protected characterSelectRoleVisibleGender: RoleGender | '' = '';
+
     protected buildCharacterPanel(): void {
         const popupParent = this.pageRoot || this.popupRoot || this.node;
         const editorPanel = popupParent.getChildByName('CharacterCreatePanel') || this.findNode('CharacterCreatePanel');
@@ -62,6 +64,7 @@ export abstract class HomeFeatureCharacterCreationUI extends HomeFeatureCharacte
 
         this.characterSelectRoleSkeletons.clear();
         this.characterSelectCardRoots.clear();
+        this.characterSelectRoleVisibleGender = '';
         this.characterSelectBgSkeleton = null;
         this.previewSkeleton = null;
         this.characterGenderLabel = null;
@@ -80,12 +83,6 @@ export abstract class HomeFeatureCharacterCreationUI extends HomeFeatureCharacte
             if (!roleNodeExisted) {
                 roleNode.setScale(1, 1, 1);
             }
-            const skeleton = roleNode.getComponent(sp.Skeleton);
-            if (skeleton) {
-                this.setSkeletonVisible(skeleton, false);
-                skeleton.skeletonData = null;
-                skeleton.enabled = false;
-            }
             this.clearSpriteFrame(roleNode);
             const portraitNodeName = `CharacterSelectRolePortrait_${gender}`;
             const portraitNodeExisted = !!roleNode.getChildByName(portraitNodeName);
@@ -94,15 +91,15 @@ export abstract class HomeFeatureCharacterCreationUI extends HomeFeatureCharacte
                 portraitNode.setPosition(0, 0, 0);
                 portraitNode.setScale(1, 1, 1);
             }
-            portraitNode.active = true;
+            portraitNode.active = false;
             portraitNode.setSiblingIndex((roleNode.children.length || 1) - 1);
             roleNode.setSiblingIndex(gender === this.profile.gender ? 2 : 1);
-            this.loadCharacterSelectRoleSkeleton(gender, portraitNode);
+            this.loadCharacterSelectRoleSkeleton(gender, roleNode);
         });
 
         const speechBubble = this.getOrCreateEditorSkinnedNode('CharacterSelectSpeechBubble', this.characterPanel, 424, 214, -206, -90, HomeConfig.UI_CHARACTER_SELECT_SPEECH_BUBBLE);
         speechBubble.setSiblingIndex(5);
-        const speechLabel = this.getOrCreateEditorLabel(speechBubble, 'CharacterSelectSpeechText', '\u5230\u6b64\u4e3a\u6b62\u5427\uff01', 29, -18, -8, 260, 56, new Color(61, 52, 46, 255));
+        const speechLabel = this.getOrCreateEditorLabel(speechBubble, 'CharacterSelectSpeechText', '\u653e\u9a6c\u8fc7\u6765\u5427\uff01', 29, -18, -8, 260, 56, new Color(61, 52, 46, 255));
         speechLabel.horizontalAlign = HorizontalTextAlignment.CENTER;
         this.setLabelOutline(speechLabel, new Color(255, 255, 255, 210), 1);
         speechLabel.node.setSiblingIndex(2);
@@ -304,20 +301,107 @@ export abstract class HomeFeatureCharacterCreationUI extends HomeFeatureCharacte
         this.refreshCharacterSelectRoleVisibility();
     }
     protected loadCharacterSelectRoleSkeleton(gender: RoleGender, roleNode: Node): void {
-        const size = HomeConfig.CHARACTER_SELECT_ROLE_PORTRAIT_SIZE[gender];
-        this.applyUiSkinKeepingEditorSize(roleNode, HomeConfig.CHARACTER_SELECT_ROLE_PORTRAIT_PATHS[gender], size.width, size.height);
+        const skeleton = roleNode.getComponent(sp.Skeleton) || roleNode.addComponent(sp.Skeleton);
+        this.characterSelectRoleSkeletons.set(gender, skeleton);
+        this.prepareSkeletonRenderer(skeleton);
+        skeleton.node.setScale(HomeConfig.CHARACTER_SELECT_ROLE_SCALE[gender], HomeConfig.CHARACTER_SELECT_ROLE_SCALE[gender], 1);
+        this.setSkeletonVisible(skeleton, false);
+
+        const portraitNode = roleNode.getChildByName(`CharacterSelectRolePortrait_${gender}`);
+        if (portraitNode?.isValid) {
+            portraitNode.active = false;
+            this.clearSpriteFrame(portraitNode);
+        }
+
         roleNode.active = true;
+
+        void this.loadSkeletonAsset(HomeConfig.CHARACTER_SELECT_ROLE_SKEL_PATHS[gender])
+            .then((asset) => {
+                if (!roleNode.isValid || !skeleton.isValid) return;
+
+                this.prepareSkeletonRenderer(skeleton);
+                skeleton.skeletonData = asset;
+                skeleton.node.setScale(HomeConfig.CHARACTER_SELECT_ROLE_SCALE[gender], HomeConfig.CHARACTER_SELECT_ROLE_SCALE[gender], 1);
+                this.refreshCharacterSelectRoleVisibility(gender === this.profile.gender);
+            })
+            .catch((err) => {
+                console.warn('[MainHomeView] character select role skel load failed', gender, err);
+            });
+
         this.refreshCharacterSelectRoleVisibility();
     }
-    protected refreshCharacterSelectRoleVisibility(): void {
+    protected refreshCharacterSelectRoleVisibility(replayActive = false): void {
+        const selectedGender = this.profile.gender;
+        const selectedChanged = this.characterSelectRoleVisibleGender !== selectedGender;
+
         (['female', 'male'] as RoleGender[]).forEach((gender) => {
             const roleNode = this.characterPreviewRoot?.getChildByName(`CharacterSelectRole_${gender}`);
             if (!roleNode?.isValid) return;
 
-            const active = gender === this.profile.gender;
+            const active = gender === selectedGender;
             roleNode.setSiblingIndex(active ? 2 : 1);
             roleNode.active = active;
+
+            const portraitNode = roleNode.getChildByName(`CharacterSelectRolePortrait_${gender}`);
+            if (portraitNode?.isValid) {
+                portraitNode.active = false;
+            }
+
+            const skeleton = this.characterSelectRoleSkeletons.get(gender);
+            if (!skeleton?.isValid) return;
+
+            if (!active) {
+                this.setSkeletonVisible(skeleton, false);
+                return;
+            }
+
+            const wasEnabled = skeleton.enabled;
+            this.prepareSkeletonRenderer(skeleton);
+            skeleton.node.setScale(HomeConfig.CHARACTER_SELECT_ROLE_SCALE[gender], HomeConfig.CHARACTER_SELECT_ROLE_SCALE[gender], 1);
+            if (skeleton.skeletonData && (replayActive || selectedChanged || !wasEnabled)) {
+                this.playCharacterSelectRoleAppearThenIdle(skeleton);
+            }
         });
+
+        this.characterSelectRoleVisibleGender = selectedGender;
+    }
+    protected playCharacterSelectRoleAppearThenIdle(skeleton: sp.Skeleton): void {
+        if (!skeleton.skeletonData) return;
+
+        this.prepareSkeletonRenderer(skeleton);
+
+        const idleAnimation = this.findFirstCharacterSelectAnimation(skeleton, [
+            'idle',
+            ...HomeConfig.IDLE_ANIMATIONS,
+        ]);
+        const appearAnimation = skeleton.findAnimation('appear') ? 'appear' : '';
+
+        try {
+            skeleton.clearTracks();
+            skeleton.setToSetupPose();
+            if (appearAnimation) {
+                skeleton.setAnimation(0, appearAnimation, false);
+                if (idleAnimation) {
+                    skeleton.addAnimation(0, idleAnimation, true, 0);
+                }
+            } else if (idleAnimation) {
+                skeleton.setAnimation(0, idleAnimation, true);
+            } else {
+                this.playSkeletonAnimation(skeleton, HomeConfig.CHARACTER_SELECT_ROLE_ANIMATIONS, true);
+            }
+            skeleton.updateAnimation(0);
+            skeleton.markForUpdateRenderData(true);
+        } catch {
+            this.playSkeletonAnimation(skeleton, HomeConfig.CHARACTER_SELECT_ROLE_ANIMATIONS, true);
+        }
+    }
+    protected findFirstCharacterSelectAnimation(skeleton: sp.Skeleton, candidates: string[]): string {
+        for (const animation of candidates) {
+            if (animation && skeleton.findAnimation(animation)) {
+                return animation;
+            }
+        }
+        return '';
     }
     protected setupHiddenNameEditBox(inputNode: Node): void {
         if (!this.nameEditBox) return;

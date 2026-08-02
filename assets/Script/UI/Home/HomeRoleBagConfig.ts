@@ -105,8 +105,8 @@ export const CHARACTER_SELECT_ROLE_SKEL_PATHS: Record<RoleGender, string> = {
 };
 export const CHARACTER_SELECT_ROLE_ANIMATIONS = ['ready', 'style', 'appear', 'click1', 'idle', 'animation'];
 export const CHARACTER_SELECT_ROLE_SCALE: Record<RoleGender, number> = {
-    female: 4.2,
-    male: 4.5,
+    female: 8.2,
+    male: 8.2,
 };
 export const CHARACTER_SELECT_ROLE_PORTRAIT_PATHS: Record<RoleGender, string> = {
     female: UI_CHARACTER_SELECT_FEMALE_PORTRAIT,

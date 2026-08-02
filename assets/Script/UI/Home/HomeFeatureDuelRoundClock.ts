@@ -6,6 +6,8 @@ type DuelJianghuActorRuntime = {
     node: Node;
     kind: string;
 };
+type DuelJianghuRoomConfig = typeof HomeConfig.DUEL_JIANGHU_ROOM_LABELS[number];
+type DuelJianghuRoomId = DuelJianghuRoomConfig['id'];
 
 abstract class HomeFeatureDuelRoundClockHost extends HomeViewBase {
     protected abstract duelJianghuCountdown: number;
@@ -13,9 +15,11 @@ abstract class HomeFeatureDuelRoundClockHost extends HomeViewBase {
     protected abstract duelJianghuPreviewActive: boolean;
     protected abstract duelJianghuRoundActive: boolean;
     protected abstract duelJianghuRoundSerial: number;
+    protected abstract readonly duelJianghuRoomInvestAmounts: Map<DuelJianghuRoomId, number>;
 
     protected abstract playDuelJianghuPreviewRound(page: Node): Promise<void>;
     protected abstract prepareDuelJianghuRoomActorsForRound(page: Node): Promise<void>;
+    protected abstract refreshDuelJianghuRoomInvestAmountDisplays(page: Node): void;
     protected abstract removeDuelJianghuActors(page: Node, predicate?: (actor: DuelJianghuActorRuntime) => boolean): void;
     protected abstract resolveDuelJianghuRound(page: Node, serial: number): Promise<void>;
 }
@@ -73,10 +77,14 @@ export abstract class HomeFeatureDuelRoundClock extends HomeFeatureDuelRoundCloc
         this.duelJianghuPreviewActive = false;
         this.duelJianghuCountdown = HomeConfig.DUEL_JIANGHU_ROUND_SECONDS;
         this.duelJianghuNpcSpawnInProgress = false;
+        this.duelJianghuRoomInvestAmounts.clear();
         if (page?.isValid) {
             const popup = page.getChildByName('JianghuResultPopup');
             if (popup) popup.active = false;
+            const killerAppearBanner = page.getChildByName('JianghuKillerAppearBanner');
+            if (killerAppearBanner) killerAppearBanner.active = false;
             this.updateDuelJianghuCountdownLabel(page);
+            this.refreshDuelJianghuRoomInvestAmountDisplays(page);
             this.removeDuelJianghuActors(page);
         }
     }
@@ -85,8 +93,10 @@ export abstract class HomeFeatureDuelRoundClock extends HomeFeatureDuelRoundCloc
         if (popup) popup.active = false;
         this.duelJianghuRoundActive = false;
         this.duelJianghuCountdown = HomeConfig.DUEL_JIANGHU_ROUND_SECONDS;
+        this.duelJianghuRoomInvestAmounts.clear();
         this.removeDuelJianghuActors(page, (actor) => actor.kind !== 'common' && actor.kind !== 'lobbyCommon' && actor.kind !== 'player');
         this.updateDuelJianghuCountdownLabel(page);
+        this.refreshDuelJianghuRoomInvestAmountDisplays(page);
         this.startDuelJianghuCountdown(page, true);
         void this.prepareDuelJianghuRoomActorsForRound(page);
     }

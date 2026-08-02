@@ -394,15 +394,12 @@
     "_verticalAlign": 1,
     "_actualFontSize": 48,
     "_fontSize": 48,
-    "_fontFamily": "SIMKAI",
+    "_fontFamily": "Microsoft YaHei",
     "_lineHeight": 56,
     "_overflow": 0,
     "_enableWrapText": true,
-    "_font": {
-      "__uuid__": "f7ac3ac9-019a-4328-b12d-d0c609943866",
-      "__expectedType__": "cc.TTFFont"
-    },
-    "_isSystemFontUsed": false,
+    "_font": null,
+    "_isSystemFontUsed": true,
     "_spacingX": 0,
     "_isItalic": false,
     "_isBold": false,
@@ -633,15 +630,12 @@
     "_verticalAlign": 1,
     "_actualFontSize": 27,
     "_fontSize": 27,
-    "_fontFamily": "SIMKAI",
+    "_fontFamily": "Microsoft YaHei",
     "_lineHeight": 35,
     "_overflow": 0,
     "_enableWrapText": true,
-    "_font": {
-      "__uuid__": "f7ac3ac9-019a-4328-b12d-d0c609943866",
-      "__expectedType__": "cc.TTFFont"
-    },
-    "_isSystemFontUsed": false,
+    "_font": null,
+    "_isSystemFontUsed": true,
     "_spacingX": 0,
     "_isItalic": false,
     "_isBold": false,
@@ -881,15 +875,12 @@
     "_verticalAlign": 1,
     "_actualFontSize": 25,
     "_fontSize": 25,
-    "_fontFamily": "SIMKAI",
+    "_fontFamily": "Microsoft YaHei",
     "_lineHeight": 33,
     "_overflow": 0,
     "_enableWrapText": true,
-    "_font": {
-      "__uuid__": "f7ac3ac9-019a-4328-b12d-d0c609943866",
-      "__expectedType__": "cc.TTFFont"
-    },
-    "_isSystemFontUsed": false,
+    "_font": null,
+    "_isSystemFontUsed": true,
     "_spacingX": 0,
     "_isItalic": false,
     "_isBold": false,
@@ -1436,15 +1427,12 @@
     "_verticalAlign": 1,
     "_actualFontSize": 25,
     "_fontSize": 25,
-    "_fontFamily": "SIMKAI",
+    "_fontFamily": "Microsoft YaHei",
     "_lineHeight": 33,
     "_overflow": 0,
     "_enableWrapText": true,
-    "_font": {
-      "__uuid__": "f7ac3ac9-019a-4328-b12d-d0c609943866",
-      "__expectedType__": "cc.TTFFont"
-    },
-    "_isSystemFontUsed": false,
+    "_font": null,
+    "_isSystemFontUsed": true,
     "_spacingX": 0,
     "_isItalic": false,
     "_isBold": false,
@@ -1571,15 +1559,12 @@
     "_verticalAlign": 1,
     "_actualFontSize": 24,
     "_fontSize": 24,
-    "_fontFamily": "SIMKAI",
+    "_fontFamily": "Microsoft YaHei",
     "_lineHeight": 32,
     "_overflow": 0,
     "_enableWrapText": true,
-    "_font": {
-      "__uuid__": "f7ac3ac9-019a-4328-b12d-d0c609943866",
-      "__expectedType__": "cc.TTFFont"
-    },
-    "_isSystemFontUsed": false,
+    "_font": null,
+    "_isSystemFontUsed": true,
     "_spacingX": 0,
     "_isItalic": false,
     "_isBold": false,
@@ -1706,15 +1691,12 @@
     "_verticalAlign": 1,
     "_actualFontSize": 25,
     "_fontSize": 25,
-    "_fontFamily": "SIMKAI",
+    "_fontFamily": "Microsoft YaHei",
     "_lineHeight": 33,
     "_overflow": 0,
     "_enableWrapText": true,
-    "_font": {
-      "__uuid__": "f7ac3ac9-019a-4328-b12d-d0c609943866",
-      "__expectedType__": "cc.TTFFont"
-    },
-    "_isSystemFontUsed": false,
+    "_font": null,
+    "_isSystemFontUsed": true,
     "_spacingX": 0,
     "_isItalic": false,
     "_isBold": false,
@@ -1837,8 +1819,7 @@
       "a": 255
     },
     "_spriteFrame": {
-      "__uuid__": "19787e37-687d-44a8-939b-7251c821dbc8@f9941",
-      "__expectedType__": "cc.SpriteFrame"
+      "__uuid__": "a3b5e15d-8198-4aff-88af-af9dc22fe152@f9941"
     },
     "_type": 0,
     "_fillType": 0,
@@ -2254,15 +2235,12 @@
     "_verticalAlign": 1,
     "_actualFontSize": 25,
     "_fontSize": 25,
-    "_fontFamily": "SIMKAI",
+    "_fontFamily": "Microsoft YaHei",
     "_lineHeight": 33,
     "_overflow": 0,
     "_enableWrapText": true,
-    "_font": {
-      "__uuid__": "f7ac3ac9-019a-4328-b12d-d0c609943866",
-      "__expectedType__": "cc.TTFFont"
-    },
-    "_isSystemFontUsed": false,
+    "_font": null,
+    "_isSystemFontUsed": true,
     "_spacingX": 0,
     "_isItalic": false,
     "_isBold": false,
@@ -2389,15 +2367,12 @@
     "_verticalAlign": 1,
     "_actualFontSize": 24,
     "_fontSize": 24,
-    "_fontFamily": "SIMKAI",
+    "_fontFamily": "Microsoft YaHei",
     "_lineHeight": 32,
     "_overflow": 0,
     "_enableWrapText": true,
-    "_font": {
-      "__uuid__": "f7ac3ac9-019a-4328-b12d-d0c609943866",
-      "__expectedType__": "cc.TTFFont"
-    },
-    "_isSystemFontUsed": false,
+    "_font": null,
+    "_isSystemFontUsed": true,
     "_spacingX": 0,
     "_isItalic": false,
     "_isBold": false,
@@ -2524,15 +2499,12 @@
     "_verticalAlign": 1,
     "_actualFontSize": 25,
     "_fontSize": 25,
-    "_fontFamily": "SIMKAI",
+    "_fontFamily": "Microsoft YaHei",
     "_lineHeight": 33,
     "_overflow": 0,
     "_enableWrapText": true,
-    "_font": {
-      "__uuid__": "f7ac3ac9-019a-4328-b12d-d0c609943866",
-      "__expectedType__": "cc.TTFFont"
-    },
-    "_isSystemFontUsed": false,
+    "_font": null,
+    "_isSystemFontUsed": true,
     "_spacingX": 0,
     "_isItalic": false,
     "_isBold": false,
@@ -2655,8 +2627,7 @@
       "a": 255
     },
     "_spriteFrame": {
-      "__uuid__": "19787e37-687d-44a8-939b-7251c821dbc8@f9941",
-      "__expectedType__": "cc.SpriteFrame"
+      "__uuid__": "1b8ad3b6-b93a-483f-bb8a-f0d23c4c0c52@f9941"
     },
     "_type": 0,
     "_fillType": 0,
@@ -3072,15 +3043,12 @@
     "_verticalAlign": 1,
     "_actualFontSize": 25,
     "_fontSize": 25,
-    "_fontFamily": "SIMKAI",
+    "_fontFamily": "Microsoft YaHei",
     "_lineHeight": 33,
     "_overflow": 0,
     "_enableWrapText": true,
-    "_font": {
-      "__uuid__": "f7ac3ac9-019a-4328-b12d-d0c609943866",
-      "__expectedType__": "cc.TTFFont"
-    },
-    "_isSystemFontUsed": false,
+    "_font": null,
+    "_isSystemFontUsed": true,
     "_spacingX": 0,
     "_isItalic": false,
     "_isBold": false,
@@ -3207,15 +3175,12 @@
     "_verticalAlign": 1,
     "_actualFontSize": 24,
     "_fontSize": 24,
-    "_fontFamily": "SIMKAI",
+    "_fontFamily": "Microsoft YaHei",
     "_lineHeight": 32,
     "_overflow": 0,
     "_enableWrapText": true,
-    "_font": {
-      "__uuid__": "f7ac3ac9-019a-4328-b12d-d0c609943866",
-      "__expectedType__": "cc.TTFFont"
-    },
-    "_isSystemFontUsed": false,
+    "_font": null,
+    "_isSystemFontUsed": true,
     "_spacingX": 0,
     "_isItalic": false,
     "_isBold": false,
@@ -3342,15 +3307,12 @@
     "_verticalAlign": 1,
     "_actualFontSize": 25,
     "_fontSize": 25,
-    "_fontFamily": "SIMKAI",
+    "_fontFamily": "Microsoft YaHei",
     "_lineHeight": 33,
     "_overflow": 0,
     "_enableWrapText": true,
-    "_font": {
-      "__uuid__": "f7ac3ac9-019a-4328-b12d-d0c609943866",
-      "__expectedType__": "cc.TTFFont"
-    },
-    "_isSystemFontUsed": false,
+    "_font": null,
+    "_isSystemFontUsed": true,
     "_spacingX": 0,
     "_isItalic": false,
     "_isBold": false,
@@ -3473,8 +3435,7 @@
       "a": 255
     },
     "_spriteFrame": {
-      "__uuid__": "19787e37-687d-44a8-939b-7251c821dbc8@f9941",
-      "__expectedType__": "cc.SpriteFrame"
+      "__uuid__": "a3b5e15d-8198-4aff-88af-af9dc22fe152@f9941"
     },
     "_type": 0,
     "_fillType": 0,
@@ -3901,15 +3862,12 @@
     "_verticalAlign": 1,
     "_actualFontSize": 30,
     "_fontSize": 30,
-    "_fontFamily": "SIMKAI",
+    "_fontFamily": "Microsoft YaHei",
     "_lineHeight": 38,
     "_overflow": 0,
     "_enableWrapText": true,
-    "_font": {
-      "__uuid__": "f7ac3ac9-019a-4328-b12d-d0c609943866",
-      "__expectedType__": "cc.TTFFont"
-    },
-    "_isSystemFontUsed": false,
+    "_font": null,
+    "_isSystemFontUsed": true,
     "_spacingX": 0,
     "_isItalic": false,
     "_isBold": false,
@@ -4036,15 +3994,12 @@
     "_verticalAlign": 1,
     "_actualFontSize": 30,
     "_fontSize": 30,
-    "_fontFamily": "SIMKAI",
+    "_fontFamily": "Microsoft YaHei",
     "_lineHeight": 38,
     "_overflow": 0,
     "_enableWrapText": true,
-    "_font": {
-      "__uuid__": "f7ac3ac9-019a-4328-b12d-d0c609943866",
-      "__expectedType__": "cc.TTFFont"
-    },
-    "_isSystemFontUsed": false,
+    "_font": null,
+    "_isSystemFontUsed": true,
     "_spacingX": 0,
     "_isItalic": false,
     "_isBold": false,
@@ -4171,15 +4126,12 @@
     "_verticalAlign": 1,
     "_actualFontSize": 28,
     "_fontSize": 28,
-    "_fontFamily": "SIMKAI",
+    "_fontFamily": "Microsoft YaHei",
     "_lineHeight": 36,
     "_overflow": 0,
     "_enableWrapText": true,
-    "_font": {
-      "__uuid__": "f7ac3ac9-019a-4328-b12d-d0c609943866",
-      "__expectedType__": "cc.TTFFont"
-    },
-    "_isSystemFontUsed": false,
+    "_font": null,
+    "_isSystemFontUsed": true,
     "_spacingX": 0,
     "_isItalic": false,
     "_isBold": false,
@@ -4306,15 +4258,12 @@
     "_verticalAlign": 1,
     "_actualFontSize": 29,
     "_fontSize": 29,
-    "_fontFamily": "SIMKAI",
+    "_fontFamily": "Microsoft YaHei",
     "_lineHeight": 37,
     "_overflow": 0,
     "_enableWrapText": true,
-    "_font": {
-      "__uuid__": "f7ac3ac9-019a-4328-b12d-d0c609943866",
-      "__expectedType__": "cc.TTFFont"
-    },
-    "_isSystemFontUsed": false,
+    "_font": null,
+    "_isSystemFontUsed": true,
     "_spacingX": 0,
     "_isItalic": false,
     "_isBold": false,
@@ -4437,8 +4386,7 @@
       "a": 255
     },
     "_spriteFrame": {
-      "__uuid__": "19787e37-687d-44a8-939b-7251c821dbc8@f9941",
-      "__expectedType__": "cc.SpriteFrame"
+      "__uuid__": "a3b5e15d-8198-4aff-88af-af9dc22fe152@f9941"
     },
     "_type": 0,
     "_fillType": 0,

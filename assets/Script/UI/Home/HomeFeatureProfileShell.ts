@@ -28,7 +28,7 @@ export abstract class HomeFeatureProfileShell extends HomeViewBase {
         const avatarIcon = this.findNode('AvatarIcon', topHud);
         if (avatarIcon) {
             avatarIcon.active = true;
-            this.applyUiSkinKeepingEditorSize(avatarIcon, HomeConfig.UI_HOME_AVATAR, 104, 104);
+            this.applyHomeAvatarSkin(avatarIcon, 104, 104);
         }
         const targets = [
             this.findNode('AvatarFrame', topHud),
@@ -46,6 +46,7 @@ export abstract class HomeFeatureProfileShell extends HomeViewBase {
             });
         });
         this.loadProfileAvatarFrameState();
+        this.refreshProfileAvatarSkins();
         this.applyEquippedProfileAvatarFrameVisual();
     }
     protected async openProfileEntry(): Promise<void> {
@@ -228,7 +229,7 @@ export abstract class HomeFeatureProfileShell extends HomeViewBase {
 
         skin('ProfilePopupBoardSkin', HomeConfig.UI_PROFILE_POPUP_BG, HomeConfig.PROFILE_POPUP_WIDTH, HomeConfig.PROFILE_POPUP_HEIGHT);
         skin('ProfileAvatarFrame', HomeConfig.UI_HOME_PROFILE_FRAME, 104, 104);
-        skin('ProfileAvatarIcon', HomeConfig.UI_HOME_AVATAR, 92, 92);
+        skin('ProfileAvatarIcon', this.getHomeAvatarSkin(), 92, 92);
         this.hideProfileNameBar(board);
         skin('ProfileEditButton', HomeConfig.UI_PROFILE_BTN_EDIT, 32, 32);
         skin('ProfileCopyButton', HomeConfig.UI_PROFILE_BTN_COPY, 34, 34);
@@ -264,7 +265,7 @@ export abstract class HomeFeatureProfileShell extends HomeViewBase {
         const header = this.createNode('ProfileHeader', board, 470, 150, -105, 92);
         header.setSiblingIndex(3);
         this.createSkinnedNode('ProfileAvatarFrame', header, 104, 104, -210, 8, HomeConfig.UI_HOME_PROFILE_FRAME).setSiblingIndex(0);
-        this.createSkinnedNode('ProfileAvatarIcon', header, 92, 92, -210, 8, HomeConfig.UI_HOME_AVATAR).setSiblingIndex(1);
+        this.createSkinnedNode('ProfileAvatarIcon', header, 92, 92, -210, 8, this.getHomeAvatarSkin()).setSiblingIndex(1);
 
         const nameBar = this.createSkinnedNode('ProfileNameBar', header, 230, 44, -28, 36, HomeConfig.UI_HOME_RESOURCE_BAR);
         nameBar.active = false;
@@ -358,6 +359,14 @@ export abstract class HomeFeatureProfileShell extends HomeViewBase {
         if (this.profilePopupUidLabel?.isValid) {
             this.profilePopupUidLabel.string = `UID: ${HomeConfig.DEFAULT_UID}`;
         }
+        this.refreshProfileAvatarSkins();
+    }
+    protected refreshProfileAvatarSkins(): void {
+        const topHud = this.persistentCurrencyHud || this.findNode('TopHud', this.uiMainLayer || this.node) || this.findNode('TopHud');
+        this.applyHomeAvatarSkin(topHud ? this.findNode('AvatarIcon', topHud) : null, 104, 104);
+
+        const board = this.profilePopupBoard?.isValid ? this.profilePopupBoard : this.findNode('ProfilePopupBoard');
+        this.applyHomeAvatarSkin(board ? this.findNode('ProfileAvatarIcon', board) : null, 92, 92);
     }
     protected getProfileNicknameText(): string {
         return `\u6635\u79f0\uff1a${this.profile.name || HomeConfig.DEFAULT_NAME}`;
