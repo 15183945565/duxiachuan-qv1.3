@@ -2,6 +2,7 @@ export * from './HomeBaseConfig';
 export * from './HomeCommonUiConfig';
 export * from './HomeProfileConfig';
 export * from './HomeShareConfig';
+export * from './HomeGiftConfig';
 export * from './HomeShopConfig';
 export * from './HomeRoleBagConfig';
 export * from './HomeMagicConfig';

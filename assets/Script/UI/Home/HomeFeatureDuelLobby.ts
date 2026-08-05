@@ -19,6 +19,8 @@ abstract class HomeFeatureDuelLobbyHost extends HomeViewBase {
     protected abstract buildDuelJianghuInvestControls(page: Node): void;
     protected abstract buildDuelJianghuSideButtons(page: Node): void;
     protected abstract ensureDuelJianghuReservedPage(page: Node, pageName: string, title: string): Node;
+    protected abstract closeDuelLuanshiRecordPage(recordPage: Node): void;
+    protected abstract closeDuelLuanshiRankPage(rankPage: Node): void;
     protected abstract playDuelJianghuBackgroundMusic(): void;
     protected abstract startDuelJianghuCountdown(page: Node, reset: boolean): void;
     protected abstract ensureDuelJianghuNpcCrowd(page: Node, force?: boolean): Promise<void>;
@@ -136,6 +138,16 @@ export abstract class HomeFeatureDuelLobby extends HomeFeatureDuelLobbyHost {
     protected handleDuelBack(panel: Node): void {
         const luanshiPage = this.findNode('DuelLuanshiZhengxiongPage', panel);
         if (luanshiPage?.active) {
+            const recordPage = luanshiPage.getChildByName('LuanshiRecordPage');
+            if (recordPage?.active) {
+                this.closeDuelLuanshiRecordPage(recordPage);
+                return;
+            }
+            const rankPage = luanshiPage.getChildByName('LuanshiRankPage');
+            if (rankPage?.active) {
+                this.closeDuelLuanshiRankPage(rankPage);
+                return;
+            }
             this.refreshDuelLandingPage(panel);
             return;
         }

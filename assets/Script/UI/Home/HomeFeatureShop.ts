@@ -13,6 +13,7 @@ import {
 } from 'cc';
 import { applySimKaiFont } from '../Common/UIFont';
 import type {
+    ShopMallTab,
     ShopItemData,
     ShopStoreState,
 } from './HomeTypes';
@@ -23,6 +24,8 @@ import { HomeViewBase } from './HomeViewBase';
  * Owns the shop page, product cells, purchase flow, and local store state.
  */
 export abstract class HomeFeatureShop extends HomeViewBase {
+    protected shopActiveTab: ShopMallTab = 'yuanbao';
+
     protected createSlicedSkinnedNode(name: string, parent: Node, width: number, height: number, x: number, y: number, skinPath: string): Node {
         const node = this.createSkinnedNode(name, parent, width, height, x, y, skinPath);
         const sprite = node.getComponent(Sprite) || node.addComponent(Sprite);
@@ -36,8 +39,9 @@ export abstract class HomeFeatureShop extends HomeViewBase {
         if (!sprite.spriteFrame) sprite.enabled = false;
         sprite.type = Sprite.Type.SLICED;
     }
-    protected openShopPanel(): void {
+    protected openShopPanel(tab: ShopMallTab = 'yuanbao'): void {
         this.ensureShopStore();
+        this.shopActiveTab = tab;
         this.buildShopPanel();
         if (!this.shopPanel) return;
 
@@ -145,6 +149,11 @@ export abstract class HomeFeatureShop extends HomeViewBase {
         const titleSign = getOrCreateSkinnedNode('ShopTitleSign', this.shopPanel, 250, 99, 242, 540, HomeConfig.UI_SHOP_TITLE_SIGN);
         titleSign.setSiblingIndex(10);
 
+        const mallTabsRoot = getOrCreateNode('ShopMallTabsRoot', this.shopPanel, 430, 100, 15, -725);
+        mallTabsRoot.setSiblingIndex(20);
+        this.createShopMallTab(mallTabsRoot, 'ShopMallTabYuanbao', 'yuanbao', '\u5143\u5b9d\u5546\u57ce', -120);
+        this.createShopMallTab(mallTabsRoot, 'ShopMallTabPoints', 'points', '\u79ef\u5206\u5546\u57ce', 120);
+
         const back = this.shopPanel.getChildByName('ShopPageBack') || this.createMailButton(
             this.shopPanel,
             'ShopPageBack',
@@ -161,6 +170,68 @@ export abstract class HomeFeatureShop extends HomeViewBase {
         this.applyUiSkin(back, HomeConfig.UI_RANK_BACK, backTransform?.contentSize.width || HomeConfig.BOTTOM_ENTRY_BACK_BUTTON_WIDTH, backTransform?.contentSize.height || HomeConfig.BOTTOM_ENTRY_BACK_BUTTON_HEIGHT);
         this.bindScaledClick(back, () => this.closeShopPanel());
         back.setSiblingIndex(30);
+    }
+    protected createShopMallTab(parent: Node, nodeName: string, tab: ShopMallTab, title: string, x: number): Node {
+        let button = parent.getChildByName(nodeName);
+        if (!button) {
+            button = this.createSkinnedNode(nodeName, parent, 184, 79, x, 0, HomeConfig.UI_SHOP_TAB_NORMAL_BG);
+        } else {
+            button.active = true;
+            const transform = button.getComponent(UITransform) || button.addComponent(UITransform);
+            const size = transform.contentSize;
+            if (size.width <= 0 || size.height <= 0) {
+                transform.setContentSize(184, 79);
+            }
+        }
+
+        const labelNodeName = `${nodeName}Label`;
+        const labelNode = button.getChildByName(labelNodeName);
+        const existingLabel = labelNode?.getComponent(Label) || null;
+        const label = existingLabel || this.createLabel(button, labelNodeName, title, 24, 0, 1, 150, 42, new Color(255, 238, 198, 255));
+        label.string = title;
+        if (!existingLabel) {
+            label.fontSize = 24;
+            label.lineHeight = 32;
+            label.horizontalAlign = HorizontalTextAlignment.CENTER;
+            label.verticalAlign = VerticalTextAlignment.CENTER;
+            label.enableOutline = true;
+            label.outlineColor = new Color(76, 40, 24, 255);
+            label.outlineWidth = 2;
+            applySimKaiFont(label);
+        }
+
+        this.bindScaledClick(button, () => this.switchShopMallTab(tab));
+        return button;
+    }
+    protected switchShopMallTab(tab: ShopMallTab): void {
+        if (this.shopActiveTab === tab) {
+            this.refreshShopMallTabs();
+            return;
+        }
+
+        this.shopActiveTab = tab;
+        this.refreshShopPanel();
+    }
+    protected refreshShopMallTabs(): void {
+        if (!this.shopPanel) return;
+
+        const root = this.shopPanel.getChildByName('ShopMallTabsRoot');
+        const configs: Array<{ name: string; tab: ShopMallTab }> = [
+            { name: 'ShopMallTabYuanbao', tab: 'yuanbao' },
+            { name: 'ShopMallTabPoints', tab: 'points' },
+        ];
+
+        configs.forEach(({ name, tab }) => {
+            const node = root?.getChildByName(name);
+            if (!node?.isValid) return;
+            const selected = this.shopActiveTab === tab;
+            this.applyUiSkinKeepingEditorSize(node, selected ? HomeConfig.UI_SHOP_TAB_ACTIVE_BG : HomeConfig.UI_SHOP_TAB_NORMAL_BG, 184, 79);
+            const label = node.getChildByName(`${name}Label`)?.getComponent(Label);
+            if (label) {
+                label.color = selected ? new Color(255, 246, 195, 255) : new Color(172, 132, 86, 255);
+                label.outlineColor = selected ? new Color(91, 45, 18, 255) : new Color(64, 46, 34, 255);
+            }
+        });
     }
     protected playShopCharacterAnimation(): void {
         const skeleton = this.shopCharacterSkeleton;
@@ -225,23 +296,32 @@ export abstract class HomeFeatureShop extends HomeViewBase {
         if (!this.shopGridRoot || !this.shopStore) return;
     
         this.updateShopCurrencyLabels();
-        const activeItemIds = new Set(HomeConfig.SHOP_ITEMS.map((item) => `ShopItem_${item.id}`));
+        this.refreshShopMallTabs();
+        const items = this.getActiveShopItems();
+        const activeItemIds = new Set(items.map((item) => `ShopItem_${item.id}`));
         this.shopGridRoot.children.forEach((child) => {
             if (child.name.startsWith('ShopItem_') && !activeItemIds.has(child.name)) {
                 child.active = false;
             }
         });
     
-        HomeConfig.SHOP_ITEMS.forEach((item, index) => this.createShopItemCell(item, index));
+        items.forEach((item, index) => this.createShopItemCell(item, index));
     }
     protected refreshEditorShopItems(): boolean {
         if (!this.shopGridRoot) return false;
     
-        const hasEditorCells = HomeConfig.SHOP_ITEMS.some((item) => !!this.shopGridRoot?.getChildByName(`ShopItem_${item.id}`));
+        const items = this.getActiveShopItems();
+        const hasEditorCells = items.some((item) => !!this.shopGridRoot?.getChildByName(`ShopItem_${item.id}`));
         if (!hasEditorCells) return false;
     
-        HomeConfig.SHOP_ITEMS.forEach((item, index) => this.updateEditorShopItemCell(item, index));
+        items.forEach((item, index) => this.updateEditorShopItemCell(item, index));
         return true;
+    }
+    protected getActiveShopItems(): readonly ShopItemData[] {
+        return this.shopActiveTab === 'points' ? HomeConfig.SHOP_POINT_ITEMS : HomeConfig.SHOP_ITEMS;
+    }
+    protected getAllShopItems(): readonly ShopItemData[] {
+        return [...HomeConfig.SHOP_ITEMS, ...HomeConfig.SHOP_POINT_ITEMS];
     }
     protected updateEditorShopItemCell(item: ShopItemData, index: number): void {
         if (!this.shopGridRoot) return;
@@ -255,11 +335,13 @@ export abstract class HomeFeatureShop extends HomeViewBase {
         const iconFrame = cell.getChildByName('ShopItemIconFrame');
         const buyButton = cell.getChildByName('ShopBuyButton');
         const iconNode = iconFrame?.getChildByName('ShopItemIcon') || cell.getChildByName('ShopItemIcon');
+        const currencyIcon = buyButton?.getChildByName('ShopCurrencyIcon') || cell.getChildByName('ShopCurrencyIcon');
         const priceNode = buyButton?.getChildByName('ShopPrice') || cell.getChildByName('ShopPrice');
     
         cell.active = true;
         this.applyEditorShopSkin(cell.getChildByName('ShopItemSkin'), HomeConfig.UI_SHOP_ITEM_BG, 132, 196);
         this.applyEditorShopSkin(iconNode, item.iconPath, 82, 82);
+        this.applyEditorShopSkin(currencyIcon, this.getShopItemCurrencyIconPath(item), 24, 24);
         this.updateEditorShopLabel(cell.getChildByName('ShopItemBadge'), '招福\n热卖', 17, 2);
         this.updateEditorShopLabel(cell.getChildByName('ShopItemName'), item.name, 24, 2);
         this.updateEditorShopLabel(priceNode, `${item.price}`, 30, 3);
@@ -330,12 +412,15 @@ export abstract class HomeFeatureShop extends HomeViewBase {
         this.bindScaledClick(buyButton, () => this.openShopBuyConfirm(item));
         buyButton.setSiblingIndex(5);
         const currencyIcon = buyButton.getChildByName('ShopCurrencyIcon') || this.createShopCurrencyIcon(buyButton, -32, 1, 24);
-        this.applyUiSkin(currencyIcon, HomeConfig.UI_HOME_JIFEN_ICON, currencyIcon.getComponent(UITransform)?.contentSize.width || 24, currencyIcon.getComponent(UITransform)?.contentSize.height || 24);
+        this.applyUiSkin(currencyIcon, this.getShopItemCurrencyIconPath(item), currencyIcon.getComponent(UITransform)?.contentSize.width || 24, currencyIcon.getComponent(UITransform)?.contentSize.height || 24);
         currencyIcon.setSiblingIndex(2);
         const priceNode = buyButton.getChildByName('ShopPrice');
         const price = priceNode?.getComponent(Label) || this.createLabel(buyButton, 'ShopPrice', `${item.price}`, 22, 16, 1, 66, 30, Color.WHITE);
         price.string = `${item.price}`;
         this.applyShopLabelStyle(price, 28, 2);
+    }
+    protected getShopItemCurrencyIconPath(item: ShopItemData): string {
+        return item.currencyIconPath || HomeConfig.UI_HOME_JIFEN_ICON;
     }
     protected getSoulCurrencyText(): string {
         return this.formatCurrency(0);
@@ -364,6 +449,7 @@ export abstract class HomeFeatureShop extends HomeViewBase {
             99,
             '\u8d2d\u4e70',
             (quantity) => this.completeShopPurchase(item, quantity),
+            item.currencyName || '\u5143\u5b9d',
         );
     }
     protected openShopItemDetail(item: ShopItemData): void {
@@ -410,7 +496,7 @@ export abstract class HomeFeatureShop extends HomeViewBase {
         if (this.shopStore) return;
     
         const fallbackInventory: Record<string, number> = {};
-        HomeConfig.SHOP_ITEMS.forEach((item) => {
+        this.getAllShopItems().forEach((item) => {
             fallbackInventory[item.id] = 0;
         });
     
@@ -423,7 +509,7 @@ export abstract class HomeFeatureShop extends HomeViewBase {
         try {
             const parsed = JSON.parse(raw) as Partial<ShopStoreState>;
             const inventory: Record<string, number> = { ...fallbackInventory };
-            HomeConfig.SHOP_ITEMS.forEach((item) => {
+            this.getAllShopItems().forEach((item) => {
                 const count = parsed.inventory?.[item.id];
                 inventory[item.id] = typeof count === 'number' && Number.isFinite(count) ? Math.max(0, Math.floor(count)) : 0;
             });

@@ -1,9 +1,18 @@
 import {
     Color,
+    EditBox,
+    HorizontalTextAlignment,
+    Label,
     Node,
+    Overflow,
     Sprite,
+    SpriteFrame,
+    UITransform,
+    VerticalTextAlignment,
 } from 'cc';
+import { applySimKaiFont } from '../Common/UIFont';
 import { bindShareTaskPanel, claimShareTaskReward, handleShareTaskAction, refreshShareTaskPanel } from './HomeShareTaskPanel';
+import * as HomeConfig from './HomeConfig';
 import { HomeViewBase } from './HomeViewBase';
 
 /**
@@ -14,13 +23,13 @@ import { HomeViewBase } from './HomeViewBase';
  */
 export abstract class HomeFeatureGiftShare extends HomeViewBase {
     protected bindGiftPage(panel: Node): void {
-        for (let index = 1; index <= 4; index += 1) {
-            const button = this.findNode(`GiftClaim_${index}`, panel);
-            if (button) this.bindScaledClick(button, () => this.claimGift(panel, index));
+        this.resetGiftTransferState();
+        const editorRoot = panel.getChildByName('GiftTransferRoot');
+        if (editorRoot?.isValid && this.findNode('GiftUidInput', editorRoot)) {
+            this.bindGiftTransferEditorPanel(panel, editorRoot);
+            return;
         }
-        const claimAll = this.findNode('GiftClaimAll', panel);
-        if (claimAll) this.bindScaledClick(claimAll, () => this.claimAllGifts(panel));
-        this.refreshGiftPage(panel);
+        this.buildGiftTransferPanel(panel);
     }
 
     protected claimGift(panel: Node, index: number): void {
@@ -67,6 +76,389 @@ export abstract class HomeFeatureGiftShare extends HomeViewBase {
             const sprite = claimAll.getComponent(Sprite);
             if (sprite) sprite.color = allClaimed ? new Color(155, 155, 155, 255) : Color.WHITE;
         }
+    }
+
+    protected resetGiftTransferState(): void {
+        this.giftSelectedPlayer = null;
+        this.giftAmount = HomeConfig.GIFT_DEFAULT_AMOUNT;
+        this.giftUidEditBox = null;
+        this.giftAmountEditBox = null;
+    }
+
+    protected buildGiftTransferPanel(panel: Node): void {
+        this.resetGiftTransferState();
+        this.ensureInputBlocker(panel);
+
+        let root = panel.getChildByName('GiftTransferRoot');
+        if (!root?.isValid) {
+            root = this.createNode('GiftTransferRoot', panel, 701, 835, 0, 0);
+        }
+        if (!root) return;
+        panel.children.forEach((child) => {
+            child.active = child === root;
+        });
+
+        root.active = true;
+        root.setPosition(0, 0, 0);
+        root.setSiblingIndex((panel.children.length || 1) - 1);
+        (root.getComponent(UITransform) || root.addComponent(UITransform)).setContentSize(701, 835);
+        this.clearChildren(root);
+        this.applyUiSkin(root, HomeConfig.UI_GIFT_TRANSFER_PANEL_BG, 701, 835);
+
+        this.createSkinnedNode('GiftTransferTitleBg', root, 486, 84, 0, 330, HomeConfig.UI_CONFIRM_TITLE_BG).setSiblingIndex(1);
+        const title = this.createGiftLabel(root, 'GiftTransferTitle', '\u5143\u5b9d\u8d60\u9001', 31, 0, 344, 220, 50, new Color(57, 37, 21, 255));
+        title.enableOutline = false;
+
+        const close = this.createSkinnedNode('GiftTransferClose', root, 77, 71, 292, 348, HomeConfig.UI_BTN_CLOSE);
+        close.setSiblingIndex(20);
+        this.bindScaledClick(close, () => this.closeEditorFeaturePage(panel));
+
+        const slot = this.createSkinnedNode('GiftOwnedYuanbaoSlot', root, 112, 128, 0, 202, HomeConfig.UI_GIFT_YUANBAO_SLOT_BG);
+        slot.setSiblingIndex(2);
+        this.createSkinnedNode('GiftOwnedYuanbaoIcon', slot, 72, 67, 0, 20, HomeConfig.UI_HOME_JIFEN_ICON).setSiblingIndex(1);
+        this.createGiftLabel(slot, 'GiftOwnedYuanbaoAmount', this.getGiftOwnedYuanbaoText(), 22, 0, -43, 70, 28, Color.WHITE, 2).node.setSiblingIndex(2);
+
+        const uidRow = this.createNode('GiftUidSearchRow', root, 600, 62, 0, 18);
+        uidRow.setSiblingIndex(3);
+        const uidInput = this.createSkinnedNode('GiftUidInput', uidRow, 390, 60, -76, 0, HomeConfig.UI_GIFT_TRANSLUCENT_BAR);
+        this.giftUidEditBox = this.setupGiftEditBox(uidInput, '\u70b9\u51fb\u8f93\u5165\u73a9\u5bb6\u7684UID', 12, '', true);
+        const searchButton = this.createSkinnedNode('GiftUidSearchButton', uidRow, 162, 62, 200, 0, HomeConfig.UI_CONFIRM_BUTTON_BG);
+        this.createGiftLabel(searchButton, 'GiftUidSearchButtonLabel', '\u641c\u7d22', 32, 0, 2, 130, 42, Color.WHITE, 3);
+        this.bindScaledClick(searchButton, () => this.searchGiftTargetPlayer());
+
+        const playerRoot = this.createNode('GiftTargetPlayerRoot', root, 360, 86, 0, -70);
+        playerRoot.setSiblingIndex(4);
+        this.createSkinnedNode('GiftTargetAvatarFrame', playerRoot, 78, 78, -128, 0, HomeConfig.UI_HOME_PROFILE_FRAME).setSiblingIndex(1);
+        this.createSkinnedNode('GiftTargetAvatarIcon', playerRoot, 66, 66, -128, 0, HomeConfig.UI_HOME_AVATAR_MALE).setSiblingIndex(2);
+        this.createGiftLabel(playerRoot, 'GiftTargetNickname', '', 24, 26, 16, 220, 34, Color.WHITE, 2, HorizontalTextAlignment.LEFT);
+        this.createGiftLabel(playerRoot, 'GiftTargetUid', '', 24, 26, -16, 260, 34, Color.WHITE, 2, HorizontalTextAlignment.LEFT);
+
+        const amountRoot = this.createNode('GiftAmountRoot', root, 440, 62, 0, -165);
+        amountRoot.setSiblingIndex(5);
+        const amountInput = this.createSkinnedNode('GiftAmountInput', amountRoot, 170, 45, 0, 0, HomeConfig.UI_GIFT_TRANSLUCENT_BAR);
+        const minus = this.createSkinnedNode('GiftAmountMinusButton', amountRoot, 41, 41, -118, 0, HomeConfig.UI_GIFT_MINUS_BUTTON);
+        const plus = this.createSkinnedNode('GiftAmountPlusButton', amountRoot, 41, 41, 118, 0, HomeConfig.UI_GIFT_PLUS_BUTTON);
+        this.giftAmountEditBox = this.setupGiftEditBox(amountInput, '', 8, `${HomeConfig.GIFT_DEFAULT_AMOUNT}`, true);
+        this.bindScaledClick(minus, () => this.adjustGiftAmount(-1));
+        this.bindScaledClick(plus, () => this.adjustGiftAmount(1));
+
+        const summaryRoot = this.createNode('GiftTransferSummaryRoot', root, 310, 90, 0, -255);
+        summaryRoot.setSiblingIndex(6);
+        this.createGiftLabel(summaryRoot, 'GiftFinalPrefixLabel', '\u6700\u7ec8\u8d60\u9001\uff1a', 22, -42, 20, 128, 32, new Color(122, 84, 51, 255));
+        this.createGiftLabel(summaryRoot, 'GiftFinalAmountLabel', '', 22, 86, 20, 150, 32, new Color(33, 176, 76, 255));
+        const feeText = `\u6bcf\u7b14\u8d60\u9001\u6536\u53d6${Math.round(HomeConfig.GIFT_FEE_RATE * 100)}%\u624b\u7eed\u8d39`;
+        this.createGiftLabel(summaryRoot, 'GiftFeeHintLabel', feeText, 18, 0, -16, 300, 28, new Color(122, 84, 51, 255));
+
+        const giftButton = this.createSkinnedNode('GiftTransferSubmitButton', root, 162, 62, 0, -342, HomeConfig.UI_CONFIRM_BUTTON_BG);
+        giftButton.setSiblingIndex(7);
+        this.createGiftLabel(giftButton, 'GiftTransferSubmitLabel', '\u8d60\u9001', 32, 0, 2, 132, 42, Color.WHITE, 3);
+        this.bindScaledClick(giftButton, () => this.handleGiftSubmit());
+
+        this.bindGiftEditBoxEvents();
+        this.refreshGiftTargetPlayer();
+        this.refreshGiftAmountSummary();
+    }
+
+    protected createGiftLabel(
+        parent: Node,
+        name: string,
+        text: string,
+        fontSize: number,
+        x: number,
+        y: number,
+        width: number,
+        height: number,
+        color: Color,
+        outlineWidth = 0,
+        align: HorizontalTextAlignment = HorizontalTextAlignment.CENTER,
+    ): Label {
+        const label = this.createLabel(parent, name, text, fontSize, x, y, width, height, color);
+        label.lineHeight = Math.max(height, fontSize + 8);
+        label.horizontalAlign = align;
+        label.verticalAlign = VerticalTextAlignment.CENTER;
+        label.overflow = Overflow.CLAMP;
+        label.enableWrapText = false;
+        label.enableOutline = outlineWidth > 0;
+        label.outlineColor = new Color(62, 37, 22, 255);
+        label.outlineWidth = outlineWidth;
+        return label;
+    }
+
+    protected bindGiftTransferEditorPanel(panel: Node, root: Node): void {
+        this.ensureInputBlocker(panel);
+        panel.children.forEach((child) => {
+            child.active = child === root;
+        });
+        root.active = true;
+
+        const close = this.findNode('GiftTransferClose', root);
+        if (close) this.bindScaledClick(close, () => this.closeEditorFeaturePage(panel));
+
+        const uidInput = this.findNode('GiftUidInput', root);
+        if (uidInput) {
+            this.giftUidEditBox = this.setupGiftEditBox(uidInput, '\u70b9\u51fb\u8f93\u5165\u73a9\u5bb6\u7684UID', 12, '', true);
+        }
+
+        const searchButton = this.findNode('GiftUidSearchButton', root);
+        if (searchButton) this.bindScaledClick(searchButton, () => this.searchGiftTargetPlayer());
+
+        const amountInput = this.findNode('GiftAmountInput', root);
+        if (amountInput) {
+            this.giftAmountEditBox = this.setupGiftEditBox(amountInput, '', 8, `${HomeConfig.GIFT_DEFAULT_AMOUNT}`, true);
+        }
+
+        const minus = this.findNode('GiftAmountMinusButton', root);
+        if (minus) this.bindScaledClick(minus, () => this.adjustGiftAmount(-1));
+
+        const plus = this.findNode('GiftAmountPlusButton', root);
+        if (plus) this.bindScaledClick(plus, () => this.adjustGiftAmount(1));
+
+        const giftButton = this.findNode('GiftTransferSubmitButton', root);
+        if (giftButton) this.bindScaledClick(giftButton, () => this.handleGiftSubmit());
+
+        this.setGiftTransferLabelText(root, 'GiftTransferTitle', '\u5143\u5b9d\u8d60\u9001');
+        this.setGiftTransferLabelText(root, 'GiftOwnedYuanbaoAmount', this.getGiftOwnedYuanbaoText());
+        this.setGiftTransferLabelText(root, 'GiftFinalPrefixLabel', '\u6700\u7ec8\u8d60\u9001\uff1a');
+        this.setGiftTransferLabelText(root, 'GiftFeeHintLabel', `\u6bcf\u7b14\u8d60\u9001\u6536\u53d6${Math.round(HomeConfig.GIFT_FEE_RATE * 100)}%\u624b\u7eed\u8d39`);
+
+        this.bindGiftEditBoxEvents();
+        this.refreshGiftTargetPlayer();
+        this.refreshGiftAmountSummary();
+    }
+
+    protected setGiftTransferLabelText(root: Node, name: string, text: string): void {
+        const label = this.findNode(name, root)?.getComponent(Label);
+        if (label) label.string = text;
+    }
+
+    protected setupGiftEditBox(inputNode: Node, placeholder: string, maxLength: number, value: string, numeric: boolean): EditBox {
+        const editNode = this.ensureGiftEditBoxTouchNode(inputNode);
+        const transform = editNode.getComponent(UITransform) || editNode.addComponent(UITransform);
+        const size = transform.contentSize;
+        let editBox = editNode.getComponent(EditBox);
+        editBox ||= editNode.addComponent(EditBox);
+
+        const textLabel = this.getOrCreateGiftEditBoxLabel(editNode, 'TEXT_LABEL', new Color(55, 44, 34, 255), size.width, size.height);
+        const placeholderLabel = this.getOrCreateGiftEditBoxLabel(editNode, 'PLACEHOLDER_LABEL', new Color(205, 216, 214, 255), size.width, size.height);
+        const editBoxCompat = editBox as unknown as {
+            textLabel?: Label;
+            placeholderLabel?: Label;
+            inputMode?: number;
+            inputFlag?: number;
+            returnType?: number;
+            fontSize?: number;
+            placeholderFontSize?: number;
+            fontColor?: Color;
+            placeholderFontColor?: Color;
+            cursorColor?: Color;
+            backgroundImage?: SpriteFrame | null;
+            placeholder?: string;
+            maxLength?: number;
+            string?: string;
+        };
+
+        editBoxCompat.textLabel = textLabel;
+        editBoxCompat.placeholderLabel = placeholderLabel;
+        editBoxCompat.inputMode = (EditBox as unknown as { InputMode?: { SINGLE_LINE?: number } }).InputMode?.SINGLE_LINE ?? 6;
+        editBoxCompat.inputFlag = (EditBox as unknown as { InputFlag?: { SENSITIVE?: number } }).InputFlag?.SENSITIVE ?? 1;
+        editBoxCompat.returnType = (EditBox as unknown as { KeyboardReturnType?: { DONE?: number } }).KeyboardReturnType?.DONE ?? 0;
+        editBoxCompat.fontSize = textLabel.fontSize;
+        editBoxCompat.placeholderFontSize = placeholderLabel.fontSize;
+        editBoxCompat.fontColor = textLabel.color.clone();
+        editBoxCompat.placeholderFontColor = placeholderLabel.color.clone();
+        editBoxCompat.cursorColor = textLabel.color.clone();
+        editBoxCompat.backgroundImage = null;
+        editBoxCompat.placeholder = placeholder;
+        editBoxCompat.maxLength = maxLength;
+        editBoxCompat.string = value;
+        placeholderLabel.string = placeholder;
+        textLabel.string = value;
+        return editBox;
+    }
+
+    protected ensureGiftEditBoxTouchNode(inputNode: Node): Node {
+        let editNode = inputNode.getChildByName('EditBoxTouch');
+        if (!editNode?.isValid) {
+            editNode = new Node('EditBoxTouch');
+            inputNode.addChild(editNode);
+        }
+
+        const inputSize = inputNode.getComponent(UITransform)?.contentSize;
+        const width = Math.max(80, (inputSize?.width || 300) - 18);
+        const height = Math.max(24, (inputSize?.height || 50) - 8);
+        editNode.active = true;
+        editNode.layer = inputNode.layer;
+        editNode.setPosition(0, 0, 0);
+        const transform = editNode.getComponent(UITransform) || editNode.addComponent(UITransform);
+        transform.setAnchorPoint(0.5, 0.5);
+        transform.setContentSize(width, height);
+
+        const emptyTouchSprite = editNode.getComponent(Sprite);
+        if (emptyTouchSprite && !emptyTouchSprite.spriteFrame) {
+            emptyTouchSprite.enabled = false;
+        }
+        return editNode;
+    }
+
+    protected getOrCreateGiftEditBoxLabel(parent: Node, name: string, color: Color, width: number, height: number): Label {
+        let node = parent.getChildByName(name);
+        if (!node?.isValid) {
+            node = this.createNode(name, parent, width, height, 0, 0);
+        }
+        node.active = true;
+        node.layer = parent.layer;
+        node.setPosition(0, 0, 0);
+        (node.getComponent(UITransform) || node.addComponent(UITransform)).setContentSize(width, height);
+        const label = node.getComponent(Label) || node.addComponent(Label);
+        applySimKaiFont(label);
+        label.color = color;
+        label.fontSize = 22;
+        label.lineHeight = height;
+        label.horizontalAlign = HorizontalTextAlignment.CENTER;
+        label.verticalAlign = VerticalTextAlignment.CENTER;
+        label.overflow = Overflow.CLAMP;
+        label.enableWrapText = false;
+        label.enableOutline = true;
+        label.outlineColor = new Color(78, 61, 45, 210);
+        label.outlineWidth = 1;
+        return label;
+    }
+
+    protected bindGiftEditBoxEvents(): void {
+        const changed = this.getGiftEditBoxEventType('TEXT_CHANGED');
+        const uidInput = this.giftUidEditBox?.node;
+        if (uidInput?.isValid) {
+            uidInput.off(changed, this.onGiftUidTextChanged, this);
+            uidInput.on(changed, this.onGiftUidTextChanged, this);
+        }
+        const amountInput = this.giftAmountEditBox?.node;
+        if (amountInput?.isValid) {
+            amountInput.off(changed, this.onGiftAmountTextChanged, this);
+            amountInput.on(changed, this.onGiftAmountTextChanged, this);
+        }
+    }
+
+    protected getGiftEditBoxEventType(name: 'TEXT_CHANGED'): string {
+        const eventType = EditBox as unknown as { EventType?: Record<string, string> };
+        return eventType.EventType?.[name] || 'text-changed';
+    }
+
+    protected onGiftUidTextChanged(): void {
+        if (this.giftUidEditBox) {
+            const raw = this.giftUidEditBox.string || '';
+            const digits = raw.replace(/[^\d]/g, '');
+            if (raw !== digits) {
+                this.giftUidEditBox.string = digits;
+            }
+        }
+        const uid = this.getGiftUidInputValue();
+        if (this.giftSelectedPlayer && this.giftSelectedPlayer.uid !== uid) {
+            this.giftSelectedPlayer = null;
+            this.refreshGiftTargetPlayer();
+        }
+    }
+
+    protected onGiftAmountTextChanged(): void {
+        if (!this.giftAmountEditBox) return;
+        const raw = this.giftAmountEditBox.string || '';
+        const digits = raw.replace(/[^\d]/g, '');
+        if (raw !== digits) {
+            this.giftAmountEditBox.string = digits;
+        }
+        this.giftAmount = digits.length > 0 ? Math.max(0, Math.floor(Number(digits))) : 0;
+        this.refreshGiftAmountSummary();
+    }
+
+    protected searchGiftTargetPlayer(): void {
+        const uid = this.getGiftUidInputValue();
+        const player = HomeConfig.GIFT_PREVIEW_PLAYERS.find((item) => item.uid === uid) || null;
+        this.giftSelectedPlayer = player;
+        this.refreshGiftTargetPlayer();
+        if (!player) {
+            this.showToast('\u8bf7\u8f93\u5165\u6b63\u786e\u73a9\u5bb6UID');
+        }
+    }
+
+    protected getGiftUidInputValue(): string {
+        return (this.giftUidEditBox?.string || '').trim();
+    }
+
+    protected refreshGiftTargetPlayer(): void {
+        const root = this.findNode('GiftTargetPlayerRoot', this.popupRoot?.getChildByName('GiftPanel') || this.node);
+        if (!root?.isValid) return;
+
+        const player = this.giftSelectedPlayer;
+        root.active = !!player;
+        if (!player) return;
+
+        const avatar = root.getChildByName('GiftTargetAvatarIcon');
+        if (avatar) {
+            this.applyUiSkinKeepingEditorSize(avatar, player.avatarPath, 66, 66);
+        }
+        const nickname = root.getChildByName('GiftTargetNickname')?.getComponent(Label);
+        if (nickname) nickname.string = player.nickname;
+        const uid = root.getChildByName('GiftTargetUid')?.getComponent(Label);
+        if (uid) uid.string = `UID: ${player.uid}`;
+    }
+
+    protected adjustGiftAmount(delta: number): void {
+        const current = this.getGiftAmountValue();
+        this.setGiftAmount(Math.max(1, current + delta));
+    }
+
+    protected setGiftAmount(value: number): void {
+        const amount = Math.max(1, Math.floor(value));
+        this.giftAmount = amount;
+        if (this.giftAmountEditBox?.isValid) {
+            this.giftAmountEditBox.string = `${amount}`;
+        }
+        this.refreshGiftAmountSummary();
+    }
+
+    protected getGiftAmountValue(): number {
+        const raw = this.giftAmountEditBox?.string?.trim() || '';
+        const value = Number.parseInt(raw, 10);
+        return Number.isFinite(value) ? Math.max(0, Math.floor(value)) : 0;
+    }
+
+    protected refreshGiftAmountSummary(): void {
+        const panel = this.popupRoot?.getChildByName('GiftPanel') || this.findNode('GiftPanel');
+        const amountLabel = panel ? this.findNode('GiftFinalAmountLabel', panel)?.getComponent(Label) : null;
+        const amount = this.getGiftAmountValue();
+        this.giftAmount = amount;
+        if (amountLabel) {
+            amountLabel.string = `${amount} \u5143\u5b9d`;
+        }
+    }
+
+    protected handleGiftSubmit(): void {
+        if (!this.giftSelectedPlayer) {
+            this.showToast('\u8bf7\u8f93\u5165\u6b63\u786e\u73a9\u5bb6UID');
+            return;
+        }
+
+        const amount = this.getGiftAmountValue();
+        if (amount < HomeConfig.GIFT_MIN_AMOUNT) {
+            this.showToast('\u8d60\u9001\u5143\u5b9d\u4e0d\u5f97\u5c0f\u4e8e20');
+            return;
+        }
+
+        this.openSharedFlowPopup('GiftTransferConfirmPopup', {
+            title: '\u63d0\u793a\u4fe1\u606f',
+            message: `\u662f\u5426\u786e\u8ba4\u8d60\u9001${amount}\u5143\u5b9d\u7ed9\u73a9\u5bb6${this.giftSelectedPlayer.nickname}\uff1f`,
+            onConfirm: () => this.completeGiftTransfer(amount, this.giftSelectedPlayer?.nickname || ''),
+        });
+    }
+
+    protected completeGiftTransfer(amount: number, nickname: string): void {
+        this.showToast(`\u8d60\u9001${amount}\u5143\u5b9d\u7ed9${nickname}\u7684\u8bf7\u6c42\u5df2\u63d0\u4ea4`);
+    }
+
+    protected getGiftOwnedYuanbaoText(): string {
+        const text = this.persistentSoulLabel?.string?.trim()
+            || this.topSoulLabel?.string?.trim()
+            || this.getSoulCurrencyText();
+        return text || '0';
     }
 
     protected bindSharePage(panel: Node): void {

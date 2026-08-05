@@ -96,27 +96,46 @@ export abstract class HomeFeatureCommerceConfirm extends HomeFeatureCommerceConf
     protected formatCommercePrice(value: number): string {
         return value.toFixed(2).replace(/\.?0+$/, '');
     }
-    protected formatCommerceQuantityConfirmMessage(actionText: string, itemName: string, unitPrice: number): string {
+    protected formatCommerceQuantityConfirmMessage(actionText: string, itemName: string, unitPrice: number, currencyName = '\u5143\u5b9d'): string {
         const quantity = this.commerceQuantity;
         const totalPrice = this.formatCommercePrice(unitPrice * quantity);
         if (actionText === '\u8d2d\u4e70') {
-            const currencyName = '\u5143\u5b9d';
             return `\u662f\u5426\u786e\u5b9a\u6d88\u8017${totalPrice}${currencyName}${actionText}${itemName} x${quantity}\uff1f`;
         }
         return `\u662f\u5426\u786e\u5b9a${actionText}${itemName} x${quantity}\uff1f\n\u603b\u4ef7\uff1a${totalPrice}`;
     }
-    protected formatCommerceQuantityConfirmRichMessage(actionText: string, itemName: string, unitPrice: number): string {
+    protected formatCommerceQuantityConfirmRichMessage(actionText: string, itemName: string, unitPrice: number, currencyName = '\u5143\u5b9d'): string {
         const quantity = this.commerceQuantity;
         const totalPrice = this.formatCommercePrice(unitPrice * quantity);
         const red = '#d83a2e';
         const normal = '#6f462a';
         const itemNameText = this.escapeRichText(itemName);
         const actionTextSafe = this.escapeRichText(actionText);
+        const currencyNameText = this.escapeRichText(currencyName);
         if (actionText === '\u8d2d\u4e70') {
-            const currencyName = '\u5143\u5b9d';
-            return `<outline color=#fff7dc width=1><color=${normal}>\u662f\u5426\u786e\u5b9a\u6d88\u8017</color><color=${red}>${totalPrice}</color><color=${normal}>${currencyName}${actionTextSafe}${itemNameText} x</color><color=${red}>${quantity}</color><color=${normal}>\uff1f</color></outline>`;
+            return `<outline color=#fff7dc width=1><color=${normal}>\u662f\u5426\u786e\u5b9a\u6d88\u8017</color><color=${red}>${totalPrice}</color><color=${normal}>${currencyNameText}${actionTextSafe}${itemNameText} x</color><color=${red}>${quantity}</color><color=${normal}>\uff1f</color></outline>`;
         }
         return `<outline color=#fff7dc width=1><color=${normal}>\u662f\u5426\u786e\u5b9a${actionTextSafe}${itemNameText} x</color><color=${red}>${quantity}</color><color=${normal}>\uff1f\n\u603b\u4ef7\uff1a</color><color=${red}>${totalPrice}</color></outline>`;
+    }
+    protected hideCommerceConfirmForeignNodes(popup: Node): void {
+        [
+            'MagicMonsterRoomQuestion',
+            'MagicMonsterRoomHpCaption',
+            'MagicMonsterRoomHpFrame',
+            'MagicMonsterRoomHpBar',
+            'MagicMonsterRoomCount',
+        ].forEach((nodeName) => {
+            const node = this.findNode(nodeName, popup);
+            if (!node?.isValid) return;
+            node.active = false;
+            node.setPosition(0, -2000, 0);
+        });
+    }
+    protected hideCommerceConfirmCloseButton(popup: Node): void {
+        const close = this.findNode('ConfirmPopupClose', popup);
+        if (!close?.isValid) return;
+        close.active = false;
+        close.setScale(0, 0, 1);
     }
     protected layoutCommerceQuantityConfirmPopup(
         popup: Node,
@@ -124,7 +143,11 @@ export abstract class HomeFeatureCommerceConfirm extends HomeFeatureCommerceConf
         actionText: string,
         itemName: string,
         unitPrice: number,
+        currencyName = '\u5143\u5b9d',
     ): { quantityValue: Label | null; message: RichText | null } {
+        this.hideCommerceConfirmForeignNodes(popup);
+        this.hideCommerceConfirmCloseButton(popup);
+
         const popupTransform = popup.getComponent(UITransform) || popup.addComponent(UITransform);
         popupTransform.setContentSize(HomeConfig.VIEW_WIDTH, HomeConfig.VIEW_HEIGHT);
 
@@ -147,7 +170,7 @@ export abstract class HomeFeatureCommerceConfirm extends HomeFeatureCommerceConf
             486,
             84,
             0,
-            182,
+            169,
             HomeConfig.UI_CONFIRM_TITLE_BG,
         );
         titleSkin.setSiblingIndex(1);
@@ -159,7 +182,7 @@ export abstract class HomeFeatureCommerceConfirm extends HomeFeatureCommerceConf
             titleText || '\u63d0\u793a\u8bf4\u660e',
             30,
             0,
-            185,
+            169,
             280,
             52,
             new Color(126, 74, 36, 255),
@@ -182,7 +205,7 @@ export abstract class HomeFeatureCommerceConfirm extends HomeFeatureCommerceConf
             0,
             66,
             560,
-            88,
+            42.84,
         );
         message.lineHeight = 34;
         message.node.setSiblingIndex(4);
@@ -198,7 +221,7 @@ export abstract class HomeFeatureCommerceConfirm extends HomeFeatureCommerceConf
             23,
             0,
             0,
-            HomeConfig.UI_SHOP_QUANTITY_BG,
+            HomeConfig.UI_GIFT_TRANSLUCENT_BAR,
         );
         quantityBg.setSiblingIndex(0);
 
@@ -248,10 +271,11 @@ export abstract class HomeFeatureCommerceConfirm extends HomeFeatureCommerceConf
             'ConfirmCancelButton',
             162,
             62,
-            -112,
-            -188,
+            -113.38800000000003,
+            -155,
             HomeConfig.UI_CONFIRM_BUTTON_BG,
         );
+        cancel.setPosition(-113.38800000000003, -155, 0);
         cancel.setSiblingIndex(6);
 
         const cancelLabel = this.getOrCreateConfirmLabel(
@@ -276,10 +300,11 @@ export abstract class HomeFeatureCommerceConfirm extends HomeFeatureCommerceConf
             'ConfirmAcceptButton',
             162,
             62,
-            112,
-            -188,
+            121.71900000000005,
+            -155,
             HomeConfig.UI_CONFIRM_BUTTON_BG,
         );
+        accept.setPosition(121.71900000000005, -155, 0);
         accept.setSiblingIndex(7);
 
         const acceptLabel = this.getOrCreateConfirmLabel(
@@ -299,7 +324,6 @@ export abstract class HomeFeatureCommerceConfirm extends HomeFeatureCommerceConf
         acceptLabel.node.setSiblingIndex(1);
 
         [
-            'ConfirmPopupClose',
             'ConfirmQuantityCaption',
             'ConfirmQuantityMinusLabel',
             'ConfirmQuantityPlusLabel',
@@ -307,9 +331,10 @@ export abstract class HomeFeatureCommerceConfirm extends HomeFeatureCommerceConf
             const node = this.findNode(nodeName, popup);
             if (node?.isValid) node.active = false;
         });
+        this.hideCommerceConfirmCloseButton(popup);
 
         const refreshMessage = (): void => {
-            message.string = this.formatCommerceQuantityConfirmRichMessage(actionText, itemName, unitPrice);
+            message.string = this.formatCommerceQuantityConfirmRichMessage(actionText, itemName, unitPrice, currencyName);
         };
         refreshMessage();
 
@@ -332,6 +357,7 @@ export abstract class HomeFeatureCommerceConfirm extends HomeFeatureCommerceConf
         maxQuantity: number,
         actionText: string,
         onConfirm: (quantity: number) => void,
+        currencyName = '\u5143\u5b9d',
     ): void {
         this.commerceQuantity = 1;
         this.commerceQuantityMax = Math.max(1, Math.floor(maxQuantity));
@@ -342,10 +368,10 @@ export abstract class HomeFeatureCommerceConfirm extends HomeFeatureCommerceConf
         });
         const popup = this.popupRoot?.getChildByName('ConfirmPopup') || this.findNode('ConfirmPopup');
         if (!popup?.isValid) return;
-        const { quantityValue, message } = this.layoutCommerceQuantityConfirmPopup(popup, title, actionText, itemName, unitPrice);
+        const { quantityValue, message } = this.layoutCommerceQuantityConfirmPopup(popup, title, actionText, itemName, unitPrice, currencyName);
         const refresh = () => {
             if (quantityValue) quantityValue.string = `${this.commerceQuantity}`;
-            if (message) message.string = this.formatCommerceQuantityConfirmRichMessage(actionText, itemName, unitPrice);
+            if (message) message.string = this.formatCommerceQuantityConfirmRichMessage(actionText, itemName, unitPrice, currencyName);
         };
         const minus = this.findNode('ConfirmQuantityMinus', popup);
         const plus = this.findNode('ConfirmQuantityPlus', popup);

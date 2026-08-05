@@ -14,14 +14,20 @@ export const UI_DUEL_LUANSHI_ZHENGXIONG_BG = `${DUEL_UI_ROOT}/duel_luanshi_zheng
 export const UI_DUEL_LUANSHI_PK_HP_FRAME = `${DUEL_UI_ROOT}/duel_luanshi_pk_hp_frame`;
 export const UI_DUEL_LUANSHI_HP_WUDANG = `${DUEL_UI_ROOT}/duel_luanshi_hp_wudang`;
 export const UI_DUEL_LUANSHI_HP_GAIBANG = `${DUEL_UI_ROOT}/duel_luanshi_hp_gaibang`;
+export const UI_DUEL_LUANSHI_ICON_WUDANG = `${DUEL_UI_ROOT}/duel_luanshi_icon_wudang`;
+export const UI_DUEL_LUANSHI_ICON_GAIBANG = `${DUEL_UI_ROOT}/duel_luanshi_icon_gaibang`;
 export const UI_DUEL_LUANSHI_SKILL_PANEL = `${DUEL_UI_ROOT}/duel_luanshi_skill_panel`;
 export const UI_DUEL_LUANSHI_TOGGLE_BUTTON = `${DUEL_UI_ROOT}/duel_luanshi_toggle_button`;
 export const UI_DUEL_LUANSHI_RECORD_BUTTON = `${DUEL_UI_ROOT}/duel_luanshi_record_button`;
+export const UI_DUEL_LUANSHI_RANK_BUTTON = `${DUEL_UI_ROOT}/duel_jianghu_rank_icon`;
 export const DUEL_LUANSHI_UI_ROOT = `${DUEL_UI_ROOT}/Luanshi`;
 export const UI_DUEL_LUANSHI_TIMER_BG = `${DUEL_LUANSHI_UI_ROOT}/luanshi_timer_bg`;
 export const UI_DUEL_LUANSHI_DUEL_ICON = `${DUEL_LUANSHI_UI_ROOT}/luanshi_duel_icon`;
 export const UI_DUEL_LUANSHI_RESULT_VICTORY_BG = `${DUEL_LUANSHI_UI_ROOT}/luanshi_result_victory_bg`;
 export const UI_DUEL_LUANSHI_RESULT_DEFEAT_BG = `${DUEL_LUANSHI_UI_ROOT}/luanshi_result_defeat_bg`;
+export const UI_DUEL_LUANSHI_YUANBAO_ICON = `${DUEL_LUANSHI_UI_ROOT}/luanshi_yuanbao_icon`;
+export const UI_DUEL_LUANSHI_OWNED_YUANBAO_BG = `${DUEL_LUANSHI_UI_ROOT}/luanshi_owned_yuanbao_bg`;
+export const UI_DUEL_LUANSHI_INVEST_YUANBAO_BG = `${DUEL_LUANSHI_UI_ROOT}/luanshi_invest_yuanbao_bg`;
 export const DUEL_LUANSHI_AVATAR_UI_ROOT = `${DUEL_LUANSHI_UI_ROOT}/Avatars`;
 export const DUEL_LUANSHI_SKILL_ICON_UI_ROOT = `${DUEL_LUANSHI_UI_ROOT}/SkillIcons`;
 export const DUEL_LUANSHI_AVATAR_FRAME_EFFECT_UI_ROOT = `${DUEL_LUANSHI_UI_ROOT}/AvatarFrameEffect`;
@@ -147,6 +153,30 @@ export const DUEL_LUANSHI_SKILL_ICON_EFFECT_FRAME_PATHS = {
         `${DUEL_LUANSHI_SKILL_ICON_EFFECT_UI_ROOT}/lanse_mofa/frame_10`,
         `${DUEL_LUANSHI_SKILL_ICON_EFFECT_UI_ROOT}/lanse_mofa/frame_11`,
     ],
+    ultimate_1: [
+        `${DUEL_LUANSHI_SKILL_ICON_EFFECT_UI_ROOT}/ultimate_1/frame_00`,
+        `${DUEL_LUANSHI_SKILL_ICON_EFFECT_UI_ROOT}/ultimate_1/frame_01`,
+        `${DUEL_LUANSHI_SKILL_ICON_EFFECT_UI_ROOT}/ultimate_1/frame_02`,
+        `${DUEL_LUANSHI_SKILL_ICON_EFFECT_UI_ROOT}/ultimate_1/frame_03`,
+        `${DUEL_LUANSHI_SKILL_ICON_EFFECT_UI_ROOT}/ultimate_1/frame_04`,
+        `${DUEL_LUANSHI_SKILL_ICON_EFFECT_UI_ROOT}/ultimate_1/frame_05`,
+        `${DUEL_LUANSHI_SKILL_ICON_EFFECT_UI_ROOT}/ultimate_1/frame_06`,
+        `${DUEL_LUANSHI_SKILL_ICON_EFFECT_UI_ROOT}/ultimate_1/frame_07`,
+        `${DUEL_LUANSHI_SKILL_ICON_EFFECT_UI_ROOT}/ultimate_1/frame_08`,
+        `${DUEL_LUANSHI_SKILL_ICON_EFFECT_UI_ROOT}/ultimate_1/frame_09`,
+    ],
+    ultimate_2: [
+        `${DUEL_LUANSHI_SKILL_ICON_EFFECT_UI_ROOT}/ultimate_2/frame_00`,
+        `${DUEL_LUANSHI_SKILL_ICON_EFFECT_UI_ROOT}/ultimate_2/frame_01`,
+        `${DUEL_LUANSHI_SKILL_ICON_EFFECT_UI_ROOT}/ultimate_2/frame_02`,
+        `${DUEL_LUANSHI_SKILL_ICON_EFFECT_UI_ROOT}/ultimate_2/frame_03`,
+        `${DUEL_LUANSHI_SKILL_ICON_EFFECT_UI_ROOT}/ultimate_2/frame_04`,
+        `${DUEL_LUANSHI_SKILL_ICON_EFFECT_UI_ROOT}/ultimate_2/frame_05`,
+        `${DUEL_LUANSHI_SKILL_ICON_EFFECT_UI_ROOT}/ultimate_2/frame_06`,
+        `${DUEL_LUANSHI_SKILL_ICON_EFFECT_UI_ROOT}/ultimate_2/frame_07`,
+        `${DUEL_LUANSHI_SKILL_ICON_EFFECT_UI_ROOT}/ultimate_2/frame_08`,
+        `${DUEL_LUANSHI_SKILL_ICON_EFFECT_UI_ROOT}/ultimate_2/frame_09`,
+    ],
 } as const;
 export const DUEL_LUANSHI_SKILL_COST_YUANBAO = 80;
 export const DUEL_LUANSHI_SKILL_CONFIGS = [
@@ -158,6 +188,8 @@ export const DUEL_LUANSHI_SKILL_CONFIGS = [
     { id: 'huoyan_down', label: '\u706b\u7130\u4e0b\u5288', yuanbaoCost: DUEL_LUANSHI_SKILL_COST_YUANBAO, iconPath: `${DUEL_LUANSHI_SKILL_ICON_UI_ROOT}/skill_huoyan_down`, frameEffectPaths: DUEL_LUANSHI_SKILL_ICON_EFFECT_FRAME_PATHS.huoyan_down, spinePath: `${DUEL_LUANSHI_SPINE_ROOT}/huoyan_down/H043_Special` },
     { id: 'hongjian', label: '\u7ea2\u5251', yuanbaoCost: DUEL_LUANSHI_SKILL_COST_YUANBAO, iconPath: `${DUEL_LUANSHI_SKILL_ICON_UI_ROOT}/skill_hongjian`, frameEffectPaths: DUEL_LUANSHI_SKILL_ICON_EFFECT_FRAME_PATHS.hongjian, spinePath: `${DUEL_LUANSHI_SPINE_ROOT}/hongjian/magicSkill1201` },
     { id: 'lanse_mofa', label: '\u84dd\u8272\u9b54\u6cd5', yuanbaoCost: DUEL_LUANSHI_SKILL_COST_YUANBAO, frameEffectSize: 160, iconPath: `${DUEL_LUANSHI_SKILL_ICON_UI_ROOT}/skill_lanse_mofa`, frameEffectPaths: DUEL_LUANSHI_SKILL_ICON_EFFECT_FRAME_PATHS.lanse_mofa, spinePath: `${DUEL_LUANSHI_SPINE_ROOT}/lanse_mofa/H041_Special` },
+    { id: 'ultimate_1', label: '\u5927\u62db\u6280\u80fd1', yuanbaoCost: DUEL_LUANSHI_SKILL_COST_YUANBAO, frameEffectSize: 150, iconPath: `${DUEL_LUANSHI_SKILL_ICON_UI_ROOT}/skill_ultimate_1`, frameEffectPaths: DUEL_LUANSHI_SKILL_ICON_EFFECT_FRAME_PATHS.ultimate_1, spinePath: `${DUEL_LUANSHI_SPINE_ROOT}/ultimate_1/action`, fullScreenEffect: true, flipFullScreenForGaibang: true, effectScale: 2.75, fullScreenOffsetY: 0 },
+    { id: 'ultimate_2', label: '\u5927\u62db\u6280\u80fd2', yuanbaoCost: DUEL_LUANSHI_SKILL_COST_YUANBAO, frameEffectSize: 150, iconPath: `${DUEL_LUANSHI_SKILL_ICON_UI_ROOT}/skill_ultimate_2`, frameEffectPaths: DUEL_LUANSHI_SKILL_ICON_EFFECT_FRAME_PATHS.ultimate_2, spinePath: `${DUEL_LUANSHI_SPINE_ROOT}/ultimate_2/action`, fullScreenEffect: true, effectScale: 2.05, fullScreenOffsetY: -45 },
 ] as const;
 export const DUEL_LUANSHI_DAMAGE_DIGIT_PATHS = [
     `${DUEL_LUANSHI_RECEIVED_DAMAGE_NUMBER_UI_ROOT}/jy_0`,
@@ -211,7 +243,7 @@ export const DUEL_PAGE_BG_PAN_DURATION = 28;
 export const DUEL_LUANSHI_ZHENGXIONG_BG_WIDTH = 2888;
 export const DUEL_LUANSHI_ZHENGXIONG_BG_HEIGHT = VIEW_HEIGHT;
 export const DUEL_LUANSHI_ZHENGXIONG_BG_PAN_X = (DUEL_LUANSHI_ZHENGXIONG_BG_WIDTH - VIEW_WIDTH) / 2;
-export const DUEL_LUANSHI_ZHENGXIONG_BG_PAN_DURATION = 28;
+export const DUEL_LUANSHI_ZHENGXIONG_BG_PAN_DURATION = 42;
 export const DUEL_BACK_X = -300;
 export const DUEL_BACK_Y = -720;
 export const DUEL_LUANSHI_PK_FRAME_WIDTH = VIEW_WIDTH;
@@ -222,6 +254,11 @@ export const DUEL_LUANSHI_HP_HEIGHT = 16;
 export const DUEL_LUANSHI_HP_Y = 650;
 export const DUEL_LUANSHI_HP_LEFT_X = -164;
 export const DUEL_LUANSHI_HP_RIGHT_X = 164;
+export const DUEL_LUANSHI_CAMP_ICON_WIDTH = 49;
+export const DUEL_LUANSHI_CAMP_ICON_HEIGHT = 62;
+export const DUEL_LUANSHI_WUDANG_ICON_X = -351;
+export const DUEL_LUANSHI_GAIBANG_ICON_X = 351;
+export const DUEL_LUANSHI_CAMP_ICON_Y = 5;
 export const DUEL_LUANSHI_TIMER_BG_WIDTH = 360;
 export const DUEL_LUANSHI_TIMER_BG_HEIGHT = 58;
 export const DUEL_LUANSHI_PERIOD_TAG_WIDTH = 136;
@@ -257,8 +294,29 @@ export const DUEL_LUANSHI_TOGGLE_Y = -377;
 export const DUEL_LUANSHI_SIDE_BUTTON_SIZE = 95;
 export const DUEL_LUANSHI_SIDE_BUTTON_Y = -344;
 export const DUEL_LUANSHI_BACK_X = -305;
+export const DUEL_LUANSHI_RANK_X = 322;
 export const DUEL_LUANSHI_RECORD_X = 322;
+export const DUEL_LUANSHI_RANK_Y = -344;
+export const DUEL_LUANSHI_RECORD_Y = -252;
 export const DUEL_LUANSHI_TIMER_Y = 724;
+export const DUEL_LUANSHI_CURRENCY_LAYER_WIDTH = VIEW_WIDTH;
+export const DUEL_LUANSHI_CURRENCY_LAYER_HEIGHT = 220;
+export const DUEL_LUANSHI_OWNED_YUANBAO_ROOT_Y = 680;
+export const DUEL_LUANSHI_OWNED_YUANBAO_BG_WIDTH = 138;
+export const DUEL_LUANSHI_OWNED_YUANBAO_BG_HEIGHT = 32;
+export const DUEL_LUANSHI_OWNED_YUANBAO_ICON_SIZE = 30;
+export const DUEL_LUANSHI_OWNED_YUANBAO_ICON_X = -30;
+export const DUEL_LUANSHI_OWNED_YUANBAO_LABEL_X = 20;
+export const DUEL_LUANSHI_OWNED_YUANBAO_LABEL_WIDTH = 82;
+export const DUEL_LUANSHI_INVEST_YUANBAO_ROOT_Y = 604;
+export const DUEL_LUANSHI_WUDANG_INVEST_YUANBAO_ROOT_X = -325;
+export const DUEL_LUANSHI_GAIBANG_INVEST_YUANBAO_ROOT_X = 325;
+export const DUEL_LUANSHI_INVEST_YUANBAO_BG_WIDTH = 114;
+export const DUEL_LUANSHI_INVEST_YUANBAO_BG_HEIGHT = 32;
+export const DUEL_LUANSHI_INVEST_YUANBAO_ICON_SIZE = 24;
+export const DUEL_LUANSHI_INVEST_YUANBAO_ICON_X = -32;
+export const DUEL_LUANSHI_INVEST_YUANBAO_LABEL_X = 12;
+export const DUEL_LUANSHI_INVEST_YUANBAO_LABEL_WIDTH = 68;
 export const DUEL_LUANSHI_AVATAR_SIZE = 78;
 export const DUEL_LUANSHI_AVATAR_EFFECT_SIZE = 116;
 export const DUEL_LUANSHI_AVATAR_ROAM_RADIUS_X = 34;
@@ -290,7 +348,9 @@ export const DUEL_LUANSHI_AVATAR_HIT_SHAKE_Y = 5;
 export const DUEL_LUANSHI_JOIN_LAYER_HEIGHT = 1220;
 export const DUEL_LUANSHI_JOIN_BUTTON_WIDTH = 212;
 export const DUEL_LUANSHI_JOIN_BUTTON_HEIGHT = 60;
-export const DUEL_LUANSHI_JOIN_BUTTON_Y = -520;
+export const DUEL_LUANSHI_JOIN_WUDANG_X = -160;
+export const DUEL_LUANSHI_JOIN_GAIBANG_X = 160;
+export const DUEL_LUANSHI_JOIN_BUTTON_Y = -344;
 export const DUEL_LUANSHI_SKILL_EFFECT_SCALE = 0.9;
 export const DUEL_LUANSHI_BLUE_MAGIC_SKILL_EFFECT_SCALE = 0.72;
 export const DUEL_LUANSHI_DEFENSE_SKILL_EFFECT_SCALE = 1.22;
@@ -299,6 +359,9 @@ export const DUEL_LUANSHI_SKILL_EFFECT_TARGET_X = 205;
 export const DUEL_LUANSHI_BLUE_MAGIC_SKILL_EFFECT_TARGET_X = 112;
 export const DUEL_LUANSHI_SKILL_EFFECT_Y = 60;
 export const DUEL_LUANSHI_DEFENSE_SKILL_EFFECT_Y = 130;
+export const DUEL_LUANSHI_FULLSCREEN_SKILL_EFFECT_WIDTH = VIEW_WIDTH;
+export const DUEL_LUANSHI_FULLSCREEN_SKILL_EFFECT_HEIGHT = VIEW_HEIGHT;
+export const DUEL_LUANSHI_FULLSCREEN_SKILL_EFFECT_Y = -120;
 export const DUEL_LUANSHI_SKILL_EFFECT_TRAVEL_SECONDS = 0.32;
 export const DUEL_LUANSHI_AUTO_SKILL_DELAY_MIN = 0.56;
 export const DUEL_LUANSHI_AUTO_SKILL_DELAY_MAX = 1.24;
@@ -307,6 +370,11 @@ export const DUEL_LUANSHI_AUTO_SKILL_Y_MAX = 285;
 export const DUEL_LUANSHI_AUTO_EFFECT_POOL_SIZE = 10;
 export const DUEL_LUANSHI_AUTO_ATTACK_SKILL_WEIGHT = 1;
 export const DUEL_LUANSHI_AUTO_DEFENSE_SKILL_WEIGHT = 0.22;
+export const DUEL_LUANSHI_AUTO_ULTIMATE_SKILL_WEIGHT = 0.16;
+export const DUEL_LUANSHI_COUNTERATTACK_LOW_POWER_THRESHOLD = 68;
+export const DUEL_LUANSHI_COUNTERATTACK_MIN_CAST_GAP = 2;
+export const DUEL_LUANSHI_COUNTERATTACK_BASE_CHANCE = 0.18;
+export const DUEL_LUANSHI_COUNTERATTACK_MAX_CHANCE = 0.62;
 export const UI_DUEL_ROOM_NAME_CURRENCY_BG = `${DUEL_UI_ROOT}/duel_room_name_currency_bg`;
 export const UI_DUEL_YUANBAO_ICON = `${DUEL_UI_ROOT}/duel_yuanbao_icon`;
 export const UI_DUEL_INVEST_BUTTON_BG = `${DUEL_UI_ROOT}/duel_invest_button_bg`;

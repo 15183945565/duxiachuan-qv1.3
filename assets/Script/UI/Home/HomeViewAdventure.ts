@@ -138,7 +138,6 @@ export abstract class HomeViewAdventure extends HomeViewRoleBag {
             popupName === 'ConfirmPopup'
             && content.variant !== 'magicFloorConfirm'
             && content.variant !== 'beastStrengthenConfirm'
-            && content.variant !== 'commerceQuantityConfirm'
         ) {
             const popup = this.popupRoot?.getChildByName('ConfirmPopup') || this.findNode('ConfirmPopup');
             if (popup?.isValid) this.resetSharedConfirmPopupStyle(popup);
@@ -174,7 +173,7 @@ export abstract class HomeViewAdventure extends HomeViewRoleBag {
         if (titleSkin?.isValid) {
             if (board?.isValid && titleSkin.parent !== board) titleSkin.setParent(board);
             titleSkin.active = true;
-            titleSkin.setPosition(0, 182, 0);
+            titleSkin.setPosition(0, 169, 0);
             (titleSkin.getComponent(UITransform) || titleSkin.addComponent(UITransform)).setContentSize(486, 84);
             this.applyUiSkinKeepingEditorSize(titleSkin, HomeConfig.UI_CONFIRM_TITLE_BG, 486, 84);
             titleSkin.setSiblingIndex(1);
@@ -185,7 +184,7 @@ export abstract class HomeViewAdventure extends HomeViewRoleBag {
         if (titleNode?.isValid && titleLabel) {
             if (board?.isValid && titleNode.parent !== board) titleNode.setParent(board);
             titleNode.active = true;
-            titleNode.setPosition(0, 185, 0);
+            titleNode.setPosition(0, 169, 0);
             (titleNode.getComponent(UITransform) || titleNode.addComponent(UITransform)).setContentSize(280, 52);
             titleLabel.fontSize = 30;
             titleLabel.lineHeight = 38;
@@ -210,8 +209,8 @@ export abstract class HomeViewAdventure extends HomeViewRoleBag {
         if (messageNode?.isValid) {
             if (board?.isValid && messageNode.parent !== board) messageNode.setParent(board);
             messageNode.active = true;
-            messageNode.setPosition(0, 48, 0);
-            (messageNode.getComponent(UITransform) || messageNode.addComponent(UITransform)).setContentSize(560, 88);
+            messageNode.setPosition(0, 66, 0);
+            (messageNode.getComponent(UITransform) || messageNode.addComponent(UITransform)).setContentSize(560, 42.84);
             const richText = messageNode.getComponent(RichText);
             if (richText) {
                 richText.enabled = true;
@@ -234,7 +233,7 @@ export abstract class HomeViewAdventure extends HomeViewRoleBag {
             'ConfirmCancelButtonLabel',
             HomeConfig.UI_CONFIRM_BUTTON_BG,
             '\u53d6\u6d88',
-            -112,
+            -113.38800000000003,
             new Color(94, 36, 35, 255),
             6,
         );
@@ -244,7 +243,7 @@ export abstract class HomeViewAdventure extends HomeViewRoleBag {
             'ConfirmAcceptButtonLabel',
             HomeConfig.UI_CONFIRM_BUTTON_BG,
             '\u786e\u5b9a',
-            112,
+            121.71900000000005,
             new Color(28, 85, 82, 255),
             7,
         );
@@ -253,6 +252,7 @@ export abstract class HomeViewAdventure extends HomeViewRoleBag {
         if (close?.isValid) {
             if (board?.isValid && close.parent !== board) close.setParent(board);
             close.active = false;
+            close.setScale(0, 0, 1);
             close.setPosition(251, 226, 0);
             (close.getComponent(UITransform) || close.addComponent(UITransform)).setContentSize(70, 70);
             this.applyUiSkinKeepingEditorSize(close, HomeConfig.UI_BTN_CLOSE, 70, 70);
@@ -285,7 +285,7 @@ export abstract class HomeViewAdventure extends HomeViewRoleBag {
         if (!button?.isValid) return;
 
         button.active = true;
-        button.setPosition(x, -188, 0);
+        button.setPosition(x, -155, 0);
         (button.getComponent(UITransform) || button.addComponent(UITransform)).setContentSize(162, 62);
         this.applyUiSkinKeepingEditorSize(button, skinPath, 162, 62);
         button.setSiblingIndex(siblingIndex);

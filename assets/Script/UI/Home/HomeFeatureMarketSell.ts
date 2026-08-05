@@ -53,7 +53,9 @@ export abstract class HomeFeatureMarketSell extends HomeFeatureMarketSellHost {
                 child.active = false;
             });
 
-        const startY = viewportHeight / 2 - HomeConfig.MARKET_ROW_HEIGHT / 2 - 10;
+        const addSlotTemplate = this.marketContent.getChildByName('MarketSellAddSlot');
+        const defaultStartY = viewportHeight / 2 - HomeConfig.MARKET_ROW_HEIGHT / 2 - 10;
+        const startY = hasAddSlot && addSlotTemplate?.isValid ? addSlotTemplate.position.y : defaultStartY;
         const listingStartIndex = hasAddSlot ? 1 : 0;
         if (hasAddSlot) {
             this.createMarketSellAddRow(this.marketContent, startY);
@@ -68,10 +70,13 @@ export abstract class HomeFeatureMarketSell extends HomeFeatureMarketSellHost {
         this.bindBagGridScroll(this.marketContent, this.marketContent, maxScrollY);
     }
     protected createMarketSellAddRow(parent: Node, y: number): void {
+        const existingRow = parent.getChildByName('MarketSellAddSlot');
         const row = this.getOrCreateEditorSkinnedNode('MarketSellAddSlot', parent, HomeConfig.MARKET_ROW_WIDTH, HomeConfig.MARKET_ROW_HEIGHT, 0, y, HomeConfig.UI_MARKET_ITEM_ROW);
         row.active = true;
-        row.setPosition(0, y, 0);
-        (row.getComponent(UITransform) || row.addComponent(UITransform)).setContentSize(HomeConfig.MARKET_ROW_WIDTH, HomeConfig.MARKET_ROW_HEIGHT);
+        if (!existingRow?.isValid) {
+            row.setPosition(0, y, 0);
+            (row.getComponent(UITransform) || row.addComponent(UITransform)).setContentSize(HomeConfig.MARKET_ROW_WIDTH, HomeConfig.MARKET_ROW_HEIGHT);
+        }
         row.children
             .filter((child) => child.name !== 'MarketSellAddButton')
             .forEach((child) => {
@@ -206,22 +211,26 @@ export abstract class HomeFeatureMarketSell extends HomeFeatureMarketSellHost {
         viewport.setSiblingIndex(5);
         const mask = viewport.getComponent(Mask) || viewport.addComponent(Mask);
         mask.type = Mask.Type.GRAPHICS_RECT;
-        const oldContent = viewport.getChildByName('MarketSellSelectContent');
-        if (oldContent?.isValid) {
-            oldContent.removeFromParent();
-            oldContent.destroy();
-        }
-
         const cols = 4;
         const rowCount = Math.max(1, Math.ceil(items.length / cols));
         const rowStep = HomeConfig.MARKET_SELL_SELECT_CELL_SIZE + HomeConfig.MARKET_SELL_SELECT_CELL_GAP_Y;
         const contentHeight = Math.max(HomeConfig.MARKET_SELL_SELECT_VIEWPORT_HEIGHT, rowCount * rowStep + 20);
-        const content = this.createNode('MarketSellSelectContent', viewport, HomeConfig.MARKET_SELL_SELECT_VIEWPORT_WIDTH, contentHeight, 0, 0);
+        const content = this.getOrCreateEditorNode('MarketSellSelectContent', viewport, HomeConfig.MARKET_SELL_SELECT_VIEWPORT_WIDTH, contentHeight, 0, 0);
+        content.active = true;
+        content.setPosition(0, 0, 0);
+        (content.getComponent(UITransform) || content.addComponent(UITransform)).setContentSize(HomeConfig.MARKET_SELL_SELECT_VIEWPORT_WIDTH, contentHeight);
+        content.children
+            .filter((child) => /^MarketSellSelectItem_\d+$/.test(child.name) || child.name === 'MarketSellSelectEmpty')
+            .forEach((child) => {
+                child.active = false;
+            });
         const startX = -((cols - 1) * (HomeConfig.MARKET_SELL_SELECT_CELL_SIZE + HomeConfig.MARKET_SELL_SELECT_CELL_GAP_X)) / 2;
         const startY = HomeConfig.MARKET_SELL_SELECT_VIEWPORT_HEIGHT / 2 - HomeConfig.MARKET_SELL_SELECT_CELL_SIZE / 2 - 12;
 
         if (items.length === 0) {
-            const empty = this.createLabel(content, 'MarketSellSelectEmpty', this.isMarketRequestPostPage() ? '\u6682\u65e0\u53ef\u6c42\u8d2d\u7269\u54c1' : '\u6682\u65e0\u53ef\u4e0a\u67b6\u7269\u54c1', 26, 0, 120, 360, 58, new Color(92, 65, 43, 255));
+            const empty = this.getOrCreateEditorLabel(content, 'MarketSellSelectEmpty', this.isMarketRequestPostPage() ? '\u6682\u65e0\u53ef\u6c42\u8d2d\u7269\u54c1' : '\u6682\u65e0\u53ef\u4e0a\u67b6\u7269\u54c1', 26, 0, 120, 360, 58, new Color(92, 65, 43, 255));
+            empty.node.active = true;
+            empty.node.setPosition(0, 120, 0);
             this.setLabelOutline(empty, new Color(255, 247, 224, 255), 1);
         } else {
             items.forEach((item, index) => {
@@ -242,17 +251,33 @@ export abstract class HomeFeatureMarketSell extends HomeFeatureMarketSellHost {
         this.bindBagGridScroll(content, content, maxScrollY);
     }
     protected createMarketSellSelectItem(parent: Node, item: BagIllustrationCatalogItem, index: number, x: number, y: number): void {
-        const slot = this.createNode(`MarketSellSelectItem_${index + 1}`, parent, HomeConfig.MARKET_SELL_SELECT_CELL_SIZE, HomeConfig.MARKET_SELL_SELECT_CELL_SIZE + 34, x, y);
+        const slot = this.getOrCreateEditorNode(`MarketSellSelectItem_${index + 1}`, parent, HomeConfig.MARKET_SELL_SELECT_CELL_SIZE, HomeConfig.MARKET_SELL_SELECT_CELL_SIZE + 34, x, y);
+        slot.active = true;
+        slot.setPosition(x, y, 0);
+        (slot.getComponent(UITransform) || slot.addComponent(UITransform)).setContentSize(HomeConfig.MARKET_SELL_SELECT_CELL_SIZE, HomeConfig.MARKET_SELL_SELECT_CELL_SIZE + 34);
         slot.setSiblingIndex(index + 1);
-        this.createSkinnedNode('MarketSellSelectFrame', slot, 76, 76, 0, 12, item.framePath).setSiblingIndex(0);
-        this.createSkinnedNode('MarketSellSelectIcon', slot, 58, 58, 0, 14, item.iconPath).setSiblingIndex(1);
+        const frame = this.getOrCreateEditorSkinnedNode('MarketSellSelectFrame', slot, 76, 76, 0, 12, item.framePath);
+        frame.active = true;
+        frame.setPosition(0, 12, 0);
+        (frame.getComponent(UITransform) || frame.addComponent(UITransform)).setContentSize(76, 76);
+        frame.setSiblingIndex(0);
+        const icon = this.getOrCreateEditorSkinnedNode('MarketSellSelectIcon', slot, 58, 58, 0, 14, item.iconPath);
+        icon.active = true;
+        icon.setPosition(0, 14, 0);
+        (icon.getComponent(UITransform) || icon.addComponent(UITransform)).setContentSize(58, 58);
+        icon.setSiblingIndex(1);
         const count = this.getAvailableMarketSellItemCount(item);
-        const countLabel = this.createLabel(slot, 'MarketSellSelectCount', `${count}`, 17, 25, -14, 42, 24, Color.WHITE);
+        const countLabel = this.getOrCreateEditorLabel(slot, 'MarketSellSelectCount', `${count}`, 17, 25, -14, 42, 24, Color.WHITE);
         countLabel.node.active = !this.isMarketRequestPostPage();
+        countLabel.node.setPosition(25, -14, 0);
+        (countLabel.node.getComponent(UITransform) || countLabel.node.addComponent(UITransform)).setContentSize(42, 24);
         countLabel.horizontalAlign = HorizontalTextAlignment.RIGHT;
         this.setLabelOutline(countLabel, Color.BLACK, 2);
         countLabel.node.setSiblingIndex(2);
-        const name = this.createLabel(slot, 'MarketSellSelectName', this.getCatalogDisplayName(item), 16, 0, -44, 108, 30, new Color(92, 65, 43, 255));
+        const name = this.getOrCreateEditorLabel(slot, 'MarketSellSelectName', this.getCatalogDisplayName(item), 16, 0, -44, 108, 30, new Color(92, 65, 43, 255));
+        name.node.active = true;
+        name.node.setPosition(0, -44, 0);
+        (name.node.getComponent(UITransform) || name.node.addComponent(UITransform)).setContentSize(108, 30);
         name.overflow = Overflow.SHRINK;
         this.setLabelOutline(name, new Color(255, 247, 224, 255), 1);
         name.node.setSiblingIndex(3);

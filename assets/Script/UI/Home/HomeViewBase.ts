@@ -50,6 +50,7 @@ import {
     DuelTab,
     ShowcaseTab,
     MarketCategory,
+    ShopMallTab,
     MagicSceneLayoutConfig,
     BeastCardLayoutConfig,
     EntryButton,
@@ -106,7 +107,7 @@ export abstract class HomeViewBase extends Component {
         { nodeName: 'BtnMarket', displayName: '\u96c6\u5e02' },
         { nodeName: 'BtnDuel', displayName: '\u5bf9\u51b3' },
         { nodeName: 'BtnShare', displayName: '\u5206\u4eab' },
-        { nodeName: 'BtnAdGift', displayName: '\u793c\u5305' },
+        { nodeName: 'BtnAdGift', displayName: '\u8d60\u9001' },
         { nodeName: 'BtnBoss', displayName: '\u5c55\u53f0' },
         { nodeName: 'BtnWanderingMerchant', displayName: '\u6d41\u6d6a\u5546\u4eba' },
         { nodeName: 'TabRole', displayName: '\u89d2\u8272' },
@@ -168,6 +169,7 @@ export abstract class HomeViewBase extends Component {
         'ItemDetailPopup',
         'BagIllustrationDetailPopup',
         'ConfirmPopup',
+        'GiftTransferConfirmPopup',
         'RewardPopup',
         'BattleResultPopup',
     ];
@@ -178,6 +180,10 @@ export abstract class HomeViewBase extends Component {
     protected duelActiveTab: DuelTab = 'match';
     protected showcaseActiveTab: ShowcaseTab = 'overview';
     protected readonly claimedGiftIndexes = new Set<number>();
+    protected giftUidEditBox: EditBox | null = null;
+    protected giftAmountEditBox: EditBox | null = null;
+    protected giftSelectedPlayer: { uid: string; nickname: string; avatarPath: string } | null = null;
+    protected giftAmount = HomeConfig.GIFT_DEFAULT_AMOUNT;
     protected readonly claimedShareTaskIds = new Set<string>();
     protected shareProgress = 0;
     protected shareRewardClaimed = false;
@@ -491,7 +497,7 @@ export abstract class HomeViewBase extends Component {
     
             if (entry.nodeName === 'BtnAdGift') {
                 this.openEditorFeaturePage('GiftPanel');
-                this.showToast('\u793c\u5305\u5df2\u6253\u5f00');
+                this.showToast('\u8d60\u9001\u5f39\u7a97\u5df2\u6253\u5f00');
                 return;
             }
     
@@ -598,6 +604,26 @@ export abstract class HomeViewBase extends Component {
             if (found) return found;
         }
         return null;
+    }
+
+    protected ensureDuelLuanshiMainPageRoot(page: Node): Node {
+        if (page.name === 'LuanshiZhengxiongMainPage') return page;
+        const existing = page.getChildByName('LuanshiZhengxiongMainPage');
+        if (existing) {
+            existing.active = true;
+            return existing;
+        }
+        return this.createNode('LuanshiZhengxiongMainPage', page, HomeConfig.VIEW_WIDTH, HomeConfig.VIEW_HEIGHT, 0, 0);
+    }
+
+    protected getDuelLuanshiMainPageRoot(page: Node): Node {
+        if (page.name === 'LuanshiZhengxiongMainPage') return page;
+        return page.getChildByName('LuanshiZhengxiongMainPage') || page;
+    }
+
+    protected findDuelLuanshiMainNode(page: Node, name: string): Node | null {
+        const mainPage = this.getDuelLuanshiMainPageRoot(page);
+        return mainPage.getChildByName(name) || page.getChildByName(name);
     }
 
     // Feature contracts keep cross-feature calls typed while implementations live in dedicated modules.
@@ -723,7 +749,7 @@ export abstract class HomeViewBase extends Component {
     protected abstract openItemDetailPopup(name: string, type: string, description: string, count: string, framePath?: string): void;
     protected abstract openBagIllustrationItemDetailPopup(item: BagIllustrationCatalogItem, type: string): void;
     protected abstract openCommerceItemDetail(name: string, type: string, description: string, countText: string, iconPath: string, actionText: string, onAction: () => void, framePath?: string, style?: 'default' | 'market'): void;
-    protected abstract openCommerceQuantityConfirm(title: string, itemName: string, unitPrice: number, maxQuantity: number, actionText: string, onConfirm: (quantity: number) => void): void;
+    protected abstract openCommerceQuantityConfirm(title: string, itemName: string, unitPrice: number, maxQuantity: number, actionText: string, onConfirm: (quantity: number) => void, currencyName?: string): void;
     protected abstract closeSharedFlowPopup(popup: Node): void;
     protected abstract openRolePagePanel(): void;
     protected abstract closeRolePagePanel(): void;
@@ -987,7 +1013,7 @@ export abstract class HomeViewBase extends Component {
     protected abstract buildMarketHistoryList(): void;
     protected abstract openMarketTransactionDetail(transaction: MarketTransactionData): void;
     protected abstract applyMarketTextStyle(label: Label, outlineWidth: number): void;
-    protected abstract openShopPanel(): void;
+    protected abstract openShopPanel(tab?: ShopMallTab): void;
     protected abstract buildShopPanel(): void;
     protected abstract prepareEditorShopPanel(): void;
     protected abstract closeShopPanel(): void;

@@ -583,6 +583,9 @@ export abstract class HomeViewRoleBag extends HomeViewBase {
                 'RewardConfirmButton',
                 'BattleResultCloseButton',
             ];
+            if (popupName === 'GiftTransferConfirmPopup') {
+                closeNames.push('ConfirmPopupClose');
+            }
             closeNames.forEach((nodeName) => {
                 const button = this.findNode(nodeName, popup);
                 if (button) {
@@ -591,16 +594,18 @@ export abstract class HomeViewRoleBag extends HomeViewBase {
             });
         });
     
-        const confirm = this.findNode('ConfirmAcceptButton', this.popupRoot || this.node);
-        if (confirm) {
+        ['ConfirmPopup', 'GiftTransferConfirmPopup'].forEach((confirmPopupName) => {
+            const confirmPopup = this.popupRoot?.getChildByName(confirmPopupName) || this.findNode(confirmPopupName);
+            const confirm = confirmPopup ? this.findNode('ConfirmAcceptButton', confirmPopup) : null;
+            if (!confirm) return;
             this.bindScaledClick(confirm, () => {
                 const action = this.sharedPopupConfirmAction;
-                const popup = this.popupRoot?.getChildByName('ConfirmPopup') || this.findNode('ConfirmPopup');
+                const popup = this.popupRoot?.getChildByName(confirmPopupName) || this.findNode(confirmPopupName);
                 if (popup) this.closeSharedFlowPopup(popup);
                 this.sharedPopupConfirmAction = null;
                 action?.();
             });
-        }
+        });
     
         const itemPrimary = this.findNode('ItemDetailPrimaryButton', this.popupRoot || this.node);
         if (itemPrimary) {
@@ -657,9 +662,12 @@ export abstract class HomeViewRoleBag extends HomeViewBase {
             this.sharedBattleCloseAction = content.onClose || null;
         }
     
-        const title = this.findNode(`${popupName}Title`, popup)?.getComponent(Label);
+        const titleNodeName = popupName === 'GiftTransferConfirmPopup'
+            ? 'ConfirmPopupTitle'
+            : `${popupName}Title`;
+        const title = this.findNode(titleNodeName, popup)?.getComponent(Label);
         if (title && content.title) title.string = content.title;
-        const messageNodeName = popupName === 'ConfirmPopup'
+        const messageNodeName = popupName === 'ConfirmPopup' || popupName === 'GiftTransferConfirmPopup'
             ? 'ConfirmMessage'
             : popupName === 'RewardPopup'
                 ? 'RewardMessage'
@@ -679,7 +687,7 @@ export abstract class HomeViewRoleBag extends HomeViewBase {
                 }
             }
         }
-        if (popupName === 'ConfirmPopup') {
+        if (popupName === 'ConfirmPopup' || popupName === 'GiftTransferConfirmPopup') {
             const quantityRoot = this.findNode('ConfirmQuantityRoot', popup);
             if (quantityRoot) quantityRoot.active = false;
         }
@@ -700,7 +708,7 @@ export abstract class HomeViewRoleBag extends HomeViewBase {
     }
     protected closeSharedFlowPopup(popup: Node): void {
         popup.active = false;
-        if (popup.name === 'ConfirmPopup') {
+        if (popup.name === 'ConfirmPopup' || popup.name === 'GiftTransferConfirmPopup') {
             this.sharedPopupConfirmAction = null;
             const quantityRoot = this.findNode('ConfirmQuantityRoot', popup);
             if (quantityRoot) quantityRoot.active = false;

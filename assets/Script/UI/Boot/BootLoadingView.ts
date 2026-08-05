@@ -6,6 +6,7 @@ import { DisplayAdapter } from '../../Services/DisplayAdapter';
 import { PhoneLoginPanel } from '../Login/PhoneLoginPanel';
 import { AuthService } from '../../Services/AuthService';
 import type { PhoneLoginResult } from '../../Services/AuthService';
+import { GlobalButtonClickAudio } from '../Common/GlobalButtonClickAudio';
 import { applySimKaiFontToTree } from '../Common/UIFont';
 
 const { ccclass, property } = _decorator;
@@ -102,6 +103,7 @@ export class BootLoadingView extends Component {
     protected onLoad(): void {
         DisplayAdapter.apply();
         BackendRuntime.initialize();
+        GlobalButtonClickAudio.install(this.node);
         applySimKaiFontToTree(this.node);
         this.resolveSceneNodes();
         this.setupSwallowLayer();
@@ -135,6 +137,7 @@ export class BootLoadingView extends Component {
     }
 
     protected onDestroy(): void {
+        GlobalButtonClickAudio.uninstall(this.node);
         this.safeOff(this.enterGameButton, Node.EventType.TOUCH_START, this.onEnterGameTouchStart);
         this.safeOff(this.enterGameButton, Node.EventType.TOUCH_CANCEL, this.onEnterGameTouchCancel);
         this.safeOff(this.enterGameButton, Node.EventType.TOUCH_END, this.onEnterGameClicked);

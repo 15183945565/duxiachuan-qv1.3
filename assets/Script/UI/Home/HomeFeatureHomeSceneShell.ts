@@ -53,6 +53,7 @@ export abstract class HomeFeatureHomeSceneShell extends HomeViewBase {
         this.roleStageNode.setPosition(0, HomeConfig.ROLE_STAGE_INITIAL_Y, 0);
         this.roleStageNode.setScale(HomeConfig.ROLE_STAGE_SCALE, HomeConfig.ROLE_STAGE_SCALE, 1);
         if (wanderingMerchant) {
+            this.setupWanderingMerchantSpine(wanderingMerchant);
             wanderingMerchant.setSiblingIndex(1);
             this.roleStageNode.setSiblingIndex(2);
         } else {
@@ -81,6 +82,59 @@ export abstract class HomeFeatureHomeSceneShell extends HomeViewBase {
         this.sceneClickArea.active = false;
     
         this.mapLayer.setPosition(this.getMapFollowPosition(this.roleStageNode.position));
+    }
+    protected setupWanderingMerchantSpine(wanderingMerchant: Node): void {
+        const skeleton = wanderingMerchant.getChildByName('MerchantSpine')?.getComponent(sp.Skeleton);
+        if (!skeleton?.skeletonData) return;
+
+        this.prepareSkeletonRenderer(skeleton);
+        const listenerTarget = skeleton as unknown as {
+            setCompleteListener?: (listener: ((entry: unknown) => void) | null) => void;
+        };
+        listenerTarget.setCompleteListener?.(null);
+
+        const idleAnimation = HomeConfig.WANDERING_MERCHANT_IDLE_ANIMATION;
+        const accentAnimation = HomeConfig.WANDERING_MERCHANT_ACCENT_ANIMATION;
+        if (!skeleton.findAnimation(idleAnimation)) {
+            this.playSkeletonAnimation(skeleton, [accentAnimation], true);
+            return;
+        }
+        if (!skeleton.findAnimation(accentAnimation)) {
+            this.playSkeletonAnimation(skeleton, [idleAnimation], true);
+            return;
+        }
+
+        let idlePlayCount = 0;
+        const playNext = (): void => {
+            if (!skeleton.isValid || !wanderingMerchant.isValid || !wanderingMerchant.activeInHierarchy) {
+                listenerTarget.setCompleteListener?.(null);
+                return;
+            }
+
+            const shouldPlayAccent = idlePlayCount >= HomeConfig.WANDERING_MERCHANT_IDLE_REPEAT_COUNT;
+            const animation = shouldPlayAccent ? accentAnimation : idleAnimation;
+            idlePlayCount = shouldPlayAccent ? 0 : idlePlayCount + 1;
+            try {
+                skeleton.setAnimation(0, animation, false);
+                skeleton.updateAnimation(0);
+                skeleton.markForUpdateRenderData(true);
+            } catch (err) {
+                listenerTarget.setCompleteListener?.(null);
+                console.warn('[MainHomeView] wandering merchant animation failed', err);
+                this.playSkeletonAnimation(skeleton, [idleAnimation, accentAnimation], true);
+            }
+        };
+
+        try {
+            skeleton.clearTracks();
+            skeleton.setToSetupPose();
+            listenerTarget.setCompleteListener?.(() => playNext());
+            playNext();
+        } catch (err) {
+            listenerTarget.setCompleteListener?.(null);
+            console.warn('[MainHomeView] wandering merchant animation setup failed', err);
+            this.playSkeletonAnimation(skeleton, [idleAnimation, accentAnimation], true);
+        }
     }
     protected setupRoleNode(): void {
         if (!this.roleNode) return;

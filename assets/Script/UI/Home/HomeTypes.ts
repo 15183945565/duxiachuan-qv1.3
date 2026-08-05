@@ -16,6 +16,7 @@ export type AllianceTab = 'hall' | 'members' | 'mine' | 'record';
 export type DuelTab = 'match' | 'record';
 export type ShowcaseTab = 'overview' | 'cards' | 'record';
 export type MarketCategory = BagIllustrationCategory | 'all';
+export type ShopMallTab = 'yuanbao' | 'points';
 
 export interface MarketFilterOption {
     key: string;
@@ -161,6 +162,8 @@ export interface ShopItemData {
     amount: number;
     price: number;
     iconPath: string;
+    currencyIconPath?: string;
+    currencyName?: string;
 }
 
 export interface ShopStoreState {

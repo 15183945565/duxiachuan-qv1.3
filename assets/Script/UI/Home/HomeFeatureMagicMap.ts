@@ -723,6 +723,7 @@ export abstract class HomeFeatureMagicMap extends HomeFeatureMagicMapHost {
         if (close?.isValid) {
             if (close.parent !== board) close.setParent(board);
             close.active = true;
+            close.setScale(1, 1, 1);
             close.setPosition(306, 214, 0);
             (close.getComponent(UITransform) || close.addComponent(UITransform)).setContentSize(62, 62);
             this.applyUiSkinKeepingEditorSize(close, HomeConfig.UI_BTN_CLOSE, 62, 62);

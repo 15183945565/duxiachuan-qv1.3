@@ -1,4 +1,4 @@
-import { BlockInputEvents, Color, EventTouch, Graphics, Label, Node, Sprite, SpriteFrame, Tween, UIOpacity, UITransform, Vec3, sp, tween } from 'cc';
+import { BlockInputEvents, Color, Graphics, Label, Node, Sprite, SpriteFrame, Tween, UIOpacity, UITransform, Vec3, sp, tween } from 'cc';
 import * as HomeConfig from './HomeConfig';
 import type { DuelLuanshiFaction, DuelLuanshiSkillConfig } from './HomeConfig';
 import { HomeViewBase } from './HomeViewBase';
@@ -26,6 +26,10 @@ type DuelLuanshiPageRuntime = Node & {
     duelLuanshiWudangPower?: number;
     duelLuanshiGaibangPower?: number;
     duelLuanshiRoundWinner?: DuelLuanshiFaction;
+    duelLuanshiWudangSkillCasts?: number;
+    duelLuanshiGaibangSkillCasts?: number;
+    duelLuanshiCounterattackTriggered?: boolean;
+    duelLuanshiPlayerInvestYuanbao?: number;
 };
 
 type DuelLuanshiSkillEffectLayout = {
@@ -35,6 +39,10 @@ type DuelLuanshiSkillEffectLayout = {
     targetY: number;
     scaleX: number;
     scaleY: number;
+    width?: number;
+    height?: number;
+    fullScreen?: boolean;
+    editorNodeName?: string;
 };
 
 type DuelLuanshiNumberSpriteSpec = {
@@ -50,21 +58,67 @@ type DuelLuanshiAvatarSide = 'left' | 'right';
 abstract class HomeFeatureDuelLuanshiBattleHost extends HomeViewBase {
     protected abstract getOrCreateDuelLuanshiNode(name: string, parent: Node, width: number, height: number, x: number, y: number): Node;
     protected abstract getOrCreateDuelLuanshiSkin(name: string, parent: Node, width: number, height: number, x: number, y: number, skinPath: string): Node;
+    protected abstract getOrCreateDuelLuanshiEditableNode(name: string, parent: Node, width: number, height: number, x: number, y: number): Node;
+    protected abstract getOrCreateDuelLuanshiEditableSkin(name: string, parent: Node, width: number, height: number, x: number, y: number, skinPath: string): Node;
     protected abstract setDuelLuanshiBottomDockCollapsed(panel: Node, page: Node, collapsed: boolean, animated: boolean): void;
     protected abstract playDuelJianghuSkeletonAnimation(target: sp.Skeleton, candidates: string[], loop: boolean): number;
     protected abstract prepareSkeletonRenderer(target: sp.Skeleton | null): void;
 }
 
 export abstract class HomeFeatureDuelLuanshiBattle extends HomeFeatureDuelLuanshiBattleHost {
+    protected isDuelLuanshiRecordPageShowing(page: Node): boolean {
+        return !!page.getChildByName('LuanshiRecordPage')?.active
+            || !!page.getChildByName('LuanshiRankPage')?.active;
+    }
+
+    protected keepDuelLuanshiRecordPageOnTop(page: Node): void {
+        ['LuanshiRecordPage', 'LuanshiRankPage'].forEach((pageName) => {
+            const reservedPage = page.getChildByName(pageName);
+            if (reservedPage?.active) reservedPage.setSiblingIndex((page.children.length || 1) - 1);
+        });
+    }
+
+    protected hideDuelLuanshiBattleLayersBehindRecord(page: Node): void {
+        const mainPage = page.getChildByName('LuanshiZhengxiongMainPage');
+        if (mainPage) {
+            mainPage.active = false;
+            this.keepDuelLuanshiRecordPageOnTop(page);
+            return;
+        }
+        [
+            'LuanshiZhengxiongRoundStartFxRoot',
+            'LuanshiZhengxiongSkillEffectLayer',
+            'LuanshiZhengxiongDamageNumberLayer',
+            'LuanshiZhengxiongResultLayer',
+            'LuanshiZhengxiongJoinLayer',
+            'LuanshiZhengxiongBottomDock',
+            'LuanshiZhengxiongAvatarLayer',
+            'LuanshiZhengxiongTopHud',
+            'LuanshiOwnedYuanbaoRoot',
+            'LuanshiWudangInvestYuanbaoRoot',
+            'LuanshiGaibangInvestYuanbaoRoot',
+            'LuanshiZhengxiongTimerLabel',
+            'LuanshiZhengxiongRankHitArea',
+            'LuanshiZhengxiongRecordHitArea',
+        ].forEach((name) => {
+            const node = this.findDuelLuanshiMainNode(page, name);
+            if (node) node.active = false;
+        });
+        this.keepDuelLuanshiRecordPageOnTop(page);
+    }
+
     protected setupDuelLuanshiPreJoinState(panel: Node, page: Node): void {
         const runtime = page as DuelLuanshiPageRuntime;
         runtime.duelLuanshiRoundIndex = 0;
         runtime.duelLuanshiFaction = undefined;
+        runtime.duelLuanshiPlayerInvestYuanbao = 0;
         this.ensureDuelLuanshiTimer(page);
         this.ensureDuelLuanshiRoundHud(page);
+        this.ensureDuelLuanshiCurrencyHud(page);
+        this.refreshDuelLuanshiCurrencyHud(page);
         this.ensureDuelLuanshiBattlefield(page);
         this.ensureDuelLuanshiJoinLayer(panel, page);
-        this.ensureDuelLuanshiSkillSlots(panel, page).active = false;
+        this.ensureDuelLuanshiSkillSlots(panel, page).active = true;
         this.setDuelLuanshiBottomDockCollapsed(panel, page, true, false);
         this.startDuelLuanshiAutoFight(page);
         this.startDuelLuanshiNormalAttackLoop(page);
@@ -88,6 +142,9 @@ export abstract class HomeFeatureDuelLuanshiBattle extends HomeFeatureDuelLuansh
             if (node.name.startsWith('LuanshiSkillEffect_')) {
                 this.hideDuelLuanshiSkillEffect(node);
             }
+            if (node.name.startsWith('LuanshiUltimateEffect_')) {
+                this.hideDuelLuanshiSkillEffect(node);
+            }
             if (node.name.startsWith('LuanshiNormalAttack_')) {
                 this.hideDuelLuanshiNormalAttackEffect(node);
             }
@@ -95,17 +152,18 @@ export abstract class HomeFeatureDuelLuanshiBattle extends HomeFeatureDuelLuansh
     }
 
     protected ensureDuelLuanshiTimer(page: Node): void {
-        this.getOrCreateDuelLuanshiSkin(
+        const mainPage = this.ensureDuelLuanshiMainPageRoot(page);
+        this.getOrCreateDuelLuanshiEditableSkin(
             'LuanshiZhengxiongTimerBg',
-            page,
+            mainPage,
             HomeConfig.DUEL_LUANSHI_TIMER_BG_WIDTH,
             HomeConfig.DUEL_LUANSHI_TIMER_BG_HEIGHT,
             0,
             HomeConfig.DUEL_LUANSHI_TIMER_Y,
             HomeConfig.UI_DUEL_LUANSHI_TIMER_BG,
-        ).setSiblingIndex((page.children.length || 1) - 1);
-        let label = page.getChildByName('LuanshiZhengxiongTimerLabel')?.getComponent(Label);
-        if (!label) label = this.createLabel(page, 'LuanshiZhengxiongTimerLabel', '', 30, 0, HomeConfig.DUEL_LUANSHI_TIMER_Y, 430, 46, new Color(83, 255, 108, 255));
+        ).setSiblingIndex((mainPage.children.length || 1) - 1);
+        let label = this.findDuelLuanshiMainNode(page, 'LuanshiZhengxiongTimerLabel')?.getComponent(Label);
+        if (!label) label = this.createLabel(mainPage, 'LuanshiZhengxiongTimerLabel', '', 30, 0, HomeConfig.DUEL_LUANSHI_TIMER_Y, 430, 46, new Color(83, 255, 108, 255));
         label.string = `\u52a9\u529b\u5269\u4f59\u65f6\u95f4: ${this.formatDuelLuanshiCountdown(HomeConfig.DUEL_LUANSHI_SKILL_PHASE_SECONDS)}`;
         label.fontSize = 26;
         label.lineHeight = 34;
@@ -113,17 +171,188 @@ export abstract class HomeFeatureDuelLuanshiBattle extends HomeFeatureDuelLuansh
         label.outlineColor = new Color(64, 38, 18, 255);
         label.outlineWidth = 2;
         label.node.active = true;
-        label.node.setSiblingIndex((page.children.length || 1) - 1);
+        label.node.setSiblingIndex((mainPage.children.length || 1) - 1);
     }
 
     protected ensureDuelLuanshiRoundHud(page: Node): void {
-        const hud = page.getChildByName('LuanshiZhengxiongTopHud');
+        const hud = this.findDuelLuanshiMainNode(page, 'LuanshiZhengxiongTopHud');
         if (!hud) return;
 
         this.ensureDuelLuanshiHealthPercentLabel(hud, 'Wudang', HomeConfig.DUEL_LUANSHI_HP_LEFT_X);
         this.ensureDuelLuanshiHealthPercentLabel(hud, 'Gaibang', HomeConfig.DUEL_LUANSHI_HP_RIGHT_X);
         this.ensureDuelLuanshiPeriodTag(hud);
         this.updateDuelLuanshiCampPowerUi(page, false);
+    }
+
+    protected ensureDuelLuanshiCurrencyHud(page: Node): void {
+        if (this.isDuelLuanshiRecordPageShowing(page)) return;
+        const mainPage = this.ensureDuelLuanshiMainPageRoot(page);
+        this.ensureDuelLuanshiOwnedYuanbaoHud(mainPage);
+        this.ensureDuelLuanshiInvestYuanbaoHud(
+            mainPage,
+            'Wudang',
+            HomeConfig.DUEL_LUANSHI_WUDANG_INVEST_YUANBAO_ROOT_X,
+        );
+        this.ensureDuelLuanshiInvestYuanbaoHud(
+            mainPage,
+            'Gaibang',
+            HomeConfig.DUEL_LUANSHI_GAIBANG_INVEST_YUANBAO_ROOT_X,
+        );
+    }
+
+    protected ensureDuelLuanshiOwnedYuanbaoHud(parent: Node): void {
+        const root = this.getOrCreateDuelLuanshiEditableNode(
+            'LuanshiOwnedYuanbaoRoot',
+            parent,
+            HomeConfig.DUEL_LUANSHI_OWNED_YUANBAO_BG_WIDTH,
+            HomeConfig.DUEL_LUANSHI_OWNED_YUANBAO_BG_HEIGHT,
+            0,
+            HomeConfig.DUEL_LUANSHI_OWNED_YUANBAO_ROOT_Y,
+        );
+        this.getOrCreateDuelLuanshiEditableSkin(
+            'LuanshiOwnedYuanbaoBg',
+            root,
+            HomeConfig.DUEL_LUANSHI_OWNED_YUANBAO_BG_WIDTH,
+            HomeConfig.DUEL_LUANSHI_OWNED_YUANBAO_BG_HEIGHT,
+            0,
+            0,
+            HomeConfig.UI_DUEL_LUANSHI_OWNED_YUANBAO_BG,
+        ).setSiblingIndex(0);
+        this.getOrCreateDuelLuanshiEditableSkin(
+            'LuanshiOwnedYuanbaoIcon',
+            root,
+            HomeConfig.DUEL_LUANSHI_OWNED_YUANBAO_ICON_SIZE,
+            HomeConfig.DUEL_LUANSHI_OWNED_YUANBAO_ICON_SIZE,
+            HomeConfig.DUEL_LUANSHI_OWNED_YUANBAO_ICON_X,
+            0,
+            HomeConfig.UI_DUEL_LUANSHI_YUANBAO_ICON,
+        ).setSiblingIndex(1);
+        this.getOrCreateDuelLuanshiCurrencyLabel(
+            root,
+            'LuanshiOwnedYuanbaoLabel',
+            '0',
+            HomeConfig.DUEL_LUANSHI_OWNED_YUANBAO_LABEL_X,
+            0,
+            HomeConfig.DUEL_LUANSHI_OWNED_YUANBAO_LABEL_WIDTH,
+            HomeConfig.DUEL_LUANSHI_OWNED_YUANBAO_BG_HEIGHT,
+        ).node.setSiblingIndex(2);
+    }
+
+    protected ensureDuelLuanshiInvestYuanbaoHud(parent: Node, suffix: 'Wudang' | 'Gaibang', x: number): void {
+        const root = this.getOrCreateDuelLuanshiEditableNode(
+            `Luanshi${suffix}InvestYuanbaoRoot`,
+            parent,
+            HomeConfig.DUEL_LUANSHI_INVEST_YUANBAO_BG_WIDTH,
+            HomeConfig.DUEL_LUANSHI_INVEST_YUANBAO_BG_HEIGHT,
+            x,
+            HomeConfig.DUEL_LUANSHI_INVEST_YUANBAO_ROOT_Y,
+        );
+        this.getOrCreateDuelLuanshiEditableSkin(
+            `Luanshi${suffix}InvestYuanbaoBg`,
+            root,
+            HomeConfig.DUEL_LUANSHI_INVEST_YUANBAO_BG_WIDTH,
+            HomeConfig.DUEL_LUANSHI_INVEST_YUANBAO_BG_HEIGHT,
+            0,
+            0,
+            HomeConfig.UI_DUEL_LUANSHI_INVEST_YUANBAO_BG,
+        ).setSiblingIndex(0);
+        this.getOrCreateDuelLuanshiEditableSkin(
+            `Luanshi${suffix}InvestYuanbaoIcon`,
+            root,
+            HomeConfig.DUEL_LUANSHI_INVEST_YUANBAO_ICON_SIZE,
+            HomeConfig.DUEL_LUANSHI_INVEST_YUANBAO_ICON_SIZE,
+            HomeConfig.DUEL_LUANSHI_INVEST_YUANBAO_ICON_X,
+            0,
+            HomeConfig.UI_DUEL_LUANSHI_YUANBAO_ICON,
+        ).setSiblingIndex(1);
+        this.getOrCreateDuelLuanshiCurrencyLabel(
+            root,
+            `Luanshi${suffix}InvestYuanbaoLabel`,
+            '0',
+            HomeConfig.DUEL_LUANSHI_INVEST_YUANBAO_LABEL_X,
+            0,
+            HomeConfig.DUEL_LUANSHI_INVEST_YUANBAO_LABEL_WIDTH,
+            HomeConfig.DUEL_LUANSHI_INVEST_YUANBAO_BG_HEIGHT,
+        ).node.setSiblingIndex(2);
+    }
+
+    protected getOrCreateDuelLuanshiCurrencyLabel(
+        parent: Node,
+        name: string,
+        text: string,
+        x: number,
+        y: number,
+        width: number,
+        height: number,
+    ): Label {
+        let node = parent.getChildByName(name);
+        let label = node?.getComponent(Label);
+        if (!label) {
+            if (!node) {
+                label = this.createLabel(parent, name, text, 22, x, y, width, height, new Color(255, 243, 198, 255));
+                node = label.node;
+            } else {
+                label = node.addComponent(Label);
+            }
+        }
+        const transform = label.node.getComponent(UITransform) || label.node.addComponent(UITransform);
+        if (transform.contentSize.width <= 0 || transform.contentSize.height <= 0) {
+            transform.setContentSize(width, height);
+        }
+        label.string = text;
+        label.fontSize = 22;
+        label.lineHeight = 28;
+        label.color = new Color(255, 243, 198, 255);
+        label.enableOutline = true;
+        label.outlineColor = new Color(58, 31, 12, 255);
+        label.outlineWidth = 2;
+        label.node.active = true;
+        return label;
+    }
+
+    protected refreshDuelLuanshiCurrencyHud(page: Node): void {
+        if (this.isDuelLuanshiRecordPageShowing(page)) return;
+        this.ensureDuelLuanshiCurrencyHud(page);
+        const runtime = page as DuelLuanshiPageRuntime;
+        const selected = runtime.duelLuanshiFaction;
+        const invest = this.formatDuelLuanshiCurrencyAmount(runtime.duelLuanshiPlayerInvestYuanbao || 0);
+        const ownedLabel = this.findDuelLuanshiCurrencyNode(page, 'LuanshiOwnedYuanbaoLabel')?.getComponent(Label);
+        if (ownedLabel) ownedLabel.string = this.getDuelLuanshiOwnedYuanbaoText();
+
+        const wudangRoot = this.findDuelLuanshiCurrencyNode(page, 'LuanshiWudangInvestYuanbaoRoot');
+        const gaibangRoot = this.findDuelLuanshiCurrencyNode(page, 'LuanshiGaibangInvestYuanbaoRoot');
+        if (wudangRoot) wudangRoot.active = selected === 'wudang';
+        if (gaibangRoot) gaibangRoot.active = selected === 'gaibang';
+
+        const wudangLabel = this.findDuelLuanshiCurrencyNode(page, 'LuanshiWudangInvestYuanbaoLabel')?.getComponent(Label);
+        const gaibangLabel = this.findDuelLuanshiCurrencyNode(page, 'LuanshiGaibangInvestYuanbaoLabel')?.getComponent(Label);
+        if (wudangLabel) wudangLabel.string = invest;
+        if (gaibangLabel) gaibangLabel.string = invest;
+    }
+
+    protected findDuelLuanshiCurrencyNode(page: Node, name: string): Node | null {
+        const mainPage = this.getDuelLuanshiMainPageRoot(page);
+        return this.findNode(name, mainPage) || this.findNode(name, page);
+    }
+
+    protected getDuelLuanshiOwnedYuanbaoText(): string {
+        const normalize = (value?: string | null): string => {
+            const text = (value || '').trim();
+            return text && !/^\?+$/.test(text) ? text : '';
+        };
+        const persistentText = normalize(this.persistentPointLabel?.string);
+        if (persistentText) return persistentText;
+
+        const topHud = this.persistentCurrencyHud || this.findNode('TopHud', this.uiMainLayer || this.node) || this.findNode('TopHud');
+        const sceneText = normalize(topHud?.getChildByName('LabelGold')?.getComponent(Label)?.string);
+        if (sceneText) return sceneText;
+
+        return this.getPointCurrencyText();
+    }
+
+    protected formatDuelLuanshiCurrencyAmount(value: number): string {
+        const rounded = Math.max(0, Math.floor(value));
+        return `${rounded}`;
     }
 
     protected ensureDuelLuanshiHealthPercentLabel(hud: Node, suffix: string, x: number): Label {
@@ -155,25 +384,14 @@ export abstract class HomeFeatureDuelLuanshiBattle extends HomeFeatureDuelLuansh
     }
 
     protected ensureDuelLuanshiPeriodTag(hud: Node): void {
-        let bg = hud.getChildByName('LuanshiZhengxiongPeriodTagBg');
-        if (!bg) {
-            bg = this.createNode(
-                'LuanshiZhengxiongPeriodTagBg',
-                hud,
-                HomeConfig.DUEL_LUANSHI_PERIOD_TAG_WIDTH,
-                HomeConfig.DUEL_LUANSHI_PERIOD_TAG_HEIGHT,
-                0,
-                HomeConfig.DUEL_LUANSHI_PERIOD_TAG_Y,
-            );
-            this.drawRect(bg, HomeConfig.DUEL_LUANSHI_PERIOD_TAG_WIDTH, HomeConfig.DUEL_LUANSHI_PERIOD_TAG_HEIGHT, new Color(0, 0, 0, 130));
-            const opacity = bg.addComponent(UIOpacity);
-            opacity.opacity = 155;
+        const legacyBg = hud.getChildByName('LuanshiZhengxiongPeriodTagBg');
+        if (legacyBg) {
+            legacyBg.active = false;
+            legacyBg.removeFromParent();
         }
-        bg.active = true;
-        bg.setPosition(0, HomeConfig.DUEL_LUANSHI_PERIOD_TAG_Y, 0);
-        bg.setSiblingIndex((hud.children.length || 1) - 1);
 
         let label = hud.getChildByName('LuanshiZhengxiongPeriodLabel')?.getComponent(Label);
+        const hasEditorLabel = !!label;
         if (!label) {
             label = this.createLabel(
                 hud,
@@ -194,7 +412,7 @@ export abstract class HomeFeatureDuelLuanshiBattle extends HomeFeatureDuelLuansh
         label.outlineColor = new Color(44, 25, 10, 255);
         label.outlineWidth = 2;
         label.node.active = true;
-        label.node.setPosition(0, HomeConfig.DUEL_LUANSHI_PERIOD_TAG_Y, 0);
+        if (!hasEditorLabel) label.node.setPosition(0, HomeConfig.DUEL_LUANSHI_PERIOD_TAG_Y, 0);
         label.node.setSiblingIndex((hud.children.length || 1) - 1);
     }
 
@@ -209,16 +427,22 @@ export abstract class HomeFeatureDuelLuanshiBattle extends HomeFeatureDuelLuansh
         runtime.duelLuanshiRoundWinner = undefined;
         runtime.duelLuanshiWudangPower = HomeConfig.DUEL_LUANSHI_CAMP_POWER_START;
         runtime.duelLuanshiGaibangPower = HomeConfig.DUEL_LUANSHI_CAMP_POWER_START;
+        runtime.duelLuanshiWudangSkillCasts = 0;
+        runtime.duelLuanshiGaibangSkillCasts = 0;
+        runtime.duelLuanshiCounterattackTriggered = false;
+        runtime.duelLuanshiPlayerInvestYuanbao = 0;
         playerSkillBusyPages.delete(page);
 
-        const joinLayer = page.getChildByName('LuanshiZhengxiongJoinLayer');
+        const joinLayer = this.findDuelLuanshiMainNode(page, 'LuanshiZhengxiongJoinLayer');
         if (joinLayer) {
             joinLayer.active = true;
-            joinLayer.setSiblingIndex((page.children.length || 1) - 1);
+            joinLayer.setSiblingIndex((this.getDuelLuanshiMainPageRoot(page).children.length || 1) - 1);
         }
-        this.ensureDuelLuanshiSkillSlots(panel, page).active = false;
+        this.ensureDuelLuanshiSkillSlots(panel, page).active = true;
         this.setDuelLuanshiBottomDockCollapsed(panel, page, true, true);
         this.updateDuelLuanshiRoundHud(page, HomeConfig.DUEL_LUANSHI_SKILL_PHASE_SECONDS, 'skill');
+        this.ensureDuelLuanshiCurrencyHud(page);
+        this.refreshDuelLuanshiCurrencyHud(page);
         this.updateDuelLuanshiCampPowerUi(page, false);
         this.showDuelLuanshiRoundStartFx(page);
 
@@ -277,9 +501,59 @@ export abstract class HomeFeatureDuelLuanshiBattle extends HomeFeatureDuelLuansh
         const runtime = page as DuelLuanshiPageRuntime;
         runtime.duelLuanshiPhase = 'settle';
         playerSkillBusyPages.delete(page);
-        const joinLayer = page.getChildByName('LuanshiZhengxiongJoinLayer');
+        const joinLayer = this.findDuelLuanshiMainNode(page, 'LuanshiZhengxiongJoinLayer');
         if (joinLayer) joinLayer.active = false;
         this.showToast('\u672c\u671f\u8fdb\u5165\u7ed3\u7b97\u65f6\u95f4\uff0c\u73a9\u5bb6\u6280\u80fd\u5df2\u9501\u5b9a');
+        this.tryDuelLuanshiCounterattack(page);
+    }
+
+    protected tryDuelLuanshiCounterattack(page: Node): void {
+        const runtime = page as DuelLuanshiPageRuntime;
+        if (runtime.duelLuanshiCounterattackTriggered) return;
+        const power = this.ensureDuelLuanshiCampPower(page);
+        const loser: DuelLuanshiFaction = power.wudang <= power.gaibang ? 'wudang' : 'gaibang';
+        const leader = this.getOppositeDuelLuanshiFaction(loser);
+        const loserPower = loser === 'wudang' ? power.wudang : power.gaibang;
+        const leaderCasts = leader === 'wudang'
+            ? runtime.duelLuanshiWudangSkillCasts || 0
+            : runtime.duelLuanshiGaibangSkillCasts || 0;
+        const loserCasts = loser === 'wudang'
+            ? runtime.duelLuanshiWudangSkillCasts || 0
+            : runtime.duelLuanshiGaibangSkillCasts || 0;
+        const castGap = leaderCasts - loserCasts;
+        if (
+            loserPower > HomeConfig.DUEL_LUANSHI_COUNTERATTACK_LOW_POWER_THRESHOLD
+            || castGap < HomeConfig.DUEL_LUANSHI_COUNTERATTACK_MIN_CAST_GAP
+        ) {
+            return;
+        }
+
+        const lowPowerPressure = this.clamp(
+            (HomeConfig.DUEL_LUANSHI_COUNTERATTACK_LOW_POWER_THRESHOLD - loserPower)
+                / (HomeConfig.DUEL_LUANSHI_COUNTERATTACK_LOW_POWER_THRESHOLD - HomeConfig.DUEL_LUANSHI_CAMP_POWER_MIN),
+            0,
+            1,
+        );
+        const skillPressure = this.clamp((castGap - HomeConfig.DUEL_LUANSHI_COUNTERATTACK_MIN_CAST_GAP) / 5, 0, 1);
+        const chance = this.clamp(
+            HomeConfig.DUEL_LUANSHI_COUNTERATTACK_BASE_CHANCE + lowPowerPressure * 0.28 + skillPressure * 0.24,
+            0,
+            HomeConfig.DUEL_LUANSHI_COUNTERATTACK_MAX_CHANCE,
+        );
+        if (Math.random() >= chance) return;
+
+        runtime.duelLuanshiCounterattackTriggered = true;
+        const config = this.pickDuelLuanshiCounterattackSkillConfig();
+        this.showToast(`${this.getDuelLuanshiFactionName(loser)}\u9635\u8425\u89e6\u53d1\u53cd\u6740`);
+        this.scheduleOnce(() => {
+            if (!page.isValid || !page.active || (page as DuelLuanshiPageRuntime).duelLuanshiPhase === 'result') return;
+            void this.playDuelLuanshiSkillFromFaction(page, config, loser, 'counterattack', this.getDuelLuanshiSkillEffectY(config));
+        }, 0.28);
+    }
+
+    protected pickDuelLuanshiCounterattackSkillConfig(): DuelLuanshiSkillConfig {
+        const ultimates = HomeConfig.DUEL_LUANSHI_SKILL_CONFIGS.filter((config) => this.isDuelLuanshiUltimateSkill(config));
+        return ultimates[Math.floor(this.randomDuelLuanshiRange(0, ultimates.length))] || HomeConfig.DUEL_LUANSHI_SKILL_CONFIGS[0];
     }
 
     protected finishDuelLuanshiRound(panel: Node, page: Node): void {
@@ -288,10 +562,10 @@ export abstract class HomeFeatureDuelLuanshiBattle extends HomeFeatureDuelLuansh
         if (runtime.duelLuanshiPhase === 'result') return;
         runtime.duelLuanshiPhase = 'result';
         playerSkillBusyPages.delete(page);
-        const joinLayer = page.getChildByName('LuanshiZhengxiongJoinLayer');
+        const joinLayer = this.findDuelLuanshiMainNode(page, 'LuanshiZhengxiongJoinLayer');
         if (joinLayer) joinLayer.active = false;
 
-        const winner: DuelLuanshiFaction = Math.random() < 0.5 ? 'wudang' : 'gaibang';
+        const winner = this.pickDuelLuanshiRoundWinner(page);
         runtime.duelLuanshiRoundWinner = winner;
         this.applyDuelLuanshiFinalWinnerPower(page, winner);
         this.updateDuelLuanshiRoundHud(page, 0, 'result');
@@ -309,7 +583,7 @@ export abstract class HomeFeatureDuelLuanshiBattle extends HomeFeatureDuelLuansh
     }
 
     protected updateDuelLuanshiRoundHud(page: Node, remainingSeconds: number, phase: DuelLuanshiPhase): void {
-        const label = page.getChildByName('LuanshiZhengxiongTimerLabel')?.getComponent(Label);
+        const label = this.findDuelLuanshiMainNode(page, 'LuanshiZhengxiongTimerLabel')?.getComponent(Label);
         if (label) {
             const prefix = phase === 'settle'
                 ? '\u7ed3\u7b97\u5269\u4f59\u65f6\u95f4'
@@ -322,10 +596,11 @@ export abstract class HomeFeatureDuelLuanshiBattle extends HomeFeatureDuelLuansh
         }
 
         const runtime = page as DuelLuanshiPageRuntime;
-        const periodLabel = page.getChildByName('LuanshiZhengxiongTopHud')?.getChildByName('LuanshiZhengxiongPeriodLabel')?.getComponent(Label);
+        const periodLabel = this.findDuelLuanshiMainNode(page, 'LuanshiZhengxiongTopHud')?.getChildByName('LuanshiZhengxiongPeriodLabel')?.getComponent(Label);
         if (periodLabel) {
             periodLabel.string = `\u7b2c${runtime.duelLuanshiRoundIndex || 1}\u671f`;
         }
+        this.refreshDuelLuanshiCurrencyHud(page);
     }
 
     protected formatDuelLuanshiCountdown(seconds: number): string {
@@ -338,16 +613,21 @@ export abstract class HomeFeatureDuelLuanshiBattle extends HomeFeatureDuelLuansh
     }
 
     protected showDuelLuanshiRoundStartFx(page: Node): void {
-        const legacyLayer = page.getChildByName('LuanshiZhengxiongRoundStartFxLayer');
+        if (this.isDuelLuanshiRecordPageShowing(page)) {
+            this.hideDuelLuanshiBattleLayersBehindRecord(page);
+            return;
+        }
+        const mainPage = this.ensureDuelLuanshiMainPageRoot(page);
+        const legacyLayer = this.findDuelLuanshiMainNode(page, 'LuanshiZhengxiongRoundStartFxLayer');
         if (legacyLayer) {
             const legacyBlocker = legacyLayer.getComponent(BlockInputEvents);
             if (legacyBlocker) legacyBlocker.enabled = false;
             legacyLayer.active = false;
         }
 
-        const layer = this.getOrCreateDuelLuanshiNode(
+        const layer = this.getOrCreateDuelLuanshiEditableNode(
             'LuanshiZhengxiongRoundStartFxRoot',
-            page,
+            mainPage,
             HomeConfig.DUEL_LUANSHI_ROUND_START_ICON_WIDTH,
             HomeConfig.DUEL_LUANSHI_ROUND_START_ICON_HEIGHT,
             0,
@@ -355,8 +635,8 @@ export abstract class HomeFeatureDuelLuanshiBattle extends HomeFeatureDuelLuansh
         );
         const blocker = layer.getComponent(BlockInputEvents);
         if (blocker) blocker.enabled = false;
-        layer.setSiblingIndex((page.children.length || 1) - 1);
-        const icon = this.getOrCreateDuelLuanshiSkin(
+        layer.setSiblingIndex((mainPage.children.length || 1) - 1);
+        const icon = this.getOrCreateDuelLuanshiEditableSkin(
             'LuanshiZhengxiongDuelIconFx',
             layer,
             HomeConfig.DUEL_LUANSHI_ROUND_START_ICON_WIDTH,
@@ -400,7 +680,7 @@ export abstract class HomeFeatureDuelLuanshiBattle extends HomeFeatureDuelLuansh
     }
 
     protected updateDuelLuanshiCampPowerUi(page: Node, animated: boolean): void {
-        const hud = page.getChildByName('LuanshiZhengxiongTopHud');
+        const hud = this.findDuelLuanshiMainNode(page, 'LuanshiZhengxiongTopHud');
         if (!hud) return;
         const power = this.ensureDuelLuanshiCampPower(page);
         const total = Math.max(1, power.wudang + power.gaibang);
@@ -460,6 +740,7 @@ export abstract class HomeFeatureDuelLuanshiBattle extends HomeFeatureDuelLuansh
         sourceKey: string,
     ): void {
         if ((page as DuelLuanshiPageRuntime).duelLuanshiPhase === 'result') return;
+        this.addDuelLuanshiSkillCast(page, faction);
         const isPlayer = sourceKey === 'player';
         const isDefense = this.isDuelLuanshiDefenseSkill(config);
         if (isDefense) {
@@ -468,8 +749,18 @@ export abstract class HomeFeatureDuelLuanshiBattle extends HomeFeatureDuelLuansh
             return;
         }
 
-        const damage = this.randomDuelLuanshiRange(isPlayer ? 3.2 : 0.9, isPlayer ? 6.2 : 2.25);
-        this.applyDuelLuanshiCampPowerDelta(page, faction, damage * 0.22, -damage, true);
+        if (sourceKey === 'counterattack') {
+            const swing = this.randomDuelLuanshiRange(18, 28);
+            this.applyDuelLuanshiCampPowerDelta(page, faction, swing, -swing * 0.86, true);
+            return;
+        }
+
+        const isUltimate = this.isDuelLuanshiUltimateSkill(config);
+        const damage = this.randomDuelLuanshiRange(
+            isUltimate ? isPlayer ? 7.2 : 3.4 : isPlayer ? 3.2 : 0.9,
+            isUltimate ? isPlayer ? 12.5 : 6.8 : isPlayer ? 6.2 : 2.25,
+        );
+        this.applyDuelLuanshiCampPowerDelta(page, faction, damage * (isUltimate ? 0.36 : 0.22), -damage, true);
     }
 
     protected applyDuelLuanshiNormalAttackPowerEffect(page: Node, attackerSide: DuelLuanshiAvatarSide, critical: boolean): void {
@@ -498,6 +789,23 @@ export abstract class HomeFeatureDuelLuanshiBattle extends HomeFeatureDuelLuansh
         this.updateDuelLuanshiCampPowerUi(page, animated);
     }
 
+    protected addDuelLuanshiSkillCast(page: Node, faction: DuelLuanshiFaction): void {
+        const runtime = page as DuelLuanshiPageRuntime;
+        if (faction === 'wudang') {
+            runtime.duelLuanshiWudangSkillCasts = (runtime.duelLuanshiWudangSkillCasts || 0) + 1;
+            return;
+        }
+        runtime.duelLuanshiGaibangSkillCasts = (runtime.duelLuanshiGaibangSkillCasts || 0) + 1;
+    }
+
+    protected pickDuelLuanshiRoundWinner(page: Node): DuelLuanshiFaction {
+        const power = this.ensureDuelLuanshiCampPower(page);
+        if (Math.abs(power.wudang - power.gaibang) < 0.01) {
+            return Math.random() < 0.5 ? 'wudang' : 'gaibang';
+        }
+        return power.wudang > power.gaibang ? 'wudang' : 'gaibang';
+    }
+
     protected applyDuelLuanshiFinalWinnerPower(page: Node, winner: DuelLuanshiFaction): void {
         const runtime = page as DuelLuanshiPageRuntime;
         const winnerPower = this.randomDuelLuanshiRange(108, 120);
@@ -508,9 +816,14 @@ export abstract class HomeFeatureDuelLuanshiBattle extends HomeFeatureDuelLuansh
     }
 
     protected showDuelLuanshiResultPopup(page: Node, playerFaction: DuelLuanshiFaction, winner: DuelLuanshiFaction): void {
+        if (this.isDuelLuanshiRecordPageShowing(page)) {
+            this.hideDuelLuanshiBattleLayersBehindRecord(page);
+            return;
+        }
         const victory = playerFaction === winner;
-        const layer = this.getOrCreateDuelLuanshiNode('LuanshiZhengxiongResultLayer', page, HomeConfig.VIEW_WIDTH, HomeConfig.VIEW_HEIGHT, 0, 0);
-        layer.setSiblingIndex((page.children.length || 1) - 1);
+        const mainPage = this.ensureDuelLuanshiMainPageRoot(page);
+        const layer = this.getOrCreateDuelLuanshiNode('LuanshiZhengxiongResultLayer', mainPage, HomeConfig.VIEW_WIDTH, HomeConfig.VIEW_HEIGHT, 0, 0);
+        layer.setSiblingIndex((mainPage.children.length || 1) - 1);
         layer.active = true;
 
         let dim = layer.getChildByName('LuanshiZhengxiongResultDim');
@@ -559,15 +872,17 @@ export abstract class HomeFeatureDuelLuanshiBattle extends HomeFeatureDuelLuansh
         message.outlineColor = new Color(58, 32, 12, 255);
         message.outlineWidth = 2;
 
-        const rewardIcon = this.getOrCreateDuelLuanshiResultEditableSkin(
-            'LuanshiZhengxiongResultRewardYuanbao',
-            board,
-            38,
-            38,
-            55,
-            -18,
-            HomeConfig.UI_DUEL_YUANBAO_ICON,
-        );
+        const rewardIcon = victory
+            ? this.getOrCreateDuelLuanshiResultEditableSkin(
+                'LuanshiZhengxiongResultRewardYuanbao',
+                board,
+                38,
+                38,
+                55,
+                -18,
+                HomeConfig.UI_DUEL_YUANBAO_ICON,
+            )
+            : board.getChildByName('LuanshiZhengxiongResultRewardYuanbao');
         let reward = board.getChildByName('LuanshiZhengxiongResultRewardLabel')?.getComponent(Label);
         if (!reward) {
             reward = this.createLabel(board, 'LuanshiZhengxiongResultRewardLabel', `${HomeConfig.DUEL_LUANSHI_RESULT_REWARD_YUANBAO}`, 28, 102, -18, 90, 42, new Color(255, 244, 206, 255));
@@ -578,7 +893,7 @@ export abstract class HomeFeatureDuelLuanshiBattle extends HomeFeatureDuelLuansh
         reward.enableOutline = true;
         reward.outlineColor = new Color(58, 32, 12, 255);
         reward.outlineWidth = 2;
-        rewardIcon.active = victory;
+        if (rewardIcon) this.setDuelLuanshiResultRewardIconVisible(rewardIcon, victory);
         reward.node.active = victory;
 
         const opacity = layer.getComponent(UIOpacity) || layer.addComponent(UIOpacity);
@@ -595,12 +910,21 @@ export abstract class HomeFeatureDuelLuanshiBattle extends HomeFeatureDuelLuansh
     }
 
     protected hideDuelLuanshiResultPopup(page: Node): void {
-        const layer = page.getChildByName('LuanshiZhengxiongResultLayer');
+        const layer = this.findDuelLuanshiMainNode(page, 'LuanshiZhengxiongResultLayer');
         if (!layer) return;
         Tween.stopAllByTarget(layer);
         const opacity = layer.getComponent(UIOpacity);
         if (opacity) Tween.stopAllByTarget(opacity);
         layer.active = false;
+    }
+
+    protected setDuelLuanshiResultRewardIconVisible(icon: Node, visible: boolean): void {
+        if (!visible) {
+            this.skinApplyVersions.set(icon, ++this.skinApplyVersion);
+        }
+        icon.active = visible;
+        const sprite = icon.getComponent(Sprite);
+        if (sprite) sprite.enabled = visible;
     }
 
     protected getOrCreateDuelLuanshiResultEditableSkin(name: string, parent: Node, width: number, height: number, x: number, y: number, skinPath: string): Node {
@@ -618,7 +942,8 @@ export abstract class HomeFeatureDuelLuanshiBattle extends HomeFeatureDuelLuansh
     }
 
     protected ensureDuelLuanshiBattlefield(page: Node): void {
-        const layer = this.getOrCreateDuelLuanshiNode('LuanshiZhengxiongAvatarLayer', page, HomeConfig.VIEW_WIDTH, 820, 0, 70);
+        const mainPage = this.ensureDuelLuanshiMainPageRoot(page);
+        const layer = this.getOrCreateDuelLuanshiNode('LuanshiZhengxiongAvatarLayer', mainPage, HomeConfig.VIEW_WIDTH, 820, 0, 70);
         const positions = [
             { x: -250, y: 315, side: 'left' }, { x: -126, y: 258, side: 'left' }, { x: -292, y: 178, side: 'left' },
             { x: -150, y: 110, side: 'left' }, { x: -258, y: 20, side: 'left' }, { x: -122, y: -66, side: 'left' },
@@ -626,9 +951,11 @@ export abstract class HomeFeatureDuelLuanshiBattle extends HomeFeatureDuelLuansh
             { x: 150, y: 110, side: 'right' }, { x: 258, y: 20, side: 'right' }, { x: 122, y: -66, side: 'right' },
         ] as const;
         positions.forEach((position, index) => this.ensureDuelLuanshiAvatar(layer, index, position.x, position.y, position.side));
-        this.getOrCreateDuelLuanshiNode('LuanshiZhengxiongSkillEffectLayer', page, HomeConfig.VIEW_WIDTH, 860, 0, 120).setSiblingIndex((page.children.length || 1) - 1);
-        this.getOrCreateDuelLuanshiNode('LuanshiZhengxiongDamageNumberLayer', page, HomeConfig.VIEW_WIDTH, 860, 0, 120).setSiblingIndex((page.children.length || 1) - 1);
+        this.getOrCreateDuelLuanshiNode('LuanshiZhengxiongSkillEffectLayer', mainPage, HomeConfig.VIEW_WIDTH, 860, 0, 120).setSiblingIndex((mainPage.children.length || 1) - 1);
+        this.hideDuelLuanshiEditorSkillEffectTemplates(page);
+        this.getOrCreateDuelLuanshiNode('LuanshiZhengxiongDamageNumberLayer', mainPage, HomeConfig.VIEW_WIDTH, 860, 0, 120).setSiblingIndex((mainPage.children.length || 1) - 1);
         layer.setSiblingIndex(2);
+        if (this.isDuelLuanshiRecordPageShowing(page)) this.hideDuelLuanshiBattleLayersBehindRecord(page);
     }
 
     protected ensureDuelLuanshiAvatar(parent: Node, index: number, x: number, y: number, side: 'left' | 'right'): void {
@@ -642,36 +969,19 @@ export abstract class HomeFeatureDuelLuanshiBattle extends HomeFeatureDuelLuansh
     }
 
     protected ensureDuelLuanshiJoinLayer(panel: Node, page: Node): void {
-        const layer = this.getOrCreateDuelLuanshiNode('LuanshiZhengxiongJoinLayer', page, HomeConfig.VIEW_WIDTH, HomeConfig.DUEL_LUANSHI_JOIN_LAYER_HEIGHT, 0, 0);
+        if (this.isDuelLuanshiRecordPageShowing(page)) {
+            this.hideDuelLuanshiBattleLayersBehindRecord(page);
+            return;
+        }
+        const mainPage = this.ensureDuelLuanshiMainPageRoot(page);
+        const layer = this.getOrCreateDuelLuanshiNode('LuanshiZhengxiongJoinLayer', mainPage, HomeConfig.VIEW_WIDTH, HomeConfig.DUEL_LUANSHI_JOIN_LAYER_HEIGHT, 0, 0);
         layer.active = true;
-        const left = this.getOrCreateDuelLuanshiJoinButton(layer, 'Wudang', -160, HomeConfig.UI_DUEL_LUANSHI_JOIN_WUDANG, '\u52a0\u5165\u6b66\u5f53');
-        const right = this.getOrCreateDuelLuanshiJoinButton(layer, 'Gaibang', 160, HomeConfig.UI_DUEL_LUANSHI_JOIN_GAIBANG, '\u52a0\u5165\u4e10\u5e2e');
+        const left = this.getOrCreateDuelLuanshiJoinButton(layer, 'Wudang', HomeConfig.DUEL_LUANSHI_JOIN_WUDANG_X, HomeConfig.UI_DUEL_LUANSHI_JOIN_WUDANG, '\u52a0\u5165\u6b66\u5f53');
+        const right = this.getOrCreateDuelLuanshiJoinButton(layer, 'Gaibang', HomeConfig.DUEL_LUANSHI_JOIN_GAIBANG_X, HomeConfig.UI_DUEL_LUANSHI_JOIN_GAIBANG, '\u52a0\u5165\u4e10\u5e2e');
         this.bindScaledClick(left, () => this.joinDuelLuanshiFaction(panel, page, 'wudang'));
         this.bindScaledClick(right, () => this.joinDuelLuanshiFaction(panel, page, 'gaibang'));
-        this.bindDuelLuanshiJoinLayerFallback(layer, panel, page);
-        layer.setSiblingIndex((page.children.length || 1) - 1);
-    }
-
-    protected bindDuelLuanshiJoinLayerFallback(layer: Node, panel: Node, page: Node): void {
         layer.off(Node.EventType.TOUCH_END);
-        layer.on(Node.EventType.TOUCH_END, (event: EventTouch) => {
-            const transform = layer.getComponent(UITransform);
-            if (!transform) return;
-            const location = event.getUILocation();
-            const local = transform.convertToNodeSpaceAR(new Vec3(location.x, location.y, 0));
-            const buttonHalfWidth = HomeConfig.DUEL_LUANSHI_JOIN_BUTTON_WIDTH / 2;
-            const buttonHalfHeight = HomeConfig.DUEL_LUANSHI_JOIN_BUTTON_HEIGHT / 2;
-            const insideY = local.y >= HomeConfig.DUEL_LUANSHI_JOIN_BUTTON_Y - buttonHalfHeight
-                && local.y <= HomeConfig.DUEL_LUANSHI_JOIN_BUTTON_Y + buttonHalfHeight;
-            if (!insideY) return;
-
-            const hitWudang = local.x >= -160 - buttonHalfWidth && local.x <= -160 + buttonHalfWidth;
-            const hitGaibang = local.x >= 160 - buttonHalfWidth && local.x <= 160 + buttonHalfWidth;
-            if (!hitWudang && !hitGaibang) return;
-
-            event.propagationStopped = true;
-            this.joinDuelLuanshiFaction(panel, page, hitWudang ? 'wudang' : 'gaibang');
-        }, this);
+        layer.setSiblingIndex((mainPage.children.length || 1) - 1);
     }
 
     protected getOrCreateDuelLuanshiJoinButton(parent: Node, suffix: string, x: number, skinPath: string, text: string): Node {
@@ -683,19 +993,22 @@ export abstract class HomeFeatureDuelLuanshiBattle extends HomeFeatureDuelLuansh
     }
 
     protected ensureDuelLuanshiSkillSlots(panel: Node, page: Node): Node {
-        const dock = page.getChildByName('LuanshiZhengxiongBottomDock')!;
-        const root = this.getOrCreateDuelLuanshiNode('LuanshiZhengxiongSkillSlots', dock, HomeConfig.VIEW_WIDTH, 300, 0, 0);
-        const xs = [-270, -90, 90, 270, -270, -90, 90, 270];
-        const ys = [-536, -536, -536, -536, -690, -690, -690, -690];
+        const dock = this.findDuelLuanshiMainNode(page, 'LuanshiZhengxiongBottomDock')!;
+        const root = this.getOrCreateDuelLuanshiEditableNode('LuanshiZhengxiongSkillSlots', dock, HomeConfig.VIEW_WIDTH, 300, 0, 0);
+        const xs = [-280, -140, 0, 140, 280, -280, -140, 0, 140, 280];
+        const ys = [-536, -536, -536, -536, -536, -690, -690, -690, -690, -690];
         HomeConfig.DUEL_LUANSHI_SKILL_CONFIGS.forEach((config, index) => {
-            const cell = this.getOrCreateDuelLuanshiNode(`LuanshiSkillSlot_${config.id}`, root, HomeConfig.DUEL_LUANSHI_SKILL_SLOT_WIDTH, HomeConfig.DUEL_LUANSHI_SKILL_SLOT_HEIGHT, xs[index], ys[index]);
+            const cell = this.getOrCreateDuelLuanshiEditableNode(`LuanshiSkillSlot_${config.id}`, root, HomeConfig.DUEL_LUANSHI_SKILL_SLOT_WIDTH, HomeConfig.DUEL_LUANSHI_SKILL_SLOT_HEIGHT, xs[index], ys[index]);
             const iconSize = this.getDuelLuanshiSkillIconSize(config);
-            this.getOrCreateDuelLuanshiSkin(`LuanshiSkillSlotFrame_${config.id}`, cell, HomeConfig.DUEL_LUANSHI_SKILL_SLOT_WIDTH, HomeConfig.DUEL_LUANSHI_SKILL_SLOT_HEIGHT, 0, 0, HomeConfig.UI_DUEL_LUANSHI_SKILL_SLOT).setSiblingIndex(0);
-            this.getOrCreateDuelLuanshiSkin(`LuanshiSkillIcon_${config.id}`, cell, iconSize, iconSize, 0, 12, config.iconPath).setSiblingIndex(1);
+            this.getOrCreateDuelLuanshiEditableSkin(`LuanshiSkillSlotFrame_${config.id}`, cell, HomeConfig.DUEL_LUANSHI_SKILL_SLOT_WIDTH, HomeConfig.DUEL_LUANSHI_SKILL_SLOT_HEIGHT, 0, 0, HomeConfig.UI_DUEL_LUANSHI_SKILL_SLOT).setSiblingIndex(0);
+            this.getOrCreateDuelLuanshiEditableSkin(`LuanshiSkillIcon_${config.id}`, cell, iconSize, iconSize, 0, 12, config.iconPath).setSiblingIndex(1);
             this.ensureDuelLuanshiSkillIconFrameEffect(cell, config);
             this.ensureDuelLuanshiSkillCost(cell, config);
             this.bindScaledClick(cell, () => this.playDuelLuanshiSkill(page, config));
         });
+        dock.getChildByName('LuanshiZhengxiongRankButton')?.setSiblingIndex((dock.children.length || 1) - 1);
+        dock.getChildByName('LuanshiZhengxiongRecordButton')?.setSiblingIndex((dock.children.length || 1) - 1);
+        dock.getChildByName('LuanshiZhengxiongToggleButton')?.setSiblingIndex((dock.children.length || 1) - 1);
         return root;
     }
 
@@ -710,7 +1023,7 @@ export abstract class HomeFeatureDuelLuanshiBattle extends HomeFeatureDuelLuansh
     protected ensureDuelLuanshiSkillIconFrameEffect(cell: Node, config: DuelLuanshiSkillConfig): void {
         if (config.frameEffectPaths.length <= 0) return;
         const effectSize = this.getDuelLuanshiSkillIconEffectSize(config);
-        const effect = this.getOrCreateDuelLuanshiSkin(
+        const effect = this.getOrCreateDuelLuanshiEditableSkin(
             `LuanshiSkillIconFrameEffect_${config.id}`,
             cell,
             effectSize,
@@ -774,7 +1087,7 @@ export abstract class HomeFeatureDuelLuanshiBattle extends HomeFeatureDuelLuansh
     }
 
     protected ensureDuelLuanshiSkillCost(cell: Node, config: DuelLuanshiSkillConfig): void {
-        const icon = this.getOrCreateDuelLuanshiSkin(
+        const icon = this.getOrCreateDuelLuanshiEditableSkin(
             `LuanshiSkillCostYuanbao_${config.id}`,
             cell,
             HomeConfig.DUEL_LUANSHI_SKILL_COST_ICON_SIZE,
@@ -816,10 +1129,11 @@ export abstract class HomeFeatureDuelLuanshiBattle extends HomeFeatureDuelLuansh
             return;
         }
         runtime.duelLuanshiFaction = faction;
-        const joinLayer = page.getChildByName('LuanshiZhengxiongJoinLayer');
+        const joinLayer = this.findDuelLuanshiMainNode(page, 'LuanshiZhengxiongJoinLayer');
         if (joinLayer) joinLayer.active = false;
         this.ensureDuelLuanshiSkillSlots(panel, page).active = true;
         this.setDuelLuanshiBottomDockCollapsed(panel, page, false, true);
+        this.refreshDuelLuanshiCurrencyHud(page);
         this.showToast(faction === 'wudang' ? '\u5df2\u52a0\u5165\u6b66\u5f53' : '\u5df2\u52a0\u5165\u4e10\u5e2e');
     }
 
@@ -836,6 +1150,8 @@ export abstract class HomeFeatureDuelLuanshiBattle extends HomeFeatureDuelLuansh
         if (playerSkillBusyPages.has(page)) return;
         playerSkillBusyPages.add(page);
         const faction = runtime.duelLuanshiFaction;
+        runtime.duelLuanshiPlayerInvestYuanbao = (runtime.duelLuanshiPlayerInvestYuanbao || 0) + config.yuanbaoCost;
+        this.refreshDuelLuanshiCurrencyHud(page);
         const lockSeconds = await this.playDuelLuanshiSkillFromFaction(page, config, faction, 'player', this.getDuelLuanshiSkillEffectY(config));
         this.scheduleOnce(() => {
             if (page.isValid) playerSkillBusyPages.delete(page);
@@ -849,12 +1165,23 @@ export abstract class HomeFeatureDuelLuanshiBattle extends HomeFeatureDuelLuansh
         sourceKey: string,
         effectY: number,
     ): Promise<number> {
+        if (this.isDuelLuanshiRecordPageShowing(page)) {
+            this.hideDuelLuanshiBattleLayersBehindRecord(page);
+            return 0.2;
+        }
         const isDefense = this.isDuelLuanshiDefenseSkill(config);
-        const layer = page.getChildByName('LuanshiZhengxiongSkillEffectLayer') || this.getOrCreateDuelLuanshiNode('LuanshiZhengxiongSkillEffectLayer', page, HomeConfig.VIEW_WIDTH, 860, 0, 120);
-        const impactY = isDefense ? effectY : this.pickDuelLuanshiAttackTargetY(page, this.getOppositeDuelLuanshiFaction(faction), effectY);
+        const isFullScreen = this.isDuelLuanshiFullScreenSkill(config);
+        const mainPage = this.ensureDuelLuanshiMainPageRoot(page);
+        const layer = this.findDuelLuanshiMainNode(page, 'LuanshiZhengxiongSkillEffectLayer') || this.getOrCreateDuelLuanshiNode('LuanshiZhengxiongSkillEffectLayer', mainPage, HomeConfig.VIEW_WIDTH, 860, 0, 120);
+        const impactY = isDefense
+            ? effectY
+            : isFullScreen
+                ? 120
+                : this.pickDuelLuanshiAttackTargetY(page, this.getOppositeDuelLuanshiFaction(faction), effectY);
         const layout = isDefense
             ? this.getDuelLuanshiDefenseSkillEffectLayout(effectY)
             : this.getDuelLuanshiSkillEffectLayout(faction, effectY, impactY, config);
+        if (isFullScreen) this.applyDuelLuanshiEditorFullScreenSkillLayout(layer, layout, config, faction);
         const effect = this.getOrCreateDuelLuanshiSkillEffectNode(layer, faction, sourceKey, layout);
         effect.setPosition(layout.startX, layout.y, 0);
         effect.setScale(layout.scaleX, layout.scaleY, 1);
@@ -863,6 +1190,10 @@ export abstract class HomeFeatureDuelLuanshiBattle extends HomeFeatureDuelLuansh
         try {
             const skeletonData = await this.loadSkeletonAsset(config.spinePath);
             if (!effect.isValid) return 0.2;
+            if (this.isDuelLuanshiRecordPageShowing(page)) {
+                this.hideDuelLuanshiBattleLayersBehindRecord(page);
+                return 0.2;
+            }
             const skeleton = effect.getComponent(sp.Skeleton) || effect.addComponent(sp.Skeleton);
             if (skillEffectSpinePaths.get(effect) !== config.spinePath) {
                 skeleton.skeletonData = skeletonData;
@@ -871,6 +1202,7 @@ export abstract class HomeFeatureDuelLuanshiBattle extends HomeFeatureDuelLuansh
             this.prepareSkeletonRenderer(skeleton);
             const spineAssetName = config.spinePath.split('/').pop() || '';
             const duration = this.playDuelJianghuSkeletonAnimation(skeleton, [
+                'action',
                 'animation',
                 'SkillNormal',
                 'SkillOnstage',
@@ -891,7 +1223,7 @@ export abstract class HomeFeatureDuelLuanshiBattle extends HomeFeatureDuelLuansh
                 'idle4',
                 'idle5',
             ], false);
-            if (!isDefense) {
+            if (!isDefense && !layout.fullScreen) {
                 this.moveDuelLuanshiSkillEffectToEnemy(effect, layout, duration);
             }
             this.showDuelLuanshiSkillNumbers(page, config, faction, sourceKey, layout.targetY);
@@ -910,7 +1242,11 @@ export abstract class HomeFeatureDuelLuanshiBattle extends HomeFeatureDuelLuansh
     }
 
     protected getOrCreateDuelLuanshiSkillEffectNode(layer: Node, faction: DuelLuanshiFaction, sourceKey: string, layout: DuelLuanshiSkillEffectLayout): Node {
-        const effect = this.getOrCreateDuelLuanshiNode(`LuanshiSkillEffect_${sourceKey}_${faction}`, layer, 720, 620, layout.startX, layout.y);
+        const width = layout.width || 720;
+        const height = layout.height || 620;
+        const editorNode = layout.editorNodeName ? layer.getChildByName(layout.editorNodeName) : null;
+        const effect = editorNode || this.getOrCreateDuelLuanshiNode(`LuanshiSkillEffect_${sourceKey}_${faction}`, layer, width, height, layout.startX, layout.y);
+        (effect.getComponent(UITransform) || effect.addComponent(UITransform)).setContentSize(width, height);
         effect.active = true;
         effect.setSiblingIndex((layer.children.length || 1) - 1);
         Tween.stopAllByTarget(effect);
@@ -934,14 +1270,29 @@ export abstract class HomeFeatureDuelLuanshiBattle extends HomeFeatureDuelLuansh
         targetY: number = effectY,
         config?: DuelLuanshiSkillConfig,
     ): DuelLuanshiSkillEffectLayout {
+        if (config && this.isDuelLuanshiFullScreenSkill(config)) {
+            const scale = this.getDuelLuanshiSkillEffectScale(config);
+            const flipX = this.shouldFlipDuelLuanshiFullScreenSkill(config, faction) ? -1 : 1;
+            const offsetY = this.getDuelLuanshiFullScreenSkillOffsetY(config);
+            return {
+                startX: 0,
+                targetX: 0,
+                y: HomeConfig.DUEL_LUANSHI_FULLSCREEN_SKILL_EFFECT_Y + offsetY,
+                targetY,
+                scaleX: flipX * scale,
+                scaleY: scale,
+                width: HomeConfig.DUEL_LUANSHI_FULLSCREEN_SKILL_EFFECT_WIDTH,
+                height: HomeConfig.DUEL_LUANSHI_FULLSCREEN_SKILL_EFFECT_HEIGHT,
+                fullScreen: true,
+                editorNodeName: `LuanshiUltimateEffect_${config.id}`,
+            };
+        }
         const direction = faction === 'wudang' ? 1 : -1;
         const isBlueMagic = config?.id === 'lanse_mofa';
         const targetX = isBlueMagic
             ? this.randomDuelLuanshiRange(HomeConfig.DUEL_LUANSHI_BLUE_MAGIC_SKILL_EFFECT_TARGET_X - 28, HomeConfig.DUEL_LUANSHI_BLUE_MAGIC_SKILL_EFFECT_TARGET_X + 26)
             : this.randomDuelLuanshiRange(HomeConfig.DUEL_LUANSHI_SKILL_EFFECT_TARGET_X - 38, HomeConfig.DUEL_LUANSHI_SKILL_EFFECT_TARGET_X + 54);
-        const scale = isBlueMagic
-            ? HomeConfig.DUEL_LUANSHI_BLUE_MAGIC_SKILL_EFFECT_SCALE
-            : HomeConfig.DUEL_LUANSHI_SKILL_EFFECT_SCALE;
+        const scale = this.getDuelLuanshiSkillEffectScale(config);
         return {
             startX: -direction * HomeConfig.DUEL_LUANSHI_SKILL_EFFECT_START_X,
             targetX: direction * targetX,
@@ -950,6 +1301,63 @@ export abstract class HomeFeatureDuelLuanshiBattle extends HomeFeatureDuelLuansh
             scaleX: direction * scale,
             scaleY: scale,
         };
+    }
+
+    protected getDuelLuanshiSkillEffectScale(config?: DuelLuanshiSkillConfig): number {
+        const customScale = config ? (config as DuelLuanshiSkillConfig & { effectScale?: number }).effectScale : undefined;
+        if (typeof customScale === 'number') return customScale;
+        if (config?.id === 'lanse_mofa') return HomeConfig.DUEL_LUANSHI_BLUE_MAGIC_SKILL_EFFECT_SCALE;
+        return HomeConfig.DUEL_LUANSHI_SKILL_EFFECT_SCALE;
+    }
+
+    protected getDuelLuanshiFullScreenSkillOffsetY(config: DuelLuanshiSkillConfig): number {
+        const offsetY = (config as DuelLuanshiSkillConfig & { fullScreenOffsetY?: number }).fullScreenOffsetY;
+        return typeof offsetY === 'number' ? offsetY : 0;
+    }
+
+    protected applyDuelLuanshiEditorFullScreenSkillLayout(
+        layer: Node,
+        layout: DuelLuanshiSkillEffectLayout,
+        config: DuelLuanshiSkillConfig,
+        faction: DuelLuanshiFaction,
+    ): void {
+        if (!layout.editorNodeName) return;
+        const editorNode = layer.getChildByName(layout.editorNodeName);
+        if (!editorNode) return;
+        const uiTransform = editorNode.getComponent(UITransform);
+        if (uiTransform) {
+            layout.width = uiTransform.contentSize.width;
+            layout.height = uiTransform.contentSize.height;
+        }
+        layout.startX = editorNode.position.x;
+        layout.targetX = editorNode.position.x;
+        layout.y = editorNode.position.y;
+        layout.targetY = editorNode.position.y;
+
+        const scaleX = editorNode.scale.x || 1;
+        const scaleY = editorNode.scale.y || 1;
+        if (this.shouldFlipDuelLuanshiFullScreenSkill(config, faction)) {
+            layout.scaleX = -Math.abs(scaleX);
+            layout.scaleY = scaleY;
+        } else {
+            layout.scaleX = Math.abs(scaleX);
+            layout.scaleY = scaleY;
+        }
+    }
+
+    protected hideDuelLuanshiEditorSkillEffectTemplates(page: Node): void {
+        const layer = this.findDuelLuanshiMainNode(page, 'LuanshiZhengxiongSkillEffectLayer');
+        if (!layer) return;
+        layer.children.forEach((child) => {
+            if (child.name.startsWith('LuanshiUltimateEffect_')) {
+                this.hideDuelLuanshiSkillEffect(child);
+            }
+        });
+    }
+
+    protected shouldFlipDuelLuanshiFullScreenSkill(config: DuelLuanshiSkillConfig, faction: DuelLuanshiFaction): boolean {
+        return faction === 'gaibang'
+            && !!(config as DuelLuanshiSkillConfig & { flipFullScreenForGaibang?: boolean }).flipFullScreenForGaibang;
     }
 
     protected moveDuelLuanshiSkillEffectToEnemy(effect: Node, layout: DuelLuanshiSkillEffectLayout, duration: number): void {
@@ -964,17 +1372,28 @@ export abstract class HomeFeatureDuelLuanshiBattle extends HomeFeatureDuelLuansh
     }
 
     protected showDuelLuanshiSkillNumbers(page: Node, config: DuelLuanshiSkillConfig, faction: DuelLuanshiFaction, sourceKey: string, impactY?: number): void {
+        if (this.isDuelLuanshiRecordPageShowing(page)) {
+            this.hideDuelLuanshiBattleLayersBehindRecord(page);
+            return;
+        }
         const isDefense = this.isDuelLuanshiDefenseSkill(config);
+        const isUltimate = this.isDuelLuanshiUltimateSkill(config);
         const targetFaction = isDefense ? faction : this.getOppositeDuelLuanshiFaction(faction);
         const centerX = isDefense ? 0 : targetFaction === 'wudang' ? -190 : 190;
-        const burstCount = sourceKey === 'player'
-            ? isDefense ? 2 : 11
-            : isDefense ? 1 : 6;
+        const burstCount = sourceKey === 'counterattack'
+            ? 18
+            : sourceKey === 'player'
+                ? isDefense ? 2 : isUltimate ? 16 : 11
+                : isDefense ? 1 : isUltimate ? 10 : 6;
 
         for (let index = 0; index < burstCount; index += 1) {
             const delay = this.randomDuelLuanshiRange(0.02, 0.18) + index * this.randomDuelLuanshiRange(0.025, 0.07);
             this.scheduleOnce(() => {
                 if (!page.isValid || !page.active) return;
+                if (this.isDuelLuanshiRecordPageShowing(page)) {
+                    this.hideDuelLuanshiBattleLayersBehindRecord(page);
+                    return;
+                }
                 const x = centerX + this.randomDuelLuanshiRange(isDefense ? -82 : -135, isDefense ? 82 : 135);
                 const y = isDefense
                     ? this.randomDuelLuanshiRange(72, 248)
@@ -990,8 +1409,13 @@ export abstract class HomeFeatureDuelLuanshiBattle extends HomeFeatureDuelLuansh
     }
 
     protected showDuelLuanshiCombatNumber(page: Node, kind: DuelLuanshiCombatNumberKind, text: string, x: number, y: number, scaleMode: DuelLuanshiCombatNumberScale = 'skill'): void {
-        const layer = this.getOrCreateDuelLuanshiNode('LuanshiZhengxiongDamageNumberLayer', page, HomeConfig.VIEW_WIDTH, 860, 0, 120);
-        layer.setSiblingIndex((page.children.length || 1) - 1);
+        if (this.isDuelLuanshiRecordPageShowing(page)) {
+            this.hideDuelLuanshiBattleLayersBehindRecord(page);
+            return;
+        }
+        const mainPage = this.ensureDuelLuanshiMainPageRoot(page);
+        const layer = this.getOrCreateDuelLuanshiNode('LuanshiZhengxiongDamageNumberLayer', mainPage, HomeConfig.VIEW_WIDTH, 860, 0, 120);
+        layer.setSiblingIndex((mainPage.children.length || 1) - 1);
         const parts = this.getDuelLuanshiNumberSpriteSpecs(kind, text);
         if (parts.length <= 0) return;
 
@@ -1100,15 +1524,24 @@ export abstract class HomeFeatureDuelLuanshiBattle extends HomeFeatureDuelLuansh
         return config.id === 'diaozhong' || config.id === 'taiji';
     }
 
+    protected isDuelLuanshiUltimateSkill(config: DuelLuanshiSkillConfig): boolean {
+        return config.id === 'ultimate_1' || config.id === 'ultimate_2';
+    }
+
+    protected isDuelLuanshiFullScreenSkill(config: DuelLuanshiSkillConfig): boolean {
+        return !!(config as DuelLuanshiSkillConfig & { fullScreenEffect?: boolean }).fullScreenEffect;
+    }
+
     protected getDuelLuanshiSkillEffectY(config: DuelLuanshiSkillConfig): number {
+        if (this.isDuelLuanshiFullScreenSkill(config)) return HomeConfig.DUEL_LUANSHI_FULLSCREEN_SKILL_EFFECT_Y;
         return this.isDuelLuanshiDefenseSkill(config)
             ? HomeConfig.DUEL_LUANSHI_DEFENSE_SKILL_EFFECT_Y
             : this.randomDuelLuanshiRange(HomeConfig.DUEL_LUANSHI_AUTO_SKILL_Y_MIN, HomeConfig.DUEL_LUANSHI_AUTO_SKILL_Y_MAX);
     }
 
     protected pickDuelLuanshiAttackTargetY(page: Node, targetFaction: DuelLuanshiFaction, fallbackY: number): number {
-        const avatarLayer = page.getChildByName('LuanshiZhengxiongAvatarLayer');
-        const effectLayer = page.getChildByName('LuanshiZhengxiongSkillEffectLayer');
+        const avatarLayer = this.findDuelLuanshiMainNode(page, 'LuanshiZhengxiongAvatarLayer');
+        const effectLayer = this.findDuelLuanshiMainNode(page, 'LuanshiZhengxiongSkillEffectLayer');
         if (!avatarLayer || !effectLayer) return fallbackY + this.randomDuelLuanshiRange(-95, 95);
 
         const targetIsLeft = targetFaction === 'wudang';
@@ -1154,10 +1587,15 @@ export abstract class HomeFeatureDuelLuanshiBattle extends HomeFeatureDuelLuansh
     }
 
     protected playRandomDuelLuanshiAvatarNormalAttack(page: Node): void {
+        if (this.isDuelLuanshiRecordPageShowing(page)) {
+            this.hideDuelLuanshiBattleLayersBehindRecord(page);
+            return;
+        }
         if ((page as DuelLuanshiPageRuntime).duelLuanshiPhase === 'result') return;
-        const avatarLayer = page.getChildByName('LuanshiZhengxiongAvatarLayer');
+        const avatarLayer = this.findDuelLuanshiMainNode(page, 'LuanshiZhengxiongAvatarLayer');
         if (!avatarLayer) return;
-        const effectLayer = page.getChildByName('LuanshiZhengxiongSkillEffectLayer') || this.getOrCreateDuelLuanshiNode('LuanshiZhengxiongSkillEffectLayer', page, HomeConfig.VIEW_WIDTH, 860, 0, 120);
+        const mainPage = this.ensureDuelLuanshiMainPageRoot(page);
+        const effectLayer = this.findDuelLuanshiMainNode(page, 'LuanshiZhengxiongSkillEffectLayer') || this.getOrCreateDuelLuanshiNode('LuanshiZhengxiongSkillEffectLayer', mainPage, HomeConfig.VIEW_WIDTH, 860, 0, 120);
         const attackerSide: DuelLuanshiAvatarSide = Math.random() < 0.5 ? 'left' : 'right';
         const attackers = this.getDuelLuanshiAvatarNodes(avatarLayer, attackerSide);
         const targets = this.getDuelLuanshiAvatarNodes(avatarLayer, attackerSide === 'left' ? 'right' : 'left');
@@ -1197,6 +1635,10 @@ export abstract class HomeFeatureDuelLuanshiBattle extends HomeFeatureDuelLuansh
         sourcePosition: Vec3,
         targetPosition: Vec3,
     ): Promise<void> {
+        if (this.isDuelLuanshiRecordPageShowing(page)) {
+            this.hideDuelLuanshiBattleLayersBehindRecord(page);
+            return;
+        }
         const effect = this.getOrCreateDuelLuanshiNode(
             `LuanshiNormalAttack_${attackerSide}_${poolIndex}`,
             effectLayer,
@@ -1222,6 +1664,10 @@ export abstract class HomeFeatureDuelLuanshiBattle extends HomeFeatureDuelLuansh
         try {
             const skeletonData = await this.loadSkeletonAsset(spinePath);
             if (!effect.isValid || normalAttackHideTokens.get(effect) !== playToken) return;
+            if (this.isDuelLuanshiRecordPageShowing(page)) {
+                this.hideDuelLuanshiBattleLayersBehindRecord(page);
+                return;
+            }
             const skeleton = effect.getComponent(sp.Skeleton) || effect.addComponent(sp.Skeleton);
             if (normalAttackSpinePaths.get(effect) !== spinePath) {
                 skeleton.skeletonData = skeletonData;
@@ -1234,6 +1680,10 @@ export abstract class HomeFeatureDuelLuanshiBattle extends HomeFeatureDuelLuansh
                 .to(travelSeconds, { position: targetPosition }, { easing: 'quadOut' })
                 .call(() => {
                     if (!page.isValid || !effect.isValid || normalAttackHideTokens.get(effect) !== playToken) return;
+                    if (this.isDuelLuanshiRecordPageShowing(page)) {
+                        this.hideDuelLuanshiBattleLayersBehindRecord(page);
+                        return;
+                    }
                     const impactPosition = targetAvatar.isValid
                         ? this.getDuelLuanshiAvatarEffectPosition(avatarLayer, effectLayer, targetAvatar)
                         : targetPosition;
@@ -1353,27 +1803,25 @@ export abstract class HomeFeatureDuelLuanshiBattle extends HomeFeatureDuelLuansh
         const config = this.pickDuelLuanshiAutoSkillConfig();
         const faction: DuelLuanshiFaction = Math.random() < 0.5 ? 'wudang' : 'gaibang';
         const poolIndex = Math.floor(this.randomDuelLuanshiRange(0, HomeConfig.DUEL_LUANSHI_AUTO_EFFECT_POOL_SIZE));
-        const effectY = this.isDuelLuanshiDefenseSkill(config)
-            ? HomeConfig.DUEL_LUANSHI_DEFENSE_SKILL_EFFECT_Y
-            : this.randomDuelLuanshiRange(HomeConfig.DUEL_LUANSHI_AUTO_SKILL_Y_MIN, HomeConfig.DUEL_LUANSHI_AUTO_SKILL_Y_MAX);
+        const effectY = this.getDuelLuanshiSkillEffectY(config);
         void this.playDuelLuanshiSkillFromFaction(page, config, faction, `npc${poolIndex}`, effectY);
     }
 
     protected pickDuelLuanshiAutoSkillConfig(): DuelLuanshiSkillConfig {
         const configs = HomeConfig.DUEL_LUANSHI_SKILL_CONFIGS;
-        const totalWeight = configs.reduce((sum, config) => (
-            sum + (this.isDuelLuanshiDefenseSkill(config)
-                ? HomeConfig.DUEL_LUANSHI_AUTO_DEFENSE_SKILL_WEIGHT
-                : HomeConfig.DUEL_LUANSHI_AUTO_ATTACK_SKILL_WEIGHT)
-        ), 0);
+        const totalWeight = configs.reduce((sum, config) => sum + this.getDuelLuanshiAutoSkillWeight(config), 0);
         let cursor = Math.random() * totalWeight;
         for (const config of configs) {
-            cursor -= this.isDuelLuanshiDefenseSkill(config)
-                ? HomeConfig.DUEL_LUANSHI_AUTO_DEFENSE_SKILL_WEIGHT
-                : HomeConfig.DUEL_LUANSHI_AUTO_ATTACK_SKILL_WEIGHT;
+            cursor -= this.getDuelLuanshiAutoSkillWeight(config);
             if (cursor <= 0) return config;
         }
         return configs[0];
+    }
+
+    protected getDuelLuanshiAutoSkillWeight(config: DuelLuanshiSkillConfig): number {
+        if (this.isDuelLuanshiUltimateSkill(config)) return HomeConfig.DUEL_LUANSHI_AUTO_ULTIMATE_SKILL_WEIGHT;
+        if (this.isDuelLuanshiDefenseSkill(config)) return HomeConfig.DUEL_LUANSHI_AUTO_DEFENSE_SKILL_WEIGHT;
+        return HomeConfig.DUEL_LUANSHI_AUTO_ATTACK_SKILL_WEIGHT;
     }
 
     protected startDuelLuanshiAvatarRoamMotion(node: Node, x: number, y: number, side: 'left' | 'right', index: number): void {

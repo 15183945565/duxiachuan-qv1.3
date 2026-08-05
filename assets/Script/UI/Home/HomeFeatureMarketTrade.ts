@@ -141,10 +141,7 @@ export abstract class HomeFeatureMarketTrade extends HomeViewBase {
             amount: quantity,
             totalPrice,
         });
-        this.openSharedFlowPopup('RewardPopup', {
-            title: this.getMarketSuccessTitle(action),
-            message: `${item.name} x${quantity}\n${this.marketMode === 'request' ? '\u6c42\u8d2d\u603b\u4ef7' : '\u4ea4\u6613\u603b\u4ef7'}\uff1a${this.formatMarketPrice(totalPrice)} \u5143\u5b9d`,
-        });
+        this.showToast(this.getMarketSuccessTitle(action));
         if (this.marketActiveTab === 'history') this.refreshMarketList();
     }
     protected buildMarketHistoryList(): void {

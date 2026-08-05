@@ -36,7 +36,7 @@ export abstract class HomeFeatureHomeUIRoot extends HomeViewBase {
             ? this.gameSceneLayer
             : this.node.getChildByName(UI_LAYER_NAMES.gameScene);
         if (gameLayer?.isValid) {
-            ['DuelJianghuMusicAudio', 'DuelJianghuEffectAudio'].forEach((name) => {
+            ['DuelJianghuMusicAudio', 'DuelJianghuEffectAudio', 'GlobalButtonClickAudio'].forEach((name) => {
                 const audioNode = this.node.getChildByName(name);
                 if (audioNode?.isValid) audioNode.setParent(gameLayer);
             });
@@ -179,9 +179,13 @@ export abstract class HomeFeatureHomeUIRoot extends HomeViewBase {
         ensureSkin('SoulIcon', 44, 47, -214, 595, HomeConfig.UI_HOME_XIANSHI_ICON, 2);
         ensureSkin('GoldIcon', 42, 44, 96, 595, HomeConfig.UI_HOME_JIFEN_ICON, 2);
         const exchangeButton = ensureSkin('BtnCurrencyExchange', 44, 44, 151, 595, HomeConfig.UI_HOME_EXCHANGE_BUTTON, 4);
-        this.bindScaledClick(exchangeButton, () => this.showToast('兑换功能预留'));
+        this.bindScaledClick(exchangeButton, () => {
+            void this.openPointShopFromCurrencyExchange();
+        });
         const giftButton = ensureSkin('BtnCurrencyGift', 44, 44, 352, 595, HomeConfig.UI_HOME_GIFT_SEND_BUTTON, 4);
-        this.bindScaledClick(giftButton, () => this.showToast('赠送功能预留'));
+        this.bindScaledClick(giftButton, () => {
+            void this.openGiftPanelFromCurrencyGift();
+        });
     
         const soulLabel = hud.getChildByName('LabelSoul');
         if (soulLabel) {
@@ -232,6 +236,28 @@ export abstract class HomeFeatureHomeUIRoot extends HomeViewBase {
         }
         if (this.persistentPointLabel?.isValid) {
             this.persistentPointLabel.string = this.getPointCurrencyText();
+        }
+    }
+    protected async openPointShopFromCurrencyExchange(): Promise<void> {
+        try {
+            await this.withTransitionLoading(async () => {
+                await this.prepareHomeEntry('BtnShop');
+                this.openShopPanel('points');
+            });
+        } catch (error) {
+            console.error('[MainHomeView] open point shop failed', error);
+            this.showToast('\u79ef\u5206\u5546\u57ce\u6253\u5f00\u5931\u8d25');
+        }
+    }
+    protected async openGiftPanelFromCurrencyGift(): Promise<void> {
+        try {
+            await this.withTransitionLoading(async () => {
+                await this.prepareHomeEntry('BtnAdGift');
+                this.openEditorFeaturePage('GiftPanel');
+            });
+        } catch (error) {
+            console.error('[MainHomeView] open gift transfer failed', error);
+            this.showToast('\u8d60\u9001\u5f39\u7a97\u6253\u5f00\u5931\u8d25');
         }
     }
     protected closeOtherBottomEntryPages(activePanel: Node | null): void {

@@ -36,6 +36,7 @@ import {
 import { ResourceManager, ResourceScope } from '../../Managers/ResourceManager';
 import { GameBackend } from '../../Services/Backend/GameBackend';
 import { DisplayAdapter } from '../../Services/DisplayAdapter';
+import { GlobalButtonClickAudio } from '../Common/GlobalButtonClickAudio';
 import { UI_LAYER_NAMES, UI_PAGE_LAYER_ORDER } from '../Common/UIConvention';
 import { applySimKaiFont, applySimKaiFontToTree } from '../Common/UIFont';
 import { BAG_ILLUSTRATION_CATALOG, type BagIllustrationCatalogItem, type BagIllustrationCategory } from './BagIllustrationCatalog.generated';
@@ -450,6 +451,7 @@ export class MainHomeView extends HomeViewWithShop {
         this.profile = this.loadProfile();
         this.loadProfileAudioSettings();
         this.setupUILayers();
+        GlobalButtonClickAudio.install(this.node, this.gameSceneLayer);
         if (this.uiHudLayer) this.uiHudLayer.active = false;
         void this.initializeHomeView();
     }
@@ -613,6 +615,7 @@ export class MainHomeView extends HomeViewWithShop {
         }
     }
     protected onDestroy(): void {
+        GlobalButtonClickAudio.uninstall(this.node);
         screen.off('window-resize', this.onDisplayChanged, this);
         screen.off('orientation-change', this.onDisplayChanged, this);
         this.idleTweens.forEach((tw) => tw.stop());

@@ -4,6 +4,7 @@
 /local/
 /build/
 /profiles/
+/.creator/
 
 # Dependency folders
 /node_modules/

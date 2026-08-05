@@ -7,6 +7,7 @@ import {
     Node,
     Overflow,
     ScrollView,
+    Tween,
     UITransform,
     VerticalTextAlignment,
 } from 'cc';
@@ -32,6 +33,31 @@ type DuelJianghuPersonalRecordEntry = {
     success: boolean;
     investAmount: number;
     rewardAmount: number;
+};
+
+type DuelLuanshiRecordRecentEntry = {
+    period: number;
+    winner: 'wudang' | 'gaibang';
+    winnerName: string;
+};
+
+type DuelLuanshiPersonalRecordEntry = {
+    period: number;
+    time: string;
+    selectedFactionName: string;
+    winnerName: string;
+    success: boolean;
+    investAmount: number;
+    rewardAmount: number;
+};
+
+type DuelLuanshiRecordSiblingState = {
+    node: Node;
+    active: boolean;
+};
+
+type DuelLuanshiRecordPageHost = Node & {
+    duelLuanshiRecordSiblingStates?: DuelLuanshiRecordSiblingState[];
 };
 
 type DuelJianghuRecordLabelStyle = {
@@ -286,7 +312,8 @@ export abstract class HomeFeatureDuelRecord extends HomeFeatureDuelRecordHost {
     }
 
     protected syncDuelJianghuRecordPersonalRowFromTemplate(parent: Node, row: Node): void {
-        const template = parent.getChildByName('JianghuRecordPersonalRow_1');
+        const templateName = row.name.startsWith('LuanshiRecordPersonalRow_') ? 'LuanshiRecordPersonalRow_1' : 'JianghuRecordPersonalRow_1';
+        const template = parent.getChildByName(templateName);
         if (!template || template === row) return;
 
         const rowY = row.position.y;
@@ -308,7 +335,7 @@ export abstract class HomeFeatureDuelRecord extends HomeFeatureDuelRecordHost {
             'InvestLabel',
             'RewardLabel',
         ].forEach((suffix) => {
-            const source = template.getChildByName(`JianghuRecordPersonalRow_1${suffix}`)?.getComponent(Label);
+            const source = template.getChildByName(`${template.name}${suffix}`)?.getComponent(Label);
             const target = row.getChildByName(`${row.name}${suffix}`)?.getComponent(Label);
             if (!source || !target) return;
             this.applyDuelJianghuRecordLabelStyle(this.captureDuelJianghuRecordLabelStyle(source), target);
@@ -321,6 +348,8 @@ export abstract class HomeFeatureDuelRecord extends HomeFeatureDuelRecordHost {
         if (cell.name.startsWith('JianghuRecordStatsCell_')) return parent.getChildByName('JianghuRecordStatsCell_mibao_youge') || cell;
         if (cell.name.startsWith('JianghuRecordRecentCell_')) return parent.getChildByName('JianghuRecordRecentCell_1') || cell;
         if (cell.name.startsWith('JianghuRecordSummaryCell_')) return parent.getChildByName('JianghuRecordSummaryCell_Invest') || cell;
+        if (cell.name.startsWith('LuanshiRecordRecentCell_')) return parent.getChildByName('LuanshiRecordRecentCell_1') || cell;
+        if (cell.name.startsWith('LuanshiRecordSummaryCell_')) return parent.getChildByName('LuanshiRecordSummaryCell_Invest') || cell;
         return cell;
     }
 
@@ -423,6 +452,267 @@ export abstract class HomeFeatureDuelRecord extends HomeFeatureDuelRecordHost {
         content.active = true;
         this.setupDuelJianghuRecordScrollView(scroll, content);
         return detail;
+    }
+
+    protected openDuelLuanshiRecordPage(page: Node): void {
+        const recordPage = this.ensureDuelLuanshiRecordPage(page);
+        this.hideDuelLuanshiPageSiblingsForRecord(page, recordPage);
+        recordPage.active = true;
+        this.refreshDuelLuanshiRecordPage(page, recordPage);
+        this.ensureInputBlocker(recordPage);
+        recordPage.setSiblingIndex((page.children.length || 1) - 1);
+        this.positionDuelBackForLuanshiRecord(page);
+    }
+
+    protected closeDuelLuanshiRecordPage(recordPage: Node): void {
+        recordPage.active = false;
+        const page = recordPage.parent;
+        if (page) {
+            this.restoreDuelLuanshiPageSiblingsAfterRecord(page);
+            this.restoreDuelBackAfterLuanshiRecord(page);
+        }
+    }
+
+    protected positionDuelBackForLuanshiRecord(page: Node): void {
+        const panel = page.parent;
+        const back = panel?.getChildByName('DuelBack');
+        if (!back) return;
+        Tween.stopAllByTarget(back);
+        back.active = true;
+        back.setPosition(HomeConfig.BOTTOM_ENTRY_BACK_BUTTON_X, HomeConfig.BOTTOM_ENTRY_BACK_BUTTON_Y, 0);
+        back.setSiblingIndex((panel.children.length || 1) - 1);
+    }
+
+    protected restoreDuelBackAfterLuanshiRecord(page: Node): void {
+        const panel = page.parent;
+        const back = panel?.getChildByName('DuelBack');
+        if (!back) return;
+        Tween.stopAllByTarget(back);
+        const dock = this.findDuelLuanshiMainNode(page, 'LuanshiZhengxiongBottomDock');
+        const backX = HomeConfig.DUEL_LUANSHI_BACK_X;
+        const backY = dock?.isValid
+            ? HomeConfig.DUEL_LUANSHI_SIDE_BUTTON_Y + dock.position.y
+            : HomeConfig.DUEL_BACK_Y;
+        back.active = true;
+        back.setPosition(backX, backY, 0);
+        back.setSiblingIndex((panel.children.length || 1) - 1);
+    }
+
+    protected hideDuelLuanshiPageSiblingsForRecord(page: Node, recordPage: Node): void {
+        const runtime = page as DuelLuanshiRecordPageHost;
+        if (!runtime.duelLuanshiRecordSiblingStates) {
+            runtime.duelLuanshiRecordSiblingStates = page.children
+                .filter((child) => child !== recordPage)
+                .map((node) => ({ node, active: node.active }));
+        }
+        runtime.duelLuanshiRecordSiblingStates.forEach((state) => {
+            if (state.node?.isValid) state.node.active = false;
+        });
+    }
+
+    protected restoreDuelLuanshiPageSiblingsAfterRecord(page: Node): void {
+        const runtime = page as DuelLuanshiRecordPageHost;
+        runtime.duelLuanshiRecordSiblingStates?.forEach((state) => {
+            if (state.node?.isValid) state.node.active = state.active;
+        });
+        runtime.duelLuanshiRecordSiblingStates = undefined;
+    }
+
+    protected ensureDuelLuanshiRecordPage(page: Node): Node {
+        const recordPage = this.getOrCreateEditorNode('LuanshiRecordPage', page, HomeConfig.VIEW_WIDTH, HomeConfig.VIEW_HEIGHT, 0, 0);
+        this.ensureInputBlocker(recordPage);
+
+        const bg = this.getOrCreateEditorSkinnedNode(
+            'LuanshiRecordPageBackground',
+            recordPage,
+            HomeConfig.VIEW_WIDTH,
+            HomeConfig.VIEW_HEIGHT,
+            0,
+            0,
+            HomeConfig.UI_DUEL_JIANGHU_RECORD_BG,
+        );
+        const legacyGraphics = bg.getComponent(Graphics);
+        if (legacyGraphics) {
+            legacyGraphics.clear();
+            legacyGraphics.enabled = false;
+        }
+        bg.active = true;
+        bg.setSiblingIndex(0);
+
+        const titleBar = this.getOrCreateEditorSkinnedNode('LuanshiRecordHeaderTitleBar', recordPage, 182, 36, 0, 680, HomeConfig.UI_DUEL_JIANGHU_RECORD_TITLE_BAR);
+        titleBar.active = true;
+        titleBar.setSiblingIndex(1);
+        const title = this.getOrCreateDuelRoomLabel(titleBar, 'LuanshiRecordHeaderTitleLabel', '\u8bb0\u5f55', 27, 0, 2, 130, 32, new Color(60, 44, 30, 255));
+        title.fontSize = 27;
+        title.lineHeight = 33;
+        title.horizontalAlign = HorizontalTextAlignment.CENTER;
+        title.overflow = Overflow.SHRINK;
+        this.setLabelOutline(title, new Color(255, 246, 214, 255), 2);
+        title.node.setSiblingIndex(0);
+
+        const legacyBack = recordPage.getChildByName('LuanshiRecordBackButton');
+        if (legacyBack) {
+            legacyBack.active = false;
+            legacyBack.removeFromParent();
+        }
+
+        const mainScroll = this.getOrCreateEditorNode('LuanshiRecordMainScroll', recordPage, 662, 1220, 0, -82);
+        mainScroll.active = true;
+        mainScroll.setSiblingIndex(3);
+        const contentHeight = 2519.49;
+        const contentY = -610.255;
+        const mainContent = this.getOrCreateEditorNode('LuanshiRecordMainContent', mainScroll, 662, contentHeight, 0, contentY);
+        mainContent.active = true;
+        this.setupDuelJianghuRecordScrollView(mainScroll, mainContent);
+
+        this.ensureDuelLuanshiRecordRecentPanel(mainContent);
+        this.ensureDuelLuanshiRecordSummaryPanel(mainContent);
+        this.ensureDuelLuanshiRecordPersonalRows(mainContent, this.getDuelLuanshiPersonalRecords(page));
+        this.applyDuelJianghuRecordFont(recordPage);
+        return recordPage;
+    }
+
+    protected ensureDuelLuanshiRecordRecentPanel(parent: Node): Node {
+        const panel = this.getOrCreateEditorSkinnedNode('LuanshiRecordRecentPanel', parent, 640, 315, 0.457, 735, HomeConfig.UI_DUEL_JIANGHU_RECORD_STAT_PANEL);
+        panel.active = true;
+        panel.setSiblingIndex(0);
+        this.ensureDuelJianghuRecordSectionTitle(panel, 'LuanshiRecordRecentTitleBar', '\u8fd110\u671f\u4e71\u4e16\u4e89\u96c4\u8bb0\u5f55', 104, 300);
+        const xs = [-252, -126, 0, 126, 252];
+        const ys = [18, -78];
+        for (let index = 0; index < 10; index += 1) {
+            this.ensureDuelJianghuRecordValueCell(panel, `LuanshiRecordRecentCell_${index + 1}`, xs[index % 5], ys[Math.floor(index / 5)], 112, 88);
+        }
+        return panel;
+    }
+
+    protected ensureDuelLuanshiRecordSummaryPanel(parent: Node): Node {
+        const panel = this.getOrCreateEditorSkinnedNode('LuanshiRecordSummaryPanel', parent, 640, 250, 0, 390, HomeConfig.UI_DUEL_JIANGHU_RECORD_STAT_PANEL);
+        panel.active = true;
+        panel.setSiblingIndex(1);
+        this.ensureDuelJianghuRecordSectionTitle(panel, 'LuanshiRecordSummaryTitleBar', '\u6211\u53c2\u4e0e\u7684\u8bb0\u5f55', 74);
+        [
+            { name: 'Invest', x: -210 },
+            { name: 'Success', x: 0 },
+            { name: 'Reward', x: 210 },
+        ].forEach((item) => this.ensureDuelJianghuRecordValueCell(panel, `LuanshiRecordSummaryCell_${item.name}`, item.x, -42, 190, 92));
+        return panel;
+    }
+
+    protected ensureDuelLuanshiRecordPersonalRows(parent: Node, records: DuelLuanshiPersonalRecordEntry[]): void {
+        records.forEach((_, index) => {
+            this.ensureDuelJianghuRecordPersonalRow(parent, `LuanshiRecordPersonalRow_${index + 1}`, this.getDuelLuanshiRecordPersonalRowY(parent, index));
+        });
+    }
+
+    protected getDuelLuanshiRecordPersonalRowY(parent: Node, zeroBasedIndex: number): number {
+        const existing = parent.getChildByName(`LuanshiRecordPersonalRow_${zeroBasedIndex + 1}`);
+        if (existing) return existing.position.y;
+
+        const rows = parent.children
+            .map((child) => {
+                const match = /^LuanshiRecordPersonalRow_(\d+)$/.exec(child.name);
+                return match ? { index: Number(match[1]) - 1, node: child } : null;
+            })
+            .filter((item): item is { index: number; node: Node } => !!item)
+            .sort((a, b) => a.index - b.index);
+        const last = rows[rows.length - 1];
+        const prev = rows[rows.length - 2];
+        if (last && prev) {
+            const step = Math.abs(prev.node.position.y - last.node.position.y) || HomeConfig.DUEL_JIANGHU_RECORD_PERSONAL_ROW_STEP;
+            return last.node.position.y - Math.max(0, zeroBasedIndex - last.index) * step;
+        }
+        if (last) {
+            return last.node.position.y - Math.max(0, zeroBasedIndex - last.index) * HomeConfig.DUEL_JIANGHU_RECORD_PERSONAL_ROW_STEP;
+        }
+        return 112 - zeroBasedIndex * HomeConfig.DUEL_JIANGHU_RECORD_PERSONAL_ROW_STEP;
+    }
+
+    protected refreshDuelLuanshiRecordPage(page: Node, recordPage: Node): void {
+        if (!recordPage?.isValid) return;
+        const recentRecords = this.getDuelLuanshiRecentRecords(page);
+        const personalRecords = this.getDuelLuanshiPersonalRecords(page);
+        const mainContent = recordPage.getChildByName('LuanshiRecordMainScroll')?.getChildByName('LuanshiRecordMainContent');
+        const recentPanel = mainContent?.getChildByName('LuanshiRecordRecentPanel');
+        if (recentPanel) this.refreshDuelLuanshiRecordRecentPanel(recentPanel, recentRecords);
+        const summaryPanel = mainContent?.getChildByName('LuanshiRecordSummaryPanel');
+        if (summaryPanel) this.refreshDuelLuanshiRecordSummaryPanel(summaryPanel, personalRecords);
+        if (mainContent) this.refreshDuelLuanshiRecordPersonalRows(mainContent, personalRecords);
+        const scroll = recordPage.getChildByName('LuanshiRecordMainScroll');
+        if (scroll && mainContent) this.resizeDuelLuanshiRecordContentToRows(scroll, mainContent);
+        this.applyDuelJianghuRecordFont(recordPage);
+    }
+
+    protected resizeDuelLuanshiRecordContentToRows(scrollRoot: Node, content: Node): void {
+        const scrollHeight = scrollRoot.getComponent(UITransform)?.contentSize.height || 1298.648;
+        const contentTransform = content.getComponent(UITransform) || content.addComponent(UITransform);
+        const recentPanel = content.getChildByName('LuanshiRecordRecentPanel');
+        const rows = content.children
+            .map((child) => {
+                const match = /^LuanshiRecordPersonalRow_(\d+)$/.exec(child.name);
+                return match ? { index: Number(match[1]), node: child } : null;
+            })
+            .filter((item): item is { index: number; node: Node } => !!item)
+            .sort((a, b) => a.index - b.index);
+        const lastRow = rows[rows.length - 1]?.node;
+        const topHeight = recentPanel
+            ? (recentPanel.getComponent(UITransform)?.contentSize.height || 315) * recentPanel.scale.y
+            : 315;
+        const rowHeight = lastRow
+            ? (lastRow.getComponent(UITransform)?.contentSize.height || 142) * lastRow.scale.y
+            : 142;
+        const top = (recentPanel?.position.y || 1080) + topHeight / 2 + 30;
+        const bottom = (lastRow?.position.y || -408) - rowHeight / 2 - 80;
+        const contentHeight = Math.max(scrollHeight, top - bottom);
+        contentTransform.setContentSize(contentTransform.contentSize.width || 662, contentHeight);
+        content.setPosition(content.position.x, (scrollHeight - contentHeight) / 2, content.position.z);
+    }
+
+    protected refreshDuelLuanshiRecordRecentPanel(panel: Node, entries: DuelLuanshiRecordRecentEntry[]): void {
+        entries.forEach((entry, index) => {
+            const cell = panel.getChildByName(`LuanshiRecordRecentCell_${index + 1}`);
+            this.setDuelJianghuRecordValueCell(cell, `${entry.winnerName}\u80dc\u5229`, `\u7b2c${entry.period}\u671f`);
+            const nameLabel = cell?.getChildByName(`${cell.name}NameLabel`)?.getComponent(Label);
+            if (nameLabel) {
+                nameLabel.fontSize = 18;
+                nameLabel.lineHeight = 22;
+                nameLabel.color = entry.winner === 'wudang'
+                    ? new Color(42, 138, 50, 255)
+                    : new Color(186, 46, 36, 255);
+            }
+        });
+    }
+
+    protected refreshDuelLuanshiRecordSummaryPanel(panel: Node, records: DuelLuanshiPersonalRecordEntry[]): void {
+        const invest = records.reduce((sum, record) => sum + record.investAmount, 0);
+        const reward = records.reduce((sum, record) => sum + record.rewardAmount, 0);
+        const wins = records.filter((record) => record.success).length;
+        this.setDuelJianghuRecordValueCell(panel.getChildByName('LuanshiRecordSummaryCell_Invest'), this.formatDuelJianghuYuanbaoAmount(invest), '\u603b\u6295\u5165');
+        this.setDuelJianghuRecordValueCell(panel.getChildByName('LuanshiRecordSummaryCell_Success'), `${wins}\u6b21`, '\u80dc\u5229\u6b21\u6570');
+        this.setDuelJianghuRecordValueCell(panel.getChildByName('LuanshiRecordSummaryCell_Reward'), this.formatDuelJianghuYuanbaoAmount(reward), '\u603b\u83b7\u5f97');
+    }
+
+    protected refreshDuelLuanshiRecordPersonalRows(parent: Node, records: DuelLuanshiPersonalRecordEntry[]): void {
+        records.forEach((record, index) => {
+            const row = this.ensureDuelJianghuRecordPersonalRow(parent, `LuanshiRecordPersonalRow_${index + 1}`, this.getDuelLuanshiRecordPersonalRowY(parent, index));
+            const status = row.getChildByName(`${row.name}StatusLabel`)?.getComponent(Label);
+            if (status) {
+                status.string = record.success ? '\u80dc\u5229' : '\u5931\u8d25';
+                status.color = record.success ? new Color(42, 138, 50, 255) : new Color(186, 46, 36, 255);
+                this.clearDuelJianghuRecordLabelOutline(status);
+            }
+            const period = row.getChildByName(`${row.name}PeriodLabel`)?.getComponent(Label);
+            if (period) period.string = `\u7b2c${record.period}\u671f`;
+            const time = row.getChildByName(`${row.name}TimeLabel`)?.getComponent(Label);
+            if (time) time.string = record.time;
+            const select = row.getChildByName(`${row.name}SelectLabel`)?.getComponent(Label);
+            if (select) select.string = `\u6211\u9009\u62e9\uff1a[${record.selectedFactionName}]`;
+            const target = row.getChildByName(`${row.name}TargetLabel`)?.getComponent(Label);
+            if (target) target.string = `\u80dc\u65b9\uff1a[${record.winnerName}]`;
+            const invest = row.getChildByName(`${row.name}InvestLabel`)?.getComponent(Label);
+            if (invest) invest.string = `\u6295\u5165\u5143\u5b9d\uff1a${this.formatDuelJianghuYuanbaoAmount(record.investAmount)}`;
+            const reward = row.getChildByName(`${row.name}RewardLabel`)?.getComponent(Label);
+            if (reward) reward.string = `\u83b7\u5f97\u5143\u5b9d\uff1a${this.formatDuelJianghuYuanbaoAmount(record.rewardAmount)}`;
+        });
     }
 
     protected refreshDuelJianghuRecordPage(recordPage: Node): void {
@@ -624,6 +914,50 @@ export abstract class HomeFeatureDuelRecord extends HomeFeatureDuelRecordHost {
             selectedRoomName: rooms[record.selected]?.name || rooms[0].name,
             targetRoomNames: record.targets.map((roomIndex) => rooms[roomIndex]?.name || rooms[0].name),
             success: record.success,
+            investAmount: record.invest,
+            rewardAmount: record.reward,
+        }));
+    }
+
+    protected getDuelLuanshiCurrentPeriod(page: Node): number {
+        const runtime = page as { duelLuanshiRoundIndex?: number };
+        return Math.max(10, Math.floor(runtime.duelLuanshiRoundIndex || 10));
+    }
+
+    protected getDuelLuanshiRecordFactionName(faction: 'wudang' | 'gaibang'): string {
+        return faction === 'wudang' ? '\u6b66\u5f53' : '\u4e10\u5e2e';
+    }
+
+    protected getDuelLuanshiRecentRecords(page: Node): DuelLuanshiRecordRecentEntry[] {
+        const currentPeriod = this.getDuelLuanshiCurrentPeriod(page);
+        return Array.from({ length: 10 }, (_, index) => {
+            const winner = (index % 3 === 1 ? 'gaibang' : 'wudang') as 'wudang' | 'gaibang';
+            return {
+                period: currentPeriod - index,
+                winner,
+                winnerName: this.getDuelLuanshiRecordFactionName(winner),
+            };
+        });
+    }
+
+    protected getDuelLuanshiPersonalRecords(page: Node): DuelLuanshiPersonalRecordEntry[] {
+        const currentPeriod = this.getDuelLuanshiCurrentPeriod(page);
+        const joinedFaction = ((page as { duelLuanshiFaction?: 'wudang' | 'gaibang' }).duelLuanshiFaction || 'wudang') as 'wudang' | 'gaibang';
+        const fallbackOpposite = joinedFaction === 'wudang' ? 'gaibang' : 'wudang';
+        const source: Array<{ selected: 'wudang' | 'gaibang'; winner: 'wudang' | 'gaibang'; invest: number; reward: number; time: string }> = [
+            { selected: joinedFaction, winner: joinedFaction, invest: 80, reward: 128.6, time: '2026-07-21 12:18:06' },
+            { selected: joinedFaction, winner: fallbackOpposite, invest: 80, reward: 0, time: '2026-07-21 11:58:31' },
+            { selected: fallbackOpposite, winner: fallbackOpposite, invest: 160, reward: 235.2, time: '2026-07-21 11:38:14' },
+            { selected: joinedFaction, winner: joinedFaction, invest: 80, reward: 116.8, time: '2026-07-21 11:17:52' },
+            { selected: fallbackOpposite, winner: joinedFaction, invest: 80, reward: 0, time: '2026-07-21 10:57:45' },
+            { selected: joinedFaction, winner: joinedFaction, invest: 160, reward: 246.4, time: '2026-07-21 10:37:29' },
+        ];
+        return source.map((record, index) => ({
+            period: currentPeriod - index * 2,
+            time: record.time,
+            selectedFactionName: this.getDuelLuanshiRecordFactionName(record.selected),
+            winnerName: this.getDuelLuanshiRecordFactionName(record.winner),
+            success: record.selected === record.winner,
             investAmount: record.invest,
             rewardAmount: record.reward,
         }));

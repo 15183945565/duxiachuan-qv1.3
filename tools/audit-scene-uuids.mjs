@@ -67,6 +67,19 @@ function collectDuplicateSceneObjectIds(scene) {
     return [...ids.entries()].filter(([, entries]) => entries.length > 1);
 }
 
+function collectDuplicatePrefabFileIds(scene) {
+    const ids = new Map();
+    scene.forEach((entry, index) => {
+        if (!entry || typeof entry.fileId !== 'string' || entry.fileId.length === 0) return;
+
+        const list = ids.get(entry.fileId) || [];
+        list.push({ index, type: entry.__type__ || 'unknown' });
+        ids.set(entry.fileId, list);
+    });
+
+    return [...ids.entries()].filter(([, entries]) => entries.length > 1);
+}
+
 const knownUuids = collectKnownUuids();
 let failed = false;
 
@@ -85,8 +98,9 @@ for (const serializedAssetFile of serializedAssetFiles) {
 
     const relativePath = path.relative(projectRoot, serializedAssetFile);
     const duplicateIds = collectDuplicateSceneObjectIds(scene);
+    const duplicateFileIds = collectDuplicatePrefabFileIds(scene);
 
-    if (unresolved.size === 0 && duplicateIds.length === 0) {
+    if (unresolved.size === 0 && duplicateIds.length === 0 && duplicateFileIds.length === 0) {
         console.log(`${relativePath}: OK`);
         continue;
     }
@@ -106,6 +120,15 @@ for (const serializedAssetFile of serializedAssetFiles) {
         for (const [id, entries] of duplicateIds) {
             const locations = entries
                 .map((entry) => `${entry.index}:${entry.type}:${entry.name}`)
+                .join(', ');
+            console.error(`  ${id}: ${locations}`);
+        }
+    }
+    if (duplicateFileIds.length > 0) {
+        console.error(`${relativePath}: duplicate prefab fileId values`);
+        for (const [id, entries] of duplicateFileIds) {
+            const locations = entries
+                .map((entry) => `${entry.index}:${entry.type}`)
                 .join(', ');
             console.error(`  ${id}: ${locations}`);
         }

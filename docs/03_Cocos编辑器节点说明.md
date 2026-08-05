@@ -63,14 +63,17 @@ MainScene 中 `PageLayer` 和 `PopupLayer` 保持空容器。不要把功能 Pre
 - `CharacterCreatePanel`：首次创建角色全屏页。
 - `MagicMapPanel / MagicMonsterBattlePanel`：魔界地图和战斗。
 - `BattlePanel`：征战入口、战场升级和 `BattleCombatLayer`。
-- `ShopPanel`：商城页面。
+- `ShopPanel`：商城页面。底部页签在 `ShopPanel/ShopMallTabsRoot`，子节点 `ShopMallTabYuanbao` 和 `ShopMallTabPoints` 分别对应 `元宝商城`、`积分商城`；商品可编辑节点在 `ShopGridRoot` 下。
 
 ## PopupLayer
 
 - `MailPanel / NoticePanel / RankPanel`：邮件、公告和排行。
 - `MarketPanel`：集市。
   - 筛选区在 `MarketPanel/MarketFilterRoot` 下，一级分类是 `MarketCategoryFilter`，二级分类是 `MarketSecondaryFilter`，三级分类是 `MarketTertiaryFilter`。
-  - `MarketRefreshButton/MarketRefreshLabel + MarketRefreshIcon` 是刷新入口，`MarketSortFilter` 是价格排序入口，运行时下拉项挂在 `MarketPanel/MarketDropdownLayer`。
+  - `MarketRefreshButton/MarketRefreshLabel + MarketRefreshIcon` 是刷新入口，`MarketSortFilter` 是价格排序入口，下拉预览行在 `MarketPanel/MarketDropdownLayer/MarketDropdownItem_1..3`，默认关闭，运行时点击筛选会复用这些节点并按选项数量补足。
+  - 底部交易/求购按钮在 `MarketPanel/MarketModeButtons/MarketModeTradeButton` 和 `MarketModeRequestButton`；顶部三个标签是同一组 `MarketTabs/MarketTab_buy|sell|history`，交易/求购模式下只切换文字和数据。
+  - 出售/求购发布页的加号行在 `MarketListViewport/MarketListContent/MarketSellAddSlot/MarketSellAddButton`；选择物品弹窗在 `MarketSellSelectPopup/MarketSellSelectBoard/MarketSellSelectViewport/MarketSellSelectContent`，格子为 `MarketSellSelectItem_1..8`。
+  - 三张截图状态对照：图一购买页显示 `MarketFilterRoot + MarketListContent/MarketListing_1..6`；图二出售页隐藏 `MarketFilterRoot` 和商品列表，只显示 `MarketListContent/MarketSellAddSlot`；图三记录页隐藏 `MarketListContent`，显示 `MarketHistoryContent/MarketHistoryEmpty` 或 `MarketHistory_1`。
 - `GiftPanel / SharePanel / ProfilePopup`：礼包、分享和头像资料。
 - `ItemDetailPopup / BagIllustrationDetailPopup`：物品详情。
 - `ConfirmPopup / RewardPopup / BattleResultPopup`：通用确认、奖励和结算。
@@ -86,6 +89,7 @@ MainScene 中 `PageLayer` 和 `PopupLayer` 保持空容器。不要把功能 Pre
 - 公告：`NoticeScrollContent/NoticeArticleTemplate`。
 - 排行：`RankScrollContent/RankRowTemplate`。
 - 商城：`ShopGridRoot` 下的商品节点。
+- 商城页签：`ShopPanel/ShopMallTabsRoot/ShopMallTabYuanbao`、`ShopPanel/ShopMallTabsRoot/ShopMallTabPoints`。
 - 背包、市场、奖励和伤害数字按数据量动态生成。
 
 ## 编辑注意
