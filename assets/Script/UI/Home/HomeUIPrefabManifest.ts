@@ -21,6 +21,7 @@ export const HOME_UI_PREFABS: readonly HomeUIPrefabDefinition[] = [
     { rootName: 'ShopPanel', layer: 'page', path: 'Prefabs/Page/ShopPanel' },
     { rootName: 'BottomFeaturePanel', layer: 'page', path: 'Prefabs/Page/BottomFeaturePanel' },
     { rootName: 'CharacterCreatePanel', layer: 'page', path: 'Prefabs/Page/CharacterCreatePanel' },
+    { rootName: 'ValueGiftPanel', layer: 'page', path: 'Prefabs/Page/ValueGiftPanel' },
 
     { rootName: 'MailPanel', layer: 'popup', path: 'Prefabs/Popup/MailPanel' },
     { rootName: 'NoticePanel', layer: 'popup', path: 'Prefabs/Popup/NoticePanel' },
@@ -62,11 +63,11 @@ const HOME_UI_ENTRY_ROOT_NAMES: Readonly<Record<string, readonly string[]>> = {
     BtnNotice: ['NoticePanel'],
     BtnShop: ['ShopPanel'],
     BtnRank: ['RankPanel'],
-    BtnAlliance: ['AlliancePanel'],
     BtnMarket: ['MarketPanel'],
     BtnDuel: ['DuelPanel'],
     BtnShare: ['SharePanel'],
-    BtnAdGift: ['GiftPanel'],
+    BtnAdGift: ['ValueGiftPanel'],
+    BtnCurrencyGift: ['GiftPanel'],
     BtnBoss: ['ShowcasePanel'],
     BtnWanderingMerchant: ['WanderingMerchantPanel'],
     TabRole: [

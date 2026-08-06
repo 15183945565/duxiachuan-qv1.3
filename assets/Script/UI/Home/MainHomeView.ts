@@ -40,6 +40,7 @@ import { GlobalButtonClickAudio } from '../Common/GlobalButtonClickAudio';
 import { UI_LAYER_NAMES, UI_PAGE_LAYER_ORDER } from '../Common/UIConvention';
 import { applySimKaiFont, applySimKaiFontToTree } from '../Common/UIFont';
 import { BAG_ILLUSTRATION_CATALOG, type BagIllustrationCatalogItem, type BagIllustrationCategory } from './BagIllustrationCatalog.generated';
+import type { DuelLuanshiSkillConfig } from './HomeConfig';
 
 import {
     RoleGender,
@@ -422,6 +423,12 @@ export class MainHomeView extends HomeViewWithShop {
     private duelJianghuFailurePromise: Promise<AudioClip> | null = null;
     private duelJianghuMusicActive = false;
     private duelJianghuDuckCount = 0;
+    private duelLuanshiMusicSource: AudioSource | null = null;
+    private duelLuanshiSkillEffectSource: AudioSource | null = null;
+    private duelLuanshiMusicClip: AudioClip | null = null;
+    private duelLuanshiMusicPromise: Promise<AudioClip> | null = null;
+    private duelLuanshiMusicActive = false;
+    private readonly duelLuanshiSkillEffectClipPromises = new Map<string, Promise<AudioClip>>();
     private readonly homeUiResourceScope: ResourceScope = ResourceManager.instance.createScope('MainHomeView/ui-home');
     private readonly homeFeatureResourceScopes = new Map<string, ResourceScope>();
     private readonly homeUiMountPromises = new Map<string, Promise<Node>>();
@@ -630,6 +637,10 @@ export class MainHomeView extends HomeViewWithShop {
         this.duelJianghuMusicActive = false;
         this.duelJianghuMusicSource?.stop();
         this.duelJianghuEffectSource?.stop();
+        this.duelLuanshiMusicActive = false;
+        this.duelLuanshiMusicSource?.stop();
+        this.duelLuanshiSkillEffectSource?.stop();
+        this.duelLuanshiSkillEffectClipPromises.clear();
         this.stopMainHomeMusic();
         this.homeUiMountPromises.clear();
         this.homeFeatureResourceScopes.forEach((scope) => scope.dispose());
@@ -693,6 +704,7 @@ export class MainHomeView extends HomeViewWithShop {
             this.mainHomeMusicSource.volume = muted ? 0 : musicVolume;
         }
         this.refreshDuelJianghuMusicVolume();
+        this.refreshDuelLuanshiMusicVolume();
     }
 
     private async loadMainHomeMusicClip(): Promise<AudioClip> {
@@ -700,6 +712,7 @@ export class MainHomeView extends HomeViewWithShop {
     }
 
     protected playDuelJianghuBackgroundMusic(): void {
+        if (this.duelLuanshiMusicActive) this.stopDuelLuanshiBackgroundMusic(false);
         this.duelJianghuMusicActive = true;
         this.mainHomeMusicSuppressed = true;
         this.stopMainHomeMusic();
@@ -731,7 +744,7 @@ export class MainHomeView extends HomeViewWithShop {
             });
     }
 
-    protected stopDuelJianghuBackgroundMusic(): void {
+    protected stopDuelJianghuBackgroundMusic(restoreMainMusic = true): void {
         const shouldRestoreMainMusic = this.duelJianghuMusicActive || this.mainHomeMusicSuppressed;
         this.duelJianghuMusicActive = false;
         this.duelJianghuDuckCount = 0;
@@ -739,8 +752,55 @@ export class MainHomeView extends HomeViewWithShop {
             this.duelJianghuMusicSource.stop();
             this.refreshDuelJianghuMusicVolume();
         }
-        this.mainHomeMusicSuppressed = false;
-        if (shouldRestoreMainMusic) this.playMainHomeMusic();
+        this.mainHomeMusicSuppressed = this.duelLuanshiMusicActive;
+        if (restoreMainMusic && shouldRestoreMainMusic && !this.mainHomeMusicSuppressed) this.playMainHomeMusic();
+    }
+
+    protected playDuelLuanshiBackgroundMusic(): void {
+        if (this.duelJianghuMusicActive) this.stopDuelJianghuBackgroundMusic(false);
+        this.duelLuanshiMusicActive = true;
+        this.mainHomeMusicSuppressed = true;
+        this.stopMainHomeMusic();
+        this.preloadDuelLuanshiSkillEffectClips();
+        const source = this.getOrCreateDuelLuanshiMusicSource();
+        if (!source) return;
+
+        if (this.duelLuanshiMusicClip) {
+            source.clip = this.duelLuanshiMusicClip;
+            source.loop = true;
+            this.refreshDuelLuanshiMusicVolume();
+            source.play();
+            return;
+        }
+
+        this.duelLuanshiMusicPromise = this.duelLuanshiMusicPromise
+            || this.loadHomeAudioClip(HomeConfig.DUEL_LUANSHI_ZHENGXIONG_BGM_PATH);
+        void this.duelLuanshiMusicPromise
+            .then((clip) => {
+                this.duelLuanshiMusicClip = clip;
+                if (!this.duelLuanshiMusicActive || !source.isValid) return;
+                source.clip = clip;
+                source.loop = true;
+                this.refreshDuelLuanshiMusicVolume();
+                source.play();
+            })
+            .catch((err) => {
+                console.warn('[MainHomeView] duel luanshi background music missing', err);
+            });
+    }
+
+    protected stopDuelLuanshiBackgroundMusic(restoreMainMusic = true): void {
+        const shouldRestoreMainMusic = this.duelLuanshiMusicActive || this.mainHomeMusicSuppressed;
+        this.duelLuanshiMusicActive = false;
+        if (this.duelLuanshiMusicSource?.isValid) {
+            this.duelLuanshiMusicSource.stop();
+            this.refreshDuelLuanshiMusicVolume();
+        }
+        if (this.duelLuanshiSkillEffectSource?.isValid) {
+            this.duelLuanshiSkillEffectSource.stop();
+        }
+        this.mainHomeMusicSuppressed = this.duelJianghuMusicActive;
+        if (restoreMainMusic && shouldRestoreMainMusic && !this.mainHomeMusicSuppressed) this.playMainHomeMusic();
     }
 
     protected playDuelJianghuCountdownSound(): void {
@@ -761,10 +821,48 @@ export class MainHomeView extends HomeViewWithShop {
         );
     }
 
+    protected playDuelLuanshiSkillSound(config: DuelLuanshiSkillConfig): void {
+        const audioPath = (config as DuelLuanshiSkillConfig & { audioPath?: string }).audioPath;
+        if (!audioPath) return;
+        const delaySeconds = (config as DuelLuanshiSkillConfig & { audioDelaySeconds?: number }).audioDelaySeconds || 0;
+        this.playDuelLuanshiEffectSound(audioPath, `skill audio missing: ${config.id}`, delaySeconds);
+    }
+
+    protected playDuelLuanshiNormalAttackSound(): void {
+        this.playDuelLuanshiEffectSound(HomeConfig.DUEL_LUANSHI_NORMAL_ATTACK_AUDIO_PATH, 'normal attack audio missing');
+    }
+
+    private playDuelLuanshiEffectSound(audioPath: string, label: string, delaySeconds = 0): void {
+        if (!audioPath || !this.duelLuanshiMusicActive) return;
+
+        const playEffect = (): void => {
+            if (!this.duelLuanshiMusicActive) return;
+            const source = this.getOrCreateDuelLuanshiSkillEffectSource();
+            if (!source) return;
+
+            void this.getDuelLuanshiSkillEffectClipPromise(audioPath)
+                .then((clip) => {
+                    if (!this.duelLuanshiMusicActive || !source.isValid) return;
+                    const effectVolume = this.getDuelJianghuEffectVolume();
+                    if (effectVolume <= 0) return;
+                    source.playOneShot(clip, effectVolume);
+                })
+                .catch((err) => {
+                    console.warn(`[MainHomeView] duel luanshi ${label}`, err);
+                });
+        };
+
+        if (delaySeconds > 0) {
+            this.scheduleOnce(playEffect, delaySeconds);
+            return;
+        }
+        playEffect();
+    }
+
     private getOrCreateDuelJianghuMusicSource(): AudioSource | null {
         if (this.duelJianghuMusicSource?.isValid) return this.duelJianghuMusicSource;
 
-        const audioNode = this.getOrCreateDuelJianghuAudioNode('DuelJianghuMusicAudio');
+        const audioNode = this.getOrCreateDuelAudioNode('DuelJianghuMusicAudio');
         if (!audioNode) return null;
         this.duelJianghuMusicSource = audioNode.getComponent(AudioSource) || audioNode.addComponent(AudioSource);
         this.duelJianghuMusicSource.playOnAwake = false;
@@ -773,10 +871,22 @@ export class MainHomeView extends HomeViewWithShop {
         return this.duelJianghuMusicSource;
     }
 
+    private getOrCreateDuelLuanshiMusicSource(): AudioSource | null {
+        if (this.duelLuanshiMusicSource?.isValid) return this.duelLuanshiMusicSource;
+
+        const audioNode = this.getOrCreateDuelAudioNode('DuelLuanshiMusicAudio');
+        if (!audioNode) return null;
+        this.duelLuanshiMusicSource = audioNode.getComponent(AudioSource) || audioNode.addComponent(AudioSource);
+        this.duelLuanshiMusicSource.playOnAwake = false;
+        this.duelLuanshiMusicSource.loop = true;
+        this.refreshDuelLuanshiMusicVolume();
+        return this.duelLuanshiMusicSource;
+    }
+
     private getOrCreateDuelJianghuEffectSource(): AudioSource | null {
         if (this.duelJianghuEffectSource?.isValid) return this.duelJianghuEffectSource;
 
-        const audioNode = this.getOrCreateDuelJianghuAudioNode('DuelJianghuEffectAudio');
+        const audioNode = this.getOrCreateDuelAudioNode('DuelJianghuEffectAudio');
         if (!audioNode) return null;
         this.duelJianghuEffectSource = audioNode.getComponent(AudioSource) || audioNode.addComponent(AudioSource);
         this.duelJianghuEffectSource.playOnAwake = false;
@@ -785,7 +895,19 @@ export class MainHomeView extends HomeViewWithShop {
         return this.duelJianghuEffectSource;
     }
 
-    private getOrCreateDuelJianghuAudioNode(name: string): Node | null {
+    private getOrCreateDuelLuanshiSkillEffectSource(): AudioSource | null {
+        if (this.duelLuanshiSkillEffectSource?.isValid) return this.duelLuanshiSkillEffectSource;
+
+        const audioNode = this.getOrCreateDuelAudioNode('DuelLuanshiSkillEffectAudio');
+        if (!audioNode) return null;
+        this.duelLuanshiSkillEffectSource = audioNode.getComponent(AudioSource) || audioNode.addComponent(AudioSource);
+        this.duelLuanshiSkillEffectSource.playOnAwake = false;
+        this.duelLuanshiSkillEffectSource.loop = false;
+        this.duelLuanshiSkillEffectSource.volume = 1;
+        return this.duelLuanshiSkillEffectSource;
+    }
+
+    private getOrCreateDuelAudioNode(name: string): Node | null {
         const parent = this.gameSceneLayer?.isValid ? this.gameSceneLayer : this.findNode('GameSceneLayer');
         if (!parent?.isValid) {
             console.warn(`[MainHomeView] GameSceneLayer missing for audio node: ${name}`);
@@ -812,6 +934,17 @@ export class MainHomeView extends HomeViewWithShop {
             .catch((err) => console.warn('[MainHomeView] duel jianghu success audio preload failed', err));
         void this.getDuelJianghuEffectClipPromise(HomeConfig.DUEL_JIANGHU_FAILURE_AUDIO_PATH)
             .catch((err) => console.warn('[MainHomeView] duel jianghu failure audio preload failed', err));
+    }
+
+    private preloadDuelLuanshiSkillEffectClips(): void {
+        HomeConfig.DUEL_LUANSHI_SKILL_CONFIGS.forEach((config) => {
+            const audioPath = (config as DuelLuanshiSkillConfig & { audioPath?: string }).audioPath;
+            if (!audioPath) return;
+            void this.getDuelLuanshiSkillEffectClipPromise(audioPath)
+                .catch((err) => console.warn(`[MainHomeView] duel luanshi skill audio preload failed: ${config.id}`, err));
+        });
+        void this.getDuelLuanshiSkillEffectClipPromise(HomeConfig.DUEL_LUANSHI_NORMAL_ATTACK_AUDIO_PATH)
+            .catch((err) => console.warn('[MainHomeView] duel luanshi normal attack audio preload failed', err));
     }
 
     private playDuelJianghuEffect(path: string, fallbackSeconds: number, label: string): void {
@@ -869,6 +1002,15 @@ export class MainHomeView extends HomeViewWithShop {
             : this.duelJianghuFailurePromise;
     }
 
+    private getDuelLuanshiSkillEffectClipPromise(path: string): Promise<AudioClip> {
+        const existing = this.duelLuanshiSkillEffectClipPromises.get(path);
+        if (existing) return existing;
+
+        const promise = this.loadHomeAudioClip(path);
+        this.duelLuanshiSkillEffectClipPromises.set(path, promise);
+        return promise;
+    }
+
     private duckDuelJianghuMusic(durationSeconds: number): void {
         this.duelJianghuDuckCount += 1;
         this.refreshDuelJianghuMusicVolume();
@@ -882,6 +1024,11 @@ export class MainHomeView extends HomeViewWithShop {
         if (!this.duelJianghuMusicSource?.isValid) return;
         const duckScale = this.duelJianghuDuckCount > 0 ? HomeConfig.DUEL_JIANGHU_AUDIO_DUCK_VOLUME_SCALE : 1;
         this.duelJianghuMusicSource.volume = (this.profileSettingsMuted ? 0 : this.profileSettingsMusicVolume) * duckScale;
+    }
+
+    private refreshDuelLuanshiMusicVolume(): void {
+        if (!this.duelLuanshiMusicSource?.isValid) return;
+        this.duelLuanshiMusicSource.volume = this.profileSettingsMuted ? 0 : this.profileSettingsMusicVolume;
     }
 
     private getDuelJianghuEffectVolume(): number {

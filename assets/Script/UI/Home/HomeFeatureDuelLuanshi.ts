@@ -12,6 +12,8 @@ abstract class HomeFeatureDuelLuanshiHost extends HomeViewBase {
     protected abstract closeDuelLuanshiRecordPage(recordPage: Node): void;
     protected abstract openDuelLuanshiRankPage(page: Node): void;
     protected abstract closeDuelLuanshiRankPage(rankPage: Node): void;
+    protected abstract playDuelLuanshiBackgroundMusic(): void;
+    protected abstract stopDuelLuanshiBackgroundMusic(): void;
 }
 
 export abstract class HomeFeatureDuelLuanshi extends HomeFeatureDuelLuanshiHost {
@@ -51,6 +53,7 @@ export abstract class HomeFeatureDuelLuanshi extends HomeFeatureDuelLuanshiHost 
             this.resetDuelGameplayTagScales(tagsRoot);
             tagsRoot.active = false;
         }
+        this.playDuelLuanshiBackgroundMusic();
         const jianghuPage = this.findNode('DuelJianghuTaoshaPage', panel);
         if (jianghuPage) {
             this.closeDuelJianghuReservedPages(jianghuPage);
@@ -84,6 +87,7 @@ export abstract class HomeFeatureDuelLuanshi extends HomeFeatureDuelLuanshiHost 
     protected closeDuelLuanshiZhengxiongPage(panel: Node): void {
         const page = this.findNode('DuelLuanshiZhengxiongPage', panel);
         if (!page) return;
+        this.stopDuelLuanshiBackgroundMusic();
         this.stopDuelLuanshiZhengxiongBackgroundPan(this.findDuelLuanshiMainNode(page, 'LuanshiZhengxiongBackground'));
         this.stopDuelLuanshiBattleState(page);
         const recordPage = page.getChildByName('LuanshiRecordPage');

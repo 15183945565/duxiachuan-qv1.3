@@ -72,6 +72,7 @@ abstract class HomeFeatureRoleEquipmentHost extends HomeViewBase {
     protected abstract roleStrengthenSelectedSlot: RoleEquipmentSlotConfig | null;
     protected abstract readonly roleEquipmentLevels: Map<RoleEquipmentSlotId, number>;
 
+    protected abstract getBagItemIdIndex(item: BagIllustrationCatalogItem): number;
     protected abstract setLabelOutline(label: Label, color: Color, width: number): void;
 }
 
@@ -188,8 +189,8 @@ export abstract class HomeFeatureRoleEquipment extends HomeFeatureRoleEquipmentH
             { id: 'shoes', displayName: '\u6218\u9774', iconPath: HomeConfig.UI_ROLE_EQUIP_SHOES, keywords: ['\u978b\u5b50'], frameName: 'RolePageRightFrame', slotIndex: 4 },
         ];
     }
-    protected getRoleEquipmentIconIndexByTier(slotId: RoleEquipmentSlotId, tier: number): number {
-        const iconMap: Record<RoleEquipmentSlotId, number[]> = {
+    protected getRoleEquipmentCatalogIndexByTier(slotId: RoleEquipmentSlotId, tier: number): number {
+        const catalogMap: Record<RoleEquipmentSlotId, number[]> = {
             weapon: [142, 138, 139, 140, 141],
             necklace: [147, 143, 144, 145, 146],
             wrist: [122, 118, 119, 120, 121],
@@ -199,11 +200,19 @@ export abstract class HomeFeatureRoleEquipment extends HomeFeatureRoleEquipmentH
             ring: [127, 123, 124, 125, 126],
             shoes: [152, 148, 149, 150, 151],
         };
-        return iconMap[slotId][Math.max(1, Math.min(5, tier)) - 1];
+        return catalogMap[slotId][Math.max(1, Math.min(5, tier)) - 1];
+    }
+    protected getRoleEquipmentTierByCatalogIndex(catalogIndex: number): number {
+        for (const config of this.getRoleEquipmentSlotConfigs()) {
+            for (let tier = 1; tier <= 5; tier += 1) {
+                if (this.getRoleEquipmentCatalogIndexByTier(config.id, tier) === catalogIndex) return tier;
+            }
+        }
+        return 0;
     }
     protected getCatalogDisplayName(item: BagIllustrationCatalogItem | null | undefined): string {
         if (!item) return '';
-        const iconIndex = this.getBagItemIconIndex(item);
+        const equipmentIndex = item.category === 'equipment' ? this.getBagItemIdIndex(item) : this.getBagItemIconIndex(item);
         const equipmentNameMap: Record<number, string> = {
             113: '\u4e8c\u7ea7\u5e03\u7532',
             114: '\u4e09\u7ea7\u5e03\u7532',
@@ -262,7 +271,7 @@ export abstract class HomeFeatureRoleEquipment extends HomeFeatureRoleEquipmentH
             167: '\u9752\u72ee\u817f\u7532',
             168: '\u9752\u72ee\u80f8\u6302',
         };
-        return equipmentNameMap[iconIndex] || item.name;
+        return equipmentNameMap[equipmentIndex] || item.name;
     }
     protected createRolePageSideFrame(parent: Node, name: string, x: number, y: number, equipIconPaths: string[]): Node {
         const frame = this.getOrCreateRolePageNode(parent, name, 124, 650, x, y).node;
@@ -333,9 +342,8 @@ export abstract class HomeFeatureRoleEquipment extends HomeFeatureRoleEquipmentH
     protected getRoleEquipmentBaseItems(config: RoleEquipmentSlotConfig): BagIllustrationCatalogItem[] {
         return [1, 2, 3, 4, 5]
             .map((tier) => {
-                const iconIndex = this.getRoleEquipmentIconIndexByTier(config.id, tier);
-                const iconName = `bag_item_${(`00${iconIndex}`).slice(-3)}`;
-                return BAG_ILLUSTRATION_CATALOG.find((item) => item.category === 'equipment' && item.iconPath.endsWith(iconName)) || null;
+                const catalogIndex = this.getRoleEquipmentCatalogIndexByTier(config.id, tier);
+                return BAG_ILLUSTRATION_CATALOG.find((item) => item.category === 'equipment' && item.id === `equipment_${catalogIndex}`) || null;
             })
             .filter((item): item is BagIllustrationCatalogItem => !!item);
     }
@@ -344,7 +352,9 @@ export abstract class HomeFeatureRoleEquipment extends HomeFeatureRoleEquipmentH
         if (baseItems.length === 0) return [];
         return Array.from({ length: 50 }, (_, index) => {
             const displayLevel = index + 1;
-            const baseTier = Math.min(5, Math.ceil(displayLevel / 10));
+            const baseTier = config.id === 'weapon' && displayLevel <= 20
+                ? 1
+                : Math.min(5, Math.ceil(displayLevel / 10));
             const baseItem = baseItems.find((item) => this.getEquipmentBaseTier(item) === baseTier)
                 || baseItems[baseTier - 1]
                 || baseItems[0];
@@ -363,6 +373,11 @@ export abstract class HomeFeatureRoleEquipment extends HomeFeatureRoleEquipmentH
         return candidates[0] || null;
     }
     protected getEquipmentBaseTier(item?: BagIllustrationCatalogItem | null): number {
+        const catalogTier = item?.category === 'equipment'
+            ? this.getRoleEquipmentTierByCatalogIndex(this.getBagItemIdIndex(item))
+            : 0;
+        if (catalogTier > 0) return catalogTier;
+
         const frameMatch = item?.framePath ? /item_frame_lv(\d+)/.exec(item.framePath) : null;
         if (frameMatch) return Math.max(1, Math.min(5, Number(frameMatch[1])));
         const name = this.getCatalogDisplayName(item);

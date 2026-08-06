@@ -36,7 +36,7 @@ export abstract class HomeFeatureHomeUIRoot extends HomeViewBase {
             ? this.gameSceneLayer
             : this.node.getChildByName(UI_LAYER_NAMES.gameScene);
         if (gameLayer?.isValid) {
-            ['DuelJianghuMusicAudio', 'DuelJianghuEffectAudio', 'GlobalButtonClickAudio'].forEach((name) => {
+            ['DuelJianghuMusicAudio', 'DuelJianghuEffectAudio', 'DuelLuanshiMusicAudio', 'GlobalButtonClickAudio'].forEach((name) => {
                 const audioNode = this.node.getChildByName(name);
                 if (audioNode?.isValid) audioNode.setParent(gameLayer);
             });
@@ -91,6 +91,10 @@ export abstract class HomeFeatureHomeUIRoot extends HomeViewBase {
                 || this.popupRoot?.getChildByName(pageName)
                 || this.findNode(pageName);
             if (panel?.isValid && panel !== activePanel) {
+                if (panel.name === 'DuelPanel') {
+                    this.stopDuelJianghuGameplay(this.findNode('DuelJianghuTaoshaPage', panel));
+                    this.closeDuelLuanshiZhengxiongPage(panel);
+                }
                 panel.active = false;
             }
         });
@@ -134,6 +138,7 @@ export abstract class HomeFeatureHomeUIRoot extends HomeViewBase {
         this.entries.forEach((entry) => {
             const button = this.findNode(entry.nodeName);
             button?.children.forEach((child) => {
+                if (entry.nodeName === 'BtnAdGift' && child.name === 'BtnAdGiftLabel') return;
                 if (child.name.endsWith('Label')) {
                     child.active = false;
                 }
@@ -170,10 +175,8 @@ export abstract class HomeFeatureHomeUIRoot extends HomeViewBase {
             return child;
         };
     
-        const legacyTopHudBg = hud.getChildByName('MainTopHudBg');
-        if (legacyTopHudBg) {
-            legacyTopHudBg.active = false;
-        }
+        const topHudBgY = HomeConfig.VIEW_HEIGHT / 2 - hud.position.y - HomeConfig.HOME_TOP_HUD_BG_HEIGHT / 2;
+        ensureSkin('MainTopHudBg', HomeConfig.HOME_TOP_HUD_BG_WIDTH, HomeConfig.HOME_TOP_HUD_BG_HEIGHT, 0, topHudBgY, HomeConfig.UI_HOME_TOP_HUD_BG, 0);
         ensureSkin('SoulBar', 194, 44, -122, 595, HomeConfig.UI_HOME_RESOURCE_BAR, 1);
         ensureSkin('GoldBar', 194, 44, 178, 595, HomeConfig.UI_HOME_RESOURCE_BAR, 1);
         ensureSkin('SoulIcon', 44, 47, -214, 595, HomeConfig.UI_HOME_XIANSHI_ICON, 2);
@@ -252,7 +255,7 @@ export abstract class HomeFeatureHomeUIRoot extends HomeViewBase {
     protected async openGiftPanelFromCurrencyGift(): Promise<void> {
         try {
             await this.withTransitionLoading(async () => {
-                await this.prepareHomeEntry('BtnAdGift');
+                await this.prepareHomeEntry('BtnCurrencyGift');
                 this.openEditorFeaturePage('GiftPanel');
             });
         } catch (error) {

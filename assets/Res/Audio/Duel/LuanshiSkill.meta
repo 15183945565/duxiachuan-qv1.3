@@ -1,0 +1,24 @@
+{
+    "ver":  "1.2.0",
+    "importer":  "directory",
+    "imported":  true,
+    "uuid":  "f8230e3e-eb1c-48ab-b1e1-7e8d0795379c",
+    "files":  [
+
+              ],
+    "subMetas":  {
+
+                 },
+    "userData":  {
+                     "compressionType":  {
+
+                                         },
+                     "isRemoteBundle":  {
+
+                                        },
+                     "isBundle":  false,
+                     "bundleConfigID":  "default",
+                     "bundleName":  "",
+                     "priority":  1
+                 }
+}

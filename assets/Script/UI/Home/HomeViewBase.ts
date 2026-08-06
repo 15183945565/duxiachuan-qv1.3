@@ -107,7 +107,7 @@ export abstract class HomeViewBase extends Component {
         { nodeName: 'BtnMarket', displayName: '\u96c6\u5e02' },
         { nodeName: 'BtnDuel', displayName: '\u5bf9\u51b3' },
         { nodeName: 'BtnShare', displayName: '\u5206\u4eab' },
-        { nodeName: 'BtnAdGift', displayName: '\u8d60\u9001' },
+        { nodeName: 'BtnAdGift', displayName: '\u8d85\u503c\u793c\u5305' },
         { nodeName: 'BtnBoss', displayName: '\u5c55\u53f0' },
         { nodeName: 'BtnWanderingMerchant', displayName: '\u6d41\u6d6a\u5546\u4eba' },
         { nodeName: 'TabRole', displayName: '\u89d2\u8272' },
@@ -162,6 +162,7 @@ export abstract class HomeViewBase extends Component {
         'AlliancePanel',
         'DuelPanel',
         'GiftPanel',
+        'ValueGiftPanel',
         'SharePanel',
         'ShowcasePanel',
     ];
@@ -445,6 +446,11 @@ export abstract class HomeViewBase extends Component {
         this.applyUiSkinKeepingEditorSize(node, this.getHomeAvatarSkin(gender), fallbackWidth, fallbackHeight);
     }
     protected async triggerEntry(entry: EntryButton): Promise<void> {
+        if (entry.nodeName === 'BtnAlliance') {
+            this.showToast('\u5b97\u95e8\u6682\u672a\u5f00\u653e');
+            return;
+        }
+
         await this.withTransitionLoading(async () => {
             await this.prepareHomeEntry(entry.nodeName);
             if (entry.nodeName === 'BtnMail') {
@@ -477,12 +483,6 @@ export abstract class HomeViewBase extends Component {
                 return;
             }
     
-            if (entry.nodeName === 'BtnAlliance') {
-                this.openEditorFeaturePage('AlliancePanel');
-                this.showToast('\u5b97\u95e8\u5df2\u6253\u5f00');
-                return;
-            }
-    
             if (entry.nodeName === 'BtnDuel') {
                 this.openEditorFeaturePage('DuelPanel');
                 this.showToast('\u5bf9\u51b3\u5df2\u6253\u5f00');
@@ -496,8 +496,8 @@ export abstract class HomeViewBase extends Component {
             }
     
             if (entry.nodeName === 'BtnAdGift') {
-                this.openEditorFeaturePage('GiftPanel');
-                this.showToast('\u8d60\u9001\u5f39\u7a97\u5df2\u6253\u5f00');
+                this.openEditorFeaturePage('ValueGiftPanel');
+                this.showToast('\u8d85\u503c\u793c\u5305\u5df2\u6253\u5f00');
                 return;
             }
     
@@ -1064,6 +1064,8 @@ export abstract class HomeViewBase extends Component {
     protected abstract closeBaseBottomEntryPages(activePanel: Node | null): void;
     protected abstract closeOtherBottomEntryPages(activePanel: Node | null): void;
     protected abstract hideOtherEditorFeaturePages(activePanel: Node | null): void;
+    protected abstract stopDuelJianghuGameplay(page?: Node | null): void;
+    protected abstract closeDuelLuanshiZhengxiongPage(panel: Node): void;
     protected abstract ensureInputBlocker(node: Node, width?: number, height?: number): void;
     protected abstract shouldAutoBlockInput(name: string, width: number, height: number): boolean;
     protected abstract stopTouchThrough(event: EventTouch): void;

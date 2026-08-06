@@ -1,0 +1,118 @@
+
+X_XCHD.png
+size: 1011,313
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+1
+  rotate: true
+  xy: 503, 26
+  size: 91, 88
+  orig: 91, 88
+  offset: 0, 0
+  index: -1
+2
+  rotate: true
+  xy: 418, 4
+  size: 88, 81
+  orig: 88, 81
+  offset: 0, 0
+  index: -1
+3
+  rotate: false
+  xy: 900, 40
+  size: 94, 65
+  orig: 94, 65
+  offset: 0, 0
+  index: -1
+4
+  rotate: true
+  xy: 503, 119
+  size: 100, 50
+  orig: 100, 50
+  offset: 0, 0
+  index: -1
+5
+  rotate: true
+  xy: 935, 117
+  size: 95, 68
+  orig: 95, 68
+  offset: 0, 0
+  index: -1
+6
+  rotate: false
+  xy: 686, 15
+  size: 89, 81
+  orig: 89, 81
+  offset: 0, 0
+  index: -1
+Fu_Z
+  rotate: false
+  xy: 595, 98
+  size: 186, 150
+  orig: 193, 150
+  offset: 7, 0
+  index: -1
+JB
+  rotate: false
+  xy: 593, 36
+  size: 91, 60
+  orig: 91, 60
+  offset: 0, 0
+  index: -1
+SZ01
+  rotate: false
+  xy: 783, 13
+  size: 115, 92
+  orig: 130, 113
+  offset: 14, 4
+  index: -1
+SZ02
+  rotate: false
+  xy: 327, 25
+  size: 89, 67
+  orig: 98, 67
+  offset: 0, 0
+  index: -1
+YB01
+  rotate: false
+  xy: 327, 94
+  size: 174, 125
+  orig: 174, 125
+  offset: 0, 0
+  index: -1
+YB02
+  rotate: false
+  xy: 783, 107
+  size: 150, 105
+  orig: 150, 105
+  offset: 0, 0
+  index: -1
+YB_TY
+  rotate: false
+  xy: 808, 214
+  size: 201, 97
+  orig: 201, 97
+  offset: 0, 0
+  index: -1
+img_cj_fudai_1_M
+  rotate: false
+  xy: 2, 2
+  size: 323, 309
+  orig: 323, 309
+  offset: 0, 0
+  index: -1
+img_cj_fudai_2_M
+  rotate: false
+  xy: 595, 250
+  size: 211, 61
+  orig: 212, 122
+  offset: 1, 60
+  index: -1
+img_cj_fudai_3_M
+  rotate: false
+  xy: 327, 221
+  size: 266, 90
+  orig: 269, 91
+  offset: 3, 1
+  index: -1

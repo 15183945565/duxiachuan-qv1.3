@@ -575,8 +575,8 @@ const homeUiPrefabDefinitions = [...homeUiManifest.matchAll(
     layerName: match[2] === 'page' ? 'PageLayer' : 'PopupLayer',
     assetPath: match[3],
 }));
-if (homeUiPrefabDefinitions.length !== 33) {
-    throw new Error(`Expected 33 home UI prefab definitions, found ${homeUiPrefabDefinitions.length}.`);
+if (homeUiPrefabDefinitions.length !== 34) {
+    throw new Error(`Expected 34 home UI prefab definitions, found ${homeUiPrefabDefinitions.length}.`);
 }
 
 const mainScenePath = 'assets/Scene/MainScene.scene';

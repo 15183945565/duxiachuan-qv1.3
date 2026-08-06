@@ -62,6 +62,8 @@ abstract class HomeFeatureDuelLuanshiBattleHost extends HomeViewBase {
     protected abstract getOrCreateDuelLuanshiEditableSkin(name: string, parent: Node, width: number, height: number, x: number, y: number, skinPath: string): Node;
     protected abstract setDuelLuanshiBottomDockCollapsed(panel: Node, page: Node, collapsed: boolean, animated: boolean): void;
     protected abstract playDuelJianghuSkeletonAnimation(target: sp.Skeleton, candidates: string[], loop: boolean): number;
+    protected abstract playDuelLuanshiSkillSound(config: DuelLuanshiSkillConfig): void;
+    protected abstract playDuelLuanshiNormalAttackSound(): void;
     protected abstract prepareSkeletonRenderer(target: sp.Skeleton | null): void;
 }
 
@@ -1182,6 +1184,7 @@ export abstract class HomeFeatureDuelLuanshiBattle extends HomeFeatureDuelLuansh
             ? this.getDuelLuanshiDefenseSkillEffectLayout(effectY)
             : this.getDuelLuanshiSkillEffectLayout(faction, effectY, impactY, config);
         if (isFullScreen) this.applyDuelLuanshiEditorFullScreenSkillLayout(layer, layout, config, faction);
+        this.playDuelLuanshiSkillSound(config);
         const effect = this.getOrCreateDuelLuanshiSkillEffectNode(layer, faction, sourceKey, layout);
         effect.setPosition(layout.startX, layout.y, 0);
         effect.setScale(layout.scaleX, layout.scaleY, 1);
@@ -1660,6 +1663,7 @@ export abstract class HomeFeatureDuelLuanshiBattle extends HomeFeatureDuelLuansh
         effect.setPosition(sourcePosition);
         effect.setScale(scale, scale, 1);
         Tween.stopAllByTarget(effect);
+        this.playDuelLuanshiNormalAttackSound();
 
         try {
             const skeletonData = await this.loadSkeletonAsset(spinePath);

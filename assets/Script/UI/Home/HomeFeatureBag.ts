@@ -44,7 +44,7 @@ abstract class HomeFeatureBagHost extends HomeViewBase {
     protected abstract getBagItemCount(item: BagIllustrationCatalogItem): number;
     protected abstract getCatalogDisplayName(item: BagIllustrationCatalogItem | null | undefined): string;
     protected abstract getEquipmentLevel(item?: BagIllustrationCatalogItem | null): number;
-    protected abstract getRoleEquipmentIconIndexByTier(slotId: RoleEquipmentSlotId, tier: number): number;
+    protected abstract getRoleEquipmentCatalogIndexByTier(slotId: RoleEquipmentSlotId, tier: number): number;
     protected abstract getRoleEquipmentSlotConfigs(): RoleEquipmentSlotConfig[];
     protected abstract getRoleEquipmentStatRule(config: RoleEquipmentSlotConfig): { type: RoleEquipmentStatType };
     protected abstract getRoleInventoryCount(itemId: string): number;
@@ -321,10 +321,10 @@ export abstract class HomeFeatureBag extends HomeFeatureBagHost {
         return iconIndex >= 153 && iconIndex <= 168;
     }
     protected getBagEquipmentSlotId(item: BagIllustrationCatalogItem): RoleEquipmentSlotId | null {
-        const iconIndex = this.getBagItemIconIndex(item);
+        const catalogIndex = this.getBagItemIdIndex(item);
         for (const config of this.getRoleEquipmentSlotConfigs()) {
             for (let tier = 1; tier <= 5; tier++) {
-                if (this.getRoleEquipmentIconIndexByTier(config.id, tier) === iconIndex) {
+                if (this.getRoleEquipmentCatalogIndexByTier(config.id, tier) === catalogIndex) {
                     return config.id;
                 }
             }
@@ -656,8 +656,19 @@ export abstract class HomeFeatureBag extends HomeFeatureBagHost {
         return 2000 + this.getBagItemIdIndex(item);
     }
     protected getBagItemFrameLevel(item: BagIllustrationCatalogItem): number {
+        const equipmentLevel = this.getBagEquipmentCatalogLevel(item);
+        if (equipmentLevel > 0) return equipmentLevel;
+
         const match = /item_frame_lv(\d+)/.exec(item.framePath);
         return match ? Number(match[1]) : 1;
+    }
+    protected getBagEquipmentCatalogLevel(item: BagIllustrationCatalogItem): number {
+        if (item.category !== 'equipment') return 0;
+        const index = this.getBagItemIdIndex(item);
+        if (index < 113 || index > 152) return 0;
+
+        const levelByGroupOffset = [2, 3, 4, 5, 1];
+        return levelByGroupOffset[(index - 113) % 5] || 0;
     }
     protected getBagItemIconIndex(item: BagIllustrationCatalogItem): number {
         const match = /bag_item_(\d+)/.exec(item.iconPath);

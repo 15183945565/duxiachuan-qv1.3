@@ -312,8 +312,36 @@ export abstract class HomeViewRoleBag extends HomeViewBase {
         this.ensureInputBlocker(panel);
         panel.setSiblingIndex((panel.parent?.children.length || 1) - 1);
         this.bindEditorFeaturePage(panel);
+        if (panelName === 'ValueGiftPanel') {
+            this.playValueGiftCaishenAnimation(panel);
+        }
         this.refreshBottomEntryChrome();
         this.refreshRootLayerOrder();
+    }
+    protected playValueGiftCaishenAnimation(panel: Node): void {
+        const spineNode = this.findNode('ValueGiftCaishenSpine', panel);
+        const skeleton = spineNode?.getComponent(sp.Skeleton);
+        if (!skeleton?.isValid || !skeleton.skeletonData) return;
+
+        this.prepareSkeletonRenderer(skeleton);
+        skeleton.node.active = true;
+        skeleton.timeScale = 1;
+        try {
+            skeleton.clearTracks();
+            skeleton.setToSetupPose();
+            if (skeleton.findAnimation('show')) {
+                skeleton.setAnimation(0, 'show', false);
+                if (skeleton.findAnimation('idle')) {
+                    skeleton.addAnimation(0, 'idle', true, 0);
+                }
+            } else if (skeleton.findAnimation('idle')) {
+                skeleton.setAnimation(0, 'idle', true);
+            }
+            skeleton.updateAnimation(0);
+            skeleton.markForUpdateRenderData(true);
+        } catch (err) {
+            console.warn('[MainHomeView] value gift caishen animation failed', err);
+        }
     }
     protected closeEditorFeaturePage(panel: Node): void {
         panel.active = false;
