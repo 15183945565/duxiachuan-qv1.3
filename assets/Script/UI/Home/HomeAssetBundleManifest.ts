@@ -18,7 +18,6 @@ const HOME_BAG_FEATURE_ASSET_PATHS = [
     'Texture/UI/Bag/bag_filter_tab_bg',
     'Texture/UI/Bag/bag_frame',
     'Texture/UI/Bag/bag_illustration_btn',
-    'Texture/UI/Bag/bag_item_detail_title_bg',
     'Texture/UI/Bag/bag_one_key_lock',
     'Texture/UI/Bag/bag_page_bg',
     'Texture/UI/Bag/bag_synth_frame',
@@ -73,6 +72,7 @@ const HOME_FEATURE_ASSET_RULES = [
 const HOME_ENTRY_ASSET_BUNDLES: Readonly<Record<string, readonly string[]>> = {
     BtnProfile: [HOME_PROFILE_ASSET_BUNDLE_NAME],
     BtnShare: [HOME_SHARE_ASSET_BUNDLE_NAME],
+    BtnRank: [HOME_DUEL_ASSET_BUNDLE_NAME],
     TabBag: [HOME_BAG_ASSET_BUNDLE_NAME],
     TabRole: [HOME_ROLE_ASSET_BUNDLE_NAME],
     TabShowcase: [HOME_MAGIC_ASSET_BUNDLE_NAME, HOME_SHOP_ASSET_BUNDLE_NAME],

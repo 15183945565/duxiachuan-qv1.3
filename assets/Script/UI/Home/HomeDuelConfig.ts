@@ -431,8 +431,14 @@ export const DUEL_GAMEPLAY_TAG_WIDTH = 735;
 export const DUEL_GAMEPLAY_TAG_HEIGHT = 235;
 export const DUEL_GAMEPLAY_NAME_WIDTH = 280;
 export const DUEL_GAMEPLAY_NAME_HEIGHT = 76;
-export const DUEL_GAMEPLAY_NAME_X = -238;
-export const DUEL_GAMEPLAY_NAME_Y = 14;
+export const DUEL_GAMEPLAY_NAME_X = -220.297;
+export const DUEL_GAMEPLAY_NAME_Y = 7;
+export const DUEL_GAMEPLAY_NORMAL_TINT = { r: 255, g: 255, b: 255, a: 255 } as const;
+export const DUEL_GAMEPLAY_DISABLED_TINT = { r: 110, g: 110, b: 110, a: 255 } as const;
+export const DUEL_GAMEPLAY_NAME_NORMAL_COLOR = { r: 255, g: 238, b: 196, a: 255 } as const;
+export const DUEL_GAMEPLAY_NAME_DISABLED_COLOR = { r: 128, g: 118, b: 96, a: 255 } as const;
+export const DUEL_GAMEPLAY_NAME_NORMAL_OUTLINE_COLOR = { r: 50, g: 28, b: 13, a: 255 } as const;
+export const DUEL_GAMEPLAY_NAME_DISABLED_OUTLINE_COLOR = { r: 34, g: 30, b: 24, a: 255 } as const;
 export const DUEL_GAMEPLAY_TAGS = [
     {
         id: 'luanshi_zhengxiong',
@@ -440,7 +446,8 @@ export const DUEL_GAMEPLAY_TAGS = [
         nodeName: 'DuelGameplayTag_1',
         labelNodeName: 'DuelGameplayName_1',
         skinPath: `${DUEL_UI_ROOT}/GameplayTags/duel_gameplay_luanshi_zhengxiong`,
-        y: -118,
+        y: 160,
+        disabled: false,
     },
     {
         id: 'guxu_tanbao',
@@ -448,7 +455,8 @@ export const DUEL_GAMEPLAY_TAGS = [
         nodeName: 'DuelGameplayTag_2',
         labelNodeName: 'DuelGameplayName_2',
         skinPath: `${DUEL_UI_ROOT}/GameplayTags/duel_gameplay_guxu_tanbao`,
-        y: 160,
+        y: -118,
+        disabled: true,
     },
     {
         id: 'jianghu_taosha',
@@ -457,6 +465,7 @@ export const DUEL_GAMEPLAY_TAGS = [
         labelNodeName: 'DuelGameplayName_3',
         skinPath: `${DUEL_UI_ROOT}/GameplayTags/duel_gameplay_jianghu_taosha`,
         y: 438,
+        disabled: false,
     },
     {
         id: 'taxian_chumo',
@@ -465,6 +474,7 @@ export const DUEL_GAMEPLAY_TAGS = [
         labelNodeName: 'DuelGameplayName_4',
         skinPath: `${DUEL_UI_ROOT}/GameplayTags/duel_gameplay_taxian_chumo`,
         y: -396,
+        disabled: true,
     },
 ] as const;
 export type DuelGameplayId = typeof DUEL_GAMEPLAY_TAGS[number]['id'];

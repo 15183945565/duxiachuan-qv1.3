@@ -40,8 +40,8 @@ export const BEAST_CARD_BOTTOM_NAME_LABEL_Y = -350;
 export const BEAST_CARD_BOTTOM_NAME_LABEL_WIDTH = 360;
 export const BEAST_CARD_BOTTOM_NAME_LABEL_HEIGHT = 58;
 export const BEAST_CARD_BOTTOM_NAME_LABELS = [
-    '\u9752\u72ee\u517d\u5361',
     '\u767d\u9e7f\u517d\u5361',
+    '\u9752\u72ee\u517d\u5361',
     '\u91d1\u9e64\u517d\u5361',
     '\u8d64\u72d0\u517d\u5361',
 ] as const;
@@ -98,20 +98,20 @@ export const BEAST_RECORD_ROW_COUNT = 8;
 export const BEAST_CARD_ANIMATIONS = ['animation', 'idle'];
 export const BEAST_CARDS = [
     {
-        name: '\u51b0\u7130\u50b2\u72ee',
-        description: '\u51b0\u7130\u62a4\u4f53\u00b7\u653b\u5b88\u517c\u5907',
-        skelPath: 'Spine/Beast/Card1/pet03',
-        x: 0,
-        y: BEAST_CARD_SPINE_Y,
-        scale: 0.85,
-    },
-    {
         name: '\u5e7b\u96ea\u9e3e\u821e',
         description: '\u5e7b\u96ea\u6d41\u5149\u00b7\u7075\u52a8\u8fc5\u6377',
         skelPath: 'Spine/Beast/Card2/pet5',
         x: 0,
         y: BEAST_CARD_SPINE_Y,
         scale: 0.68,
+    },
+    {
+        name: '\u51b0\u7130\u50b2\u72ee',
+        description: '\u51b0\u7130\u62a4\u4f53\u00b7\u653b\u5b88\u517c\u5907',
+        skelPath: 'Spine/Beast/Card1/pet03',
+        x: 0,
+        y: BEAST_CARD_SPINE_Y,
+        scale: 0.85,
     },
     {
         name: '\u91d1\u7130\u76f8\u7fbd',

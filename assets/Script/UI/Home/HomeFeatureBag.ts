@@ -36,7 +36,13 @@ type BagDecomposeResult = {
     statType: RoleEquipmentStatType;
 };
 
+type RoleEquipmentRuntimeItem = BagIllustrationCatalogItem & {
+    displayLevel?: number;
+    baseTier?: number;
+};
+
 abstract class HomeFeatureBagHost extends HomeViewBase {
+    protected abstract readonly roleEquippedItems: Map<RoleEquipmentSlotId, RoleEquipmentRuntimeItem>;
     protected abstract bagDecomposeSelectedItem: BagIllustrationCatalogItem | null;
 
     protected abstract addRoleInventory(itemId: string, amount: number): void;
@@ -321,6 +327,9 @@ export abstract class HomeFeatureBag extends HomeFeatureBagHost {
         return iconIndex >= 153 && iconIndex <= 168;
     }
     protected getBagEquipmentSlotId(item: BagIllustrationCatalogItem): RoleEquipmentSlotId | null {
+        const generatedSlotMatch = /^equipment_(weapon|helmet|armor|wrist|leg|shoes|necklace|ring)_lv\d{3}$/.exec(item.id);
+        if (generatedSlotMatch) return generatedSlotMatch[1] as RoleEquipmentSlotId;
+
         const catalogIndex = this.getBagItemIdIndex(item);
         for (const config of this.getRoleEquipmentSlotConfigs()) {
             for (let tier = 1; tier <= 5; tier++) {
@@ -444,7 +453,7 @@ export abstract class HomeFeatureBag extends HomeFeatureBagHost {
         if (this.bagDecomposeModeFrame) this.bagDecomposeModeFrame.active = false;
         if (this.bagSynthModeFrame) this.bagSynthModeFrame.active = false;
 
-        this.bagCatalogView.itemSource = BAG_ILLUSTRATION_CATALOG;
+        this.bagCatalogView.itemSource = this.getBagIllustrationCatalogItems();
         this.bagCatalogView.activeCategory = 'equipment';
         const categoryRoot = this.bagCatalogView.board.getChildByName(`${this.bagCatalogView.board.name}CategoryTabs`);
         if (categoryRoot) categoryRoot.active = true;
@@ -492,8 +501,16 @@ export abstract class HomeFeatureBag extends HomeFeatureBagHost {
     
         this.bagIllustrationTitleLabel = this.createLabel(this.bagIllustrationPanel, 'BagIllustrationTitle', '\u56fe\u9274', 42, 0, 720, 240, 64, new Color(255, 238, 196, 255));
         this.createMailButton(this.bagIllustrationPanel, 'BagIllustrationBack', '', HomeConfig.BOTTOM_ENTRY_BACK_BUTTON_X, HomeConfig.BOTTOM_ENTRY_BACK_BUTTON_Y, HomeConfig.BOTTOM_ENTRY_BACK_BUTTON_WIDTH, HomeConfig.BOTTOM_ENTRY_BACK_BUTTON_HEIGHT, new Color(110, 72, 52, 0), () => this.closeBagIllustrationPanel(), HomeConfig.UI_RANK_BACK).setSiblingIndex(30);
-        this.bagIllustrationView = this.createBagCatalogView(this.bagIllustrationPanel, 'BagIllustrationBoard', HomeConfig.BAG_MATERIAL_BOARD_Y, 'equipment', BAG_ILLUSTRATION_CATALOG, 'BagIllustrationGridViewport');
+        this.bagIllustrationView = this.createBagCatalogView(this.bagIllustrationPanel, 'BagIllustrationBoard', HomeConfig.BAG_MATERIAL_BOARD_Y, 'equipment', this.getBagIllustrationCatalogItems(), 'BagIllustrationGridViewport');
         this.bagIllustrationView.board.setSiblingIndex(2);
+    }
+    protected getBagIllustrationCatalogItems(): readonly BagIllustrationCatalogItem[] {
+        return BAG_ILLUSTRATION_CATALOG.filter((item) => !this.isLegacyHumanEquipmentCatalogItem(item));
+    }
+    protected isLegacyHumanEquipmentCatalogItem(item: BagIllustrationCatalogItem): boolean {
+        if (item.category !== 'equipment') return false;
+        const index = this.getBagItemIdIndex(item);
+        return index >= 113 && index <= 152;
     }
     protected createBagCatalogView(parent: Node, boardName: string, y: number, initialCategory: BagIllustrationCategory, itemSource: readonly BagIllustrationCatalogItem[], viewportName: string): BagCatalogView {
         const editorBoard = parent.getChildByName(boardName);
@@ -622,6 +639,11 @@ export abstract class HomeFeatureBag extends HomeFeatureBagHost {
     }
     protected sortBagCatalogItems(items: BagIllustrationCatalogItem[]): BagIllustrationCatalogItem[] {
         return [...items].sort((a, b) => {
+            if (a.category === 'gem' || b.category === 'gem') {
+                const gemDiff = this.getBagGemSortOrder(a) - this.getBagGemSortOrder(b);
+                if (gemDiff !== 0) return gemDiff;
+            }
+
             if (a.category === 'equipment' || b.category === 'equipment') {
                 const equipmentDiff = this.getBagEquipmentSortOrder(a) - this.getBagEquipmentSortOrder(b);
                 if (equipmentDiff !== 0) return equipmentDiff;
@@ -636,6 +658,21 @@ export abstract class HomeFeatureBag extends HomeFeatureBagHost {
             return a.id.localeCompare(b.id);
         });
     }
+    protected getBagGemSortOrder(item: BagIllustrationCatalogItem): number {
+        if (item.category !== 'gem') return Number.MAX_SAFE_INTEGER;
+        const name = this.getCatalogDisplayName(item);
+        const beastOrder = ['\u767d\u9e7f', '\u9752\u72ee', '\u91d1\u9e64', '\u8d64\u72d0'];
+        const levelOrder = ['\u4e00\u7ea7', '\u4e8c\u7ea7', '\u4e09\u7ea7', '\u56db\u7ea7', '\u4e94\u7ea7', '\u516d\u7ea7', '\u4e03\u7ea7', '\u516b\u7ea7', '\u4e5d\u7ea7', '\u5341\u7ea7'];
+        const beastIndex = beastOrder.findIndex((keyword) => name.includes(keyword));
+        const kindIndex = name.includes('\uff08\u4e3b\uff09') ? 1 : 0;
+        const levelIndex = levelOrder.findIndex((keyword) => name.includes(keyword));
+
+        if (beastIndex >= 0 && levelIndex >= 0) {
+            return beastIndex * 20 + kindIndex * 10 + levelIndex;
+        }
+
+        return 1000 + this.getBagItemIdIndex(item);
+    }
     protected getBagEquipmentSortOrder(item: BagIllustrationCatalogItem): number {
         if (item.category !== 'equipment') return Number.MAX_SAFE_INTEGER;
         const name = this.getCatalogDisplayName(item);
@@ -644,16 +681,17 @@ export abstract class HomeFeatureBag extends HomeFeatureBagHost {
         const beastIndex = beastOrder.findIndex((keyword) => name.includes(keyword));
         const partIndex = beastPartOrder.findIndex((keyword) => name.includes(keyword));
         if (beastIndex >= 0 && partIndex >= 0) {
-            return 1000 + beastIndex * 10 + partIndex;
+            return 10000 + beastIndex * 10 + partIndex;
         }
 
         const humanKindOrder = ['\u6b66\u5668', '\u9879\u94fe', '\u62a4\u8155', '\u817f\u7532', '\u5934\u76d4', '\u5e03\u7532', '\u6212\u6307', '\u978b\u5b50'];
         const kindIndex = humanKindOrder.findIndex((keyword) => name.includes(keyword));
         if (kindIndex >= 0) {
-            return this.getBagItemFrameLevel(item) * 100 + kindIndex;
+            const equipmentLevel = this.getBagEquipmentCatalogLevel(item) || this.getBagItemFrameLevel(item);
+            return kindIndex * 1000 + equipmentLevel;
         }
 
-        return 2000 + this.getBagItemIdIndex(item);
+        return 20000 + this.getBagItemIdIndex(item);
     }
     protected getBagItemFrameLevel(item: BagIllustrationCatalogItem): number {
         const equipmentLevel = this.getBagEquipmentCatalogLevel(item);
@@ -664,6 +702,12 @@ export abstract class HomeFeatureBag extends HomeFeatureBagHost {
     }
     protected getBagEquipmentCatalogLevel(item: BagIllustrationCatalogItem): number {
         if (item.category !== 'equipment') return 0;
+        const levelIdMatch = /^equipment_[a-z]+_lv(\d{3})$/.exec(item.id);
+        if (levelIdMatch) return Number(levelIdMatch[1]);
+
+        const levelNameMatch = /^(\d+)\u7ea7/.exec(this.getCatalogDisplayName(item));
+        if (levelNameMatch) return Number(levelNameMatch[1]);
+
         const index = this.getBagItemIdIndex(item);
         if (index < 113 || index > 152) return 0;
 
@@ -698,15 +742,19 @@ export abstract class HomeFeatureBag extends HomeFeatureBagHost {
     
         if (item) {
             this.createSkinnedNode('BagGridIcon', slot, HomeConfig.BAG_GRID_ICON_SIZE, HomeConfig.BAG_GRID_ICON_SIZE, 0, HomeConfig.BAG_GRID_ICON_OFFSET_Y, item.iconPath).setSiblingIndex(1);
+            const equipmentLevel = this.getBagEquipmentCatalogLevel(item);
+            if (equipmentLevel > 0) {
+                this.createBagGridEquipmentLevelLabel(slot, equipmentLevel);
+            }
             const itemCount = this.getBagItemCount(item);
-            if (itemCount > 0) {
+            if (itemCount > 0 && !this.isBeastEquipmentCatalogItem(item)) {
                 const countLabel = this.createLabel(
                     slot,
                     'BagGridItemCount',
                     `\u00d7${itemCount}`,
                     HomeConfig.BAG_GRID_COUNT_FONT_SIZE,
                     HomeConfig.BAG_GRID_COUNT_X,
-                    HomeConfig.BAG_GRID_COUNT_Y,
+                    equipmentLevel > 0 ? 34 : HomeConfig.BAG_GRID_COUNT_Y,
                     HomeConfig.BAG_GRID_COUNT_WIDTH,
                     HomeConfig.BAG_GRID_COUNT_HEIGHT,
                     Color.WHITE,
@@ -714,6 +762,9 @@ export abstract class HomeFeatureBag extends HomeFeatureBagHost {
                 countLabel.horizontalAlign = HorizontalTextAlignment.RIGHT;
                 this.setLabelOutline(countLabel, Color.BLACK, 2);
                 countLabel.node.setSiblingIndex(2);
+            }
+            if (this.isBagItemEquipped(item)) {
+                this.createBagGridEquippedBadge(slot).setSiblingIndex(5);
             }
             this.bindGridItemTap(slot, () => {
                 if (this.bagPageActiveTab === 'decompose' && item.category === 'equipment') {
@@ -729,6 +780,47 @@ export abstract class HomeFeatureBag extends HomeFeatureBagHost {
                 this.openBagIllustrationItemDetailPopup(item, typeNames[item.category]);
             });
         }
+    }
+    protected createBagGridEquippedBadge(parent: Node): Node {
+        return this.createSkinnedNode('BagGridEquippedBadge', parent, 60, 60, -24, 24, HomeConfig.UI_ROLE_EQUIPPED_BADGE);
+    }
+    protected isBagItemEquipped(item: BagIllustrationCatalogItem): boolean {
+        if (item.category !== 'equipment') return false;
+        const slotId = this.getBagEquipmentSlotId(item);
+        if (!slotId) return false;
+
+        const equipped = this.roleEquippedItems.get(slotId);
+        if (!equipped) return false;
+        if (equipped.id === item.id) return true;
+        if (equipped.id.startsWith(`${item.id}_lv`)) return true;
+
+        const itemLevel = this.getBagEquipmentCatalogLevel(item);
+        const equippedLevel = this.getEquipmentLevel(equipped);
+        return itemLevel > 0 && equippedLevel > 0 && itemLevel === equippedLevel;
+    }
+    protected isBeastEquipmentCatalogItem(item: BagIllustrationCatalogItem): boolean {
+        if (item.category !== 'equipment') return false;
+        const name = this.getCatalogDisplayName(item);
+        const beastOrder = ['\u767d\u9e7f', '\u8d64\u72d0', '\u91d1\u9e64', '\u9752\u72ee'];
+        const beastPartOrder = ['\u5934\u76d4', '\u62a4\u7532', '\u817f\u7532', '\u80f8\u6302'];
+        return beastOrder.some((keyword) => name.includes(keyword))
+            && beastPartOrder.some((keyword) => name.includes(keyword));
+    }
+    protected createBagGridEquipmentLevelLabel(slot: Node, level: number): void {
+        const levelLabel = this.createLabel(
+            slot,
+            'BagGridEquipmentLevel',
+            `lv.${level}`,
+            20,
+            HomeConfig.BAG_GRID_COUNT_X,
+            HomeConfig.BAG_GRID_COUNT_Y,
+            HomeConfig.BAG_GRID_COUNT_WIDTH,
+            HomeConfig.BAG_GRID_COUNT_HEIGHT,
+            new Color(255, 238, 190, 255),
+        );
+        levelLabel.horizontalAlign = HorizontalTextAlignment.RIGHT;
+        this.setLabelOutline(levelLabel, Color.BLACK, 2);
+        levelLabel.node.setSiblingIndex(3);
     }
     protected bindGridItemTap(node: Node, onTap: () => void): void {
         let startX = 0;

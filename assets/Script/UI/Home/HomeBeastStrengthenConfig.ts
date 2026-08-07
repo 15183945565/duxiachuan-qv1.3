@@ -25,8 +25,8 @@ export interface BeastStrengthenState {
 }
 
 export const BEAST_STRENGTHEN_BEASTS: BeastStrengthenBeastConfig[] = [
-    { key: 'qingshi', name: '\u9752\u72ee' },
     { key: 'bailu', name: '\u767d\u9e7f' },
+    { key: 'qingshi', name: '\u9752\u72ee' },
     { key: 'jinhe', name: '\u91d1\u9e64' },
     { key: 'chihu', name: '\u8d64\u72d0' },
 ];

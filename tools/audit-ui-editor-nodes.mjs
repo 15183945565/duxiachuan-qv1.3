@@ -368,7 +368,7 @@ const requirements = {
         'Canvas/MainRoot/PopupLayer/NoticePanel',
         'Canvas/MainRoot/PopupLayer/NoticePanel/NoticeBoard/NoticeScrollView/NoticeScrollContent/NoticeArticleTemplate',
         'Canvas/MainRoot/PopupLayer/RankPanel',
-        'Canvas/MainRoot/PopupLayer/RankPanel/RankScrollView/RankScrollContent/RankRowTemplate',
+        'Canvas/MainRoot/PopupLayer/RankPanel/MainRankRoot/MainRankList/MainRankContent/MainRankRowTemplate',
         'Canvas/MainRoot/PopupLayer/GiftPanel',
         'Canvas/MainRoot/PopupLayer/SharePanel',
         'Canvas/MainRoot/PopupLayer/SharePanel/SharePageBackground',

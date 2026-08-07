@@ -1,4 +1,4 @@
-import { Color, Label, Node, Tween, UITransform } from 'cc';
+import { Color, Label, Node, Sprite, Tween, UITransform } from 'cc';
 import { applySimKaiFont } from '../Common/UIFont';
 import * as HomeConfig from './HomeConfig';
 import { HomeViewBase } from './HomeViewBase';
@@ -102,6 +102,7 @@ export abstract class HomeFeatureDuelLobby extends HomeFeatureDuelLobbyHost {
             Tween.stopAllByTarget(tag);
             tag.setScale(1, 1, 1);
             this.buttonBaseScales.set(tag, tag.scale.clone());
+            this.applyDuelGameplayTagState(tag, config.disabled);
 
             let nameNode = tag.getChildByName(config.labelNodeName);
             let nameLabel = nameNode?.getComponent(Label) || null;
@@ -122,12 +123,14 @@ export abstract class HomeFeatureDuelLobby extends HomeFeatureDuelLobbyHost {
             nameNode.active = true;
             nameNode.setPosition(HomeConfig.DUEL_GAMEPLAY_NAME_X, HomeConfig.DUEL_GAMEPLAY_NAME_Y, 0);
             (nameNode.getComponent(UITransform) || nameNode.addComponent(UITransform)).setContentSize(HomeConfig.DUEL_GAMEPLAY_NAME_WIDTH, HomeConfig.DUEL_GAMEPLAY_NAME_HEIGHT);
+            const nameColor = config.disabled ? HomeConfig.DUEL_GAMEPLAY_NAME_DISABLED_COLOR : HomeConfig.DUEL_GAMEPLAY_NAME_NORMAL_COLOR;
+            const outlineColor = config.disabled ? HomeConfig.DUEL_GAMEPLAY_NAME_DISABLED_OUTLINE_COLOR : HomeConfig.DUEL_GAMEPLAY_NAME_NORMAL_OUTLINE_COLOR;
             nameLabel.string = config.label;
             nameLabel.fontSize = 38;
             nameLabel.lineHeight = 44;
-            nameLabel.color = new Color(255, 238, 196, 255);
+            nameLabel.color = new Color(nameColor.r, nameColor.g, nameColor.b, nameColor.a);
             nameLabel.enableOutline = true;
-            nameLabel.outlineColor = new Color(50, 28, 13, 255);
+            nameLabel.outlineColor = new Color(outlineColor.r, outlineColor.g, outlineColor.b, outlineColor.a);
             nameLabel.outlineWidth = 3;
             applySimKaiFont(nameLabel);
 
@@ -164,6 +167,11 @@ export abstract class HomeFeatureDuelLobby extends HomeFeatureDuelLobbyHost {
     }
 
     protected handleDuelGameplayClicked(gameplayId: string): void {
+        if (this.isDuelGameplayDisabled(gameplayId)) {
+            this.showToast('\u6682\u672a\u5f00\u653e');
+            return;
+        }
+
         if (gameplayId === 'luanshi_zhengxiong') {
             this.onDuelLuanshiZhengxiongClicked();
         } else if (gameplayId === 'guxu_tanbao') {
@@ -186,7 +194,7 @@ export abstract class HomeFeatureDuelLobby extends HomeFeatureDuelLobbyHost {
     }
 
     protected onDuelGuxuTanbaoClicked(): void {
-        this.showToast('\u53e4\u589f\u63a2\u5b9d\u5165\u53e3\u5df2\u9884\u7559');
+        this.showToast('\u6682\u672a\u5f00\u653e');
     }
 
     protected onDuelJianghuTaoshaClicked(): void {
@@ -200,7 +208,17 @@ export abstract class HomeFeatureDuelLobby extends HomeFeatureDuelLobbyHost {
     }
 
     protected onDuelTaxianChumoClicked(): void {
-        this.showToast('\u8e0f\u9669\u9664\u9b54\u5165\u53e3\u5df2\u9884\u7559');
+        this.showToast('\u6682\u672a\u5f00\u653e');
+    }
+
+    private applyDuelGameplayTagState(tag: Node, disabled: boolean): void {
+        const tint = disabled ? HomeConfig.DUEL_GAMEPLAY_DISABLED_TINT : HomeConfig.DUEL_GAMEPLAY_NORMAL_TINT;
+        const sprite = tag.getComponent(Sprite);
+        if (sprite) sprite.color = new Color(tint.r, tint.g, tint.b, tint.a);
+    }
+
+    private isDuelGameplayDisabled(gameplayId: string): boolean {
+        return HomeConfig.DUEL_GAMEPLAY_TAGS.some((config) => config.id === gameplayId && config.disabled);
     }
 
     protected openDuelJianghuTaoshaPage(panel: Node): void {

@@ -1,13 +1,18 @@
 import {
     Color,
+    EventTouch,
     Graphics,
     HorizontalTextAlignment,
     Label,
     Mask,
     Node,
     Overflow,
+    Tween,
+    UIOpacity,
     UITransform,
+    Vec3,
     VerticalTextAlignment,
+    tween,
 } from 'cc';
 import {
     BAG_ILLUSTRATION_CATALOG,
@@ -179,53 +184,83 @@ export abstract class HomeFeatureMarketSell extends HomeFeatureMarketSellHost {
 
         const dim = this.getOrCreateEditorNode('MarketSellSelectDim', popup, HomeConfig.VIEW_WIDTH, HomeConfig.VIEW_HEIGHT, 0, 0);
         dim.active = true;
-        if (!dim.getComponent(Graphics)) {
-            this.drawRect(dim, HomeConfig.VIEW_WIDTH, HomeConfig.VIEW_HEIGHT, new Color(0, 0, 0, 120));
-        }
+        dim.getComponent(Graphics)?.clear();
         dim.setSiblingIndex(0);
+        dim.off(Node.EventType.TOUCH_END);
+        dim.on(Node.EventType.TOUCH_END, (event: EventTouch) => {
+            event.propagationStopped = true;
+            this.closeMarketSellItemSelectPopup();
+        }, this);
 
         const board = this.getOrCreateEditorSkinnedNode(
             'MarketSellSelectBoard',
             popup,
-            HomeConfig.MARKET_SELL_SELECT_POPUP_WIDTH,
-            HomeConfig.MARKET_SELL_SELECT_POPUP_HEIGHT,
+            HomeConfig.ROLE_EQUIP_REPLACE_DRAWER_WIDTH,
+            HomeConfig.ROLE_EQUIP_REPLACE_DRAWER_HEIGHT,
             0,
-            0,
-            HomeConfig.UI_MARKET_SELL_SELECT_POPUP_BG,
+            HomeConfig.ROLE_EQUIP_REPLACE_DRAWER_Y,
+            HomeConfig.UI_MARKET_SELL_SELECT_DRAWER_BG,
         );
         board.active = true;
-        board.setPosition(0, 0, 0);
         board.setSiblingIndex(1);
+        board.off(Node.EventType.TOUCH_START);
+        board.off(Node.EventType.TOUCH_END);
+        board.on(Node.EventType.TOUCH_START, (event: EventTouch) => {
+            event.propagationStopped = true;
+        }, this);
+        board.on(Node.EventType.TOUCH_END, (event: EventTouch) => {
+            event.propagationStopped = true;
+        }, this);
 
-        const title = this.getOrCreateEditorLabel(board, 'MarketSellSelectTitle', this.isMarketRequestPostPage() ? '\u9009\u62e9\u6c42\u8d2d\u7269\u54c1' : '\u9009\u62e9\u4e0a\u67b6\u7269\u54c1', 32, 0, 316, 300, 54, new Color(126, 74, 36, 255));
+        const title = this.getOrCreateEditorLabel(
+            board,
+            'MarketSellSelectTitle',
+            this.isMarketRequestPostPage() ? '\u9009\u62e9\u6c42\u8d2d\u7269\u54c1' : '\u9009\u62e9\u4e0a\u67b6\u7269\u54c1',
+            32,
+            0,
+            HomeConfig.ROLE_EQUIP_REPLACE_DRAWER_TITLE_Y,
+            300,
+            54,
+            new Color(126, 74, 36, 255),
+        );
         title.node.active = true;
         this.setLabelOutline(title, new Color(255, 245, 215, 255), 2);
 
-        const close = this.getOrCreateEditorSkinnedNode('MarketSellSelectClose', board, 52, 52, 218, 320, HomeConfig.UI_BTN_CLOSE);
-        close.active = true;
-        close.setSiblingIndex(20);
-        this.bindScaledClick(close, () => this.closeMarketSellItemSelectPopup());
+        const close = board.getChildByName('MarketSellSelectClose');
+        if (close) {
+            close.active = false;
+            close.off(Node.EventType.TOUCH_END);
+            close.removeFromParent();
+        }
 
-        const viewport = this.getOrCreateEditorNode('MarketSellSelectViewport', board, HomeConfig.MARKET_SELL_SELECT_VIEWPORT_WIDTH, HomeConfig.MARKET_SELL_SELECT_VIEWPORT_HEIGHT, 0, -40);
+        const viewport = this.getOrCreateEditorNode(
+            'MarketSellSelectViewport',
+            board,
+            HomeConfig.ROLE_EQUIP_REPLACE_DRAWER_VIEWPORT_WIDTH,
+            HomeConfig.ROLE_EQUIP_REPLACE_DRAWER_VIEWPORT_HEIGHT,
+            0,
+            HomeConfig.ROLE_EQUIP_REPLACE_DRAWER_VIEWPORT_Y,
+        );
         viewport.active = true;
+        viewport.setPosition(0, HomeConfig.ROLE_EQUIP_REPLACE_DRAWER_VIEWPORT_Y, 0);
         viewport.setSiblingIndex(5);
         const mask = viewport.getComponent(Mask) || viewport.addComponent(Mask);
         mask.type = Mask.Type.GRAPHICS_RECT;
-        const cols = 4;
+        const cols = HomeConfig.ROLE_EQUIP_REPLACE_DRAWER_GRID_COLS;
         const rowCount = Math.max(1, Math.ceil(items.length / cols));
-        const rowStep = HomeConfig.MARKET_SELL_SELECT_CELL_SIZE + HomeConfig.MARKET_SELL_SELECT_CELL_GAP_Y;
-        const contentHeight = Math.max(HomeConfig.MARKET_SELL_SELECT_VIEWPORT_HEIGHT, rowCount * rowStep + 20);
-        const content = this.getOrCreateEditorNode('MarketSellSelectContent', viewport, HomeConfig.MARKET_SELL_SELECT_VIEWPORT_WIDTH, contentHeight, 0, 0);
+        const rowStep = HomeConfig.ROLE_EQUIP_REPLACE_DRAWER_GRID_GAP_Y;
+        const contentHeight = Math.max(HomeConfig.ROLE_EQUIP_REPLACE_DRAWER_VIEWPORT_HEIGHT, rowCount * rowStep + 110);
+        const content = this.getOrCreateEditorNode('MarketSellSelectContent', viewport, HomeConfig.ROLE_EQUIP_REPLACE_DRAWER_VIEWPORT_WIDTH, contentHeight, 0, 0);
         content.active = true;
         content.setPosition(0, 0, 0);
-        (content.getComponent(UITransform) || content.addComponent(UITransform)).setContentSize(HomeConfig.MARKET_SELL_SELECT_VIEWPORT_WIDTH, contentHeight);
+        (content.getComponent(UITransform) || content.addComponent(UITransform)).setContentSize(HomeConfig.ROLE_EQUIP_REPLACE_DRAWER_VIEWPORT_WIDTH, contentHeight);
         content.children
             .filter((child) => /^MarketSellSelectItem_\d+$/.test(child.name) || child.name === 'MarketSellSelectEmpty')
             .forEach((child) => {
                 child.active = false;
             });
-        const startX = -((cols - 1) * (HomeConfig.MARKET_SELL_SELECT_CELL_SIZE + HomeConfig.MARKET_SELL_SELECT_CELL_GAP_X)) / 2;
-        const startY = HomeConfig.MARKET_SELL_SELECT_VIEWPORT_HEIGHT / 2 - HomeConfig.MARKET_SELL_SELECT_CELL_SIZE / 2 - 12;
+        const startX = HomeConfig.ROLE_EQUIP_REPLACE_DRAWER_GRID_START_X;
+        const startY = HomeConfig.ROLE_EQUIP_REPLACE_DRAWER_VIEWPORT_HEIGHT / 2 - 78;
 
         if (items.length === 0) {
             const empty = this.getOrCreateEditorLabel(content, 'MarketSellSelectEmpty', this.isMarketRequestPostPage() ? '\u6682\u65e0\u53ef\u6c42\u8d2d\u7269\u54c1' : '\u6682\u65e0\u53ef\u4e0a\u67b6\u7269\u54c1', 26, 0, 120, 360, 58, new Color(92, 65, 43, 255));
@@ -240,57 +275,97 @@ export abstract class HomeFeatureMarketSell extends HomeFeatureMarketSellHost {
                     content,
                     item,
                     index,
-                    startX + col * (HomeConfig.MARKET_SELL_SELECT_CELL_SIZE + HomeConfig.MARKET_SELL_SELECT_CELL_GAP_X),
+                    startX + col * HomeConfig.ROLE_EQUIP_REPLACE_DRAWER_GRID_GAP_X,
                     startY - row * rowStep,
                 );
             });
         }
 
-        const maxScrollY = Math.max(0, contentHeight - HomeConfig.MARKET_SELL_SELECT_VIEWPORT_HEIGHT);
+        const maxScrollY = Math.max(0, contentHeight - HomeConfig.ROLE_EQUIP_REPLACE_DRAWER_VIEWPORT_HEIGHT);
         this.bindBagGridScroll(viewport, content, maxScrollY);
         this.bindBagGridScroll(content, content, maxScrollY);
+        const popupOpacity = popup.getComponent(UIOpacity) || popup.addComponent(UIOpacity);
+        popupOpacity.opacity = 255;
+        void this.slideMarketSellSelectDrawer(
+            board,
+            HomeConfig.ROLE_EQUIP_REPLACE_DRAWER_HIDDEN_Y,
+            HomeConfig.ROLE_EQUIP_REPLACE_DRAWER_Y,
+            0.22,
+            'sineOut',
+        );
     }
     protected createMarketSellSelectItem(parent: Node, item: BagIllustrationCatalogItem, index: number, x: number, y: number): void {
-        const slot = this.getOrCreateEditorNode(`MarketSellSelectItem_${index + 1}`, parent, HomeConfig.MARKET_SELL_SELECT_CELL_SIZE, HomeConfig.MARKET_SELL_SELECT_CELL_SIZE + 34, x, y);
+        const slot = this.getOrCreateEditorNode(`MarketSellSelectItem_${index + 1}`, parent, 128, 138, x, y);
         slot.active = true;
         slot.setPosition(x, y, 0);
-        (slot.getComponent(UITransform) || slot.addComponent(UITransform)).setContentSize(HomeConfig.MARKET_SELL_SELECT_CELL_SIZE, HomeConfig.MARKET_SELL_SELECT_CELL_SIZE + 34);
+        (slot.getComponent(UITransform) || slot.addComponent(UITransform)).setContentSize(128, 138);
         slot.setSiblingIndex(index + 1);
-        const frame = this.getOrCreateEditorSkinnedNode('MarketSellSelectFrame', slot, 76, 76, 0, 12, item.framePath);
+        const frame = this.getOrCreateEditorSkinnedNode('MarketSellSelectFrame', slot, 112, 112, 0, 12, item.framePath);
         frame.active = true;
         frame.setPosition(0, 12, 0);
-        (frame.getComponent(UITransform) || frame.addComponent(UITransform)).setContentSize(76, 76);
+        (frame.getComponent(UITransform) || frame.addComponent(UITransform)).setContentSize(112, 112);
         frame.setSiblingIndex(0);
-        const icon = this.getOrCreateEditorSkinnedNode('MarketSellSelectIcon', slot, 58, 58, 0, 14, item.iconPath);
+        const icon = this.getOrCreateEditorSkinnedNode('MarketSellSelectIcon', slot, 88, 88, 0, 14, item.iconPath);
         icon.active = true;
         icon.setPosition(0, 14, 0);
-        (icon.getComponent(UITransform) || icon.addComponent(UITransform)).setContentSize(58, 58);
+        (icon.getComponent(UITransform) || icon.addComponent(UITransform)).setContentSize(88, 88);
         icon.setSiblingIndex(1);
         const count = this.getAvailableMarketSellItemCount(item);
-        const countLabel = this.getOrCreateEditorLabel(slot, 'MarketSellSelectCount', `${count}`, 17, 25, -14, 42, 24, Color.WHITE);
+        const countLabel = this.getOrCreateEditorLabel(slot, 'MarketSellSelectCount', `${count}`, 20, 34, -42, 48, 26, Color.WHITE);
         countLabel.node.active = !this.isMarketRequestPostPage();
-        countLabel.node.setPosition(25, -14, 0);
-        (countLabel.node.getComponent(UITransform) || countLabel.node.addComponent(UITransform)).setContentSize(42, 24);
+        countLabel.node.setPosition(34, -42, 0);
+        (countLabel.node.getComponent(UITransform) || countLabel.node.addComponent(UITransform)).setContentSize(48, 26);
         countLabel.horizontalAlign = HorizontalTextAlignment.RIGHT;
         this.setLabelOutline(countLabel, Color.BLACK, 2);
         countLabel.node.setSiblingIndex(2);
-        const name = this.getOrCreateEditorLabel(slot, 'MarketSellSelectName', this.getCatalogDisplayName(item), 16, 0, -44, 108, 30, new Color(92, 65, 43, 255));
+        const name = this.getOrCreateEditorLabel(slot, 'MarketSellSelectName', this.getCatalogDisplayName(item), 18, 0, -60, 126, 30, new Color(92, 65, 43, 255));
         name.node.active = true;
-        name.node.setPosition(0, -44, 0);
-        (name.node.getComponent(UITransform) || name.node.addComponent(UITransform)).setContentSize(108, 30);
+        name.node.setPosition(0, -60, 0);
+        (name.node.getComponent(UITransform) || name.node.addComponent(UITransform)).setContentSize(126, 30);
         name.overflow = Overflow.SHRINK;
         this.setLabelOutline(name, new Color(255, 247, 224, 255), 1);
         name.node.setSiblingIndex(3);
         this.bindGridItemTap(slot, () => this.handleMarketSellItemSelected(item));
     }
     protected handleMarketSellItemSelected(item: BagIllustrationCatalogItem): void {
-        this.closeMarketSellItemSelectPopup();
+        this.closeMarketSellItemSelectPopup(false);
         this.marketSellSelectedItem = item;
         this.openMarketSellConfirmPopup(item);
     }
-    protected closeMarketSellItemSelectPopup(): void {
+    protected async slideMarketSellSelectDrawer(board: Node, fromY: number, toY: number, duration = 0.18, easing: 'sineOut' | 'sineIn' = 'sineOut'): Promise<void> {
+        board.active = true;
+        board.setPosition(0, fromY, 0);
+        Tween.stopAllByTarget(board);
+        await new Promise<void>((resolve) => {
+            tween(board)
+                .to(duration, { position: new Vec3(0, toY, 0) }, { easing })
+                .call(() => resolve())
+                .start();
+        });
+    }
+    protected closeMarketSellItemSelectPopup(fade = true): void {
         const popup = this.marketPanel?.getChildByName('MarketSellSelectPopup');
-        if (popup?.isValid) popup.active = false;
+        if (!popup?.isValid || !popup.active) return;
+        const board = popup.getChildByName('MarketSellSelectBoard');
+        if (!fade) {
+            if (board?.isValid) Tween.stopAllByTarget(board);
+            popup.active = false;
+            return;
+        }
+        if (!board?.isValid) {
+            popup.active = false;
+            return;
+        }
+        void this.slideMarketSellSelectDrawer(
+            board,
+            board.position.y,
+            HomeConfig.ROLE_EQUIP_REPLACE_DRAWER_HIDDEN_Y,
+            0.16,
+            'sineIn',
+        )
+            .then(() => {
+                popup.active = false;
+            });
     }
     protected getMarketSellPriceRange(item: BagIllustrationCatalogItem): { basePrice: number; minPrice: number; maxPrice: number } {
         const marketItem = HomeConfig.MARKET_ITEMS.find((listing) => listing.itemId === item.id);

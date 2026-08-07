@@ -93,7 +93,7 @@ export abstract class HomeViewBase extends Component {
     @property({
         type: [BeastCardLayoutConfig],
         displayName: '\u517d\u5361\u56db\u5f20\u5e03\u5c40',
-        tooltip: '\u7b2c 1-4 \u9879\u5206\u522b\u5bf9\u5e94\u51b0\u7130\u50b2\u72ee\u3001\u5e7b\u96ea\u9e3e\u821e\u3001\u91d1\u7130\u76f8\u7fbd\u548c\u7130\u708e\u4e5d\u5c3e\u72d0\uff0c\u53ef\u5355\u72ec\u8c03\u6574 X\u3001Y \u548c\u7f29\u653e\u3002',
+        tooltip: '\u7b2c 1-4 \u9879\u5206\u522b\u5bf9\u5e94\u5e7b\u96ea\u9e3e\u821e\u3001\u51b0\u7130\u50b2\u72ee\u3001\u91d1\u7130\u76f8\u7fbd\u548c\u7130\u708e\u4e5d\u5c3e\u72d0\uff0c\u53ef\u5355\u72ec\u8c03\u6574 X\u3001Y \u548c\u7f29\u653e\u3002',
     })
     beastCardLayouts: BeastCardLayoutConfig[] = HomeConfig.BEAST_CARDS.map(
         (card) => new BeastCardLayoutConfig(card.name, card.x, card.y, card.scale),

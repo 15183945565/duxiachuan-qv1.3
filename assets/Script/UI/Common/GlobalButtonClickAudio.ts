@@ -1,7 +1,10 @@
 import { AudioClip, AudioSource, Button, EventTouch, Node, assetManager, sys } from 'cc';
 
 const RES_BUNDLE_NAME = 'res';
-const CLICK_AUDIO_PATH = 'Audio/UI/button_click';
+const DEFAULT_CLICK_AUDIO_PATH = 'Audio/UI/button_click';
+const SPECIAL_CLICK_AUDIO_PATHS: Readonly<Record<string, string>> = {
+    BtnAdGift: 'Audio/Gift/value_gift_button_click',
+};
 const AUDIO_NODE_NAME = 'GlobalButtonClickAudio';
 const PROFILE_SETTINGS_STORAGE_KEY = 'duxiachuan.profile.settings.v3';
 const BUTTON_NAME_PATTERN = /(^Btn|Button$|Button_|Tab|Toggle$|Back$|Close$|Confirm$|Cancel$|Claim$|Refresh$|Action$|Enter$|Prev$|Next$)/;
@@ -19,8 +22,8 @@ interface GlobalButtonClickBinding {
 
 export class GlobalButtonClickAudio {
     private static readonly bindings = new WeakMap<Node, GlobalButtonClickBinding>();
-    private static clip: AudioClip | null = null;
-    private static clipPromise: Promise<AudioClip> | null = null;
+    private static readonly clips = new Map<string, AudioClip>();
+    private static readonly clipPromises = new Map<string, Promise<AudioClip>>();
 
     public static install(root: Node | null, audioParent?: Node | null): void {
         if (!root?.isValid || this.bindings.has(root)) return;
@@ -40,12 +43,16 @@ export class GlobalButtonClickAudio {
         source.loop = false;
 
         const handler = (event: EventTouch): void => {
-            if (!this.isButtonTouch(root, event)) return;
-            this.play(source);
+            const audioPath = this.resolveClickAudioPath(root, event);
+            if (!audioPath) return;
+            this.play(source, audioPath);
         };
         root.on(Node.EventType.TOUCH_END, handler, this, true);
         this.bindings.set(root, { audioNode, source, handler });
-        void this.preload();
+        void this.preload(DEFAULT_CLICK_AUDIO_PATH);
+        Object.keys(SPECIAL_CLICK_AUDIO_PATHS).forEach((nodeName) => {
+            void this.preload(SPECIAL_CLICK_AUDIO_PATHS[nodeName]);
+        });
     }
 
     public static uninstall(root: Node | null): void {
@@ -60,53 +67,62 @@ export class GlobalButtonClickAudio {
         this.bindings.delete(root);
     }
 
-    private static isButtonTouch(root: Node, event: EventTouch): boolean {
+    private static resolveClickAudioPath(root: Node, event: EventTouch): string | null {
         let current = event.target instanceof Node ? event.target : null;
+        let isButtonTouch = false;
+        let audioPath: string | undefined;
         while (current?.isValid) {
-            if (current.getComponent(Button)) return true;
-            if (BUTTON_NAME_PATTERN.test(current.name)) return true;
-            if (current === root) return false;
+            audioPath = audioPath || SPECIAL_CLICK_AUDIO_PATHS[current.name];
+            if (current.getComponent(Button) || BUTTON_NAME_PATTERN.test(current.name)) isButtonTouch = true;
+            if (current === root) break;
             current = current.parent;
         }
-        return false;
+        return isButtonTouch ? audioPath || DEFAULT_CLICK_AUDIO_PATH : null;
     }
 
-    private static play(source: AudioSource): void {
+    private static play(source: AudioSource, audioPath: string): void {
         const volume = this.getEffectVolume();
         if (volume <= 0 || !source.isValid) return;
 
-        if (this.clip) {
-            source.playOneShot(this.clip, volume);
+        const clip = this.clips.get(audioPath);
+        if (clip) {
+            source.playOneShot(clip, volume);
             return;
         }
 
-        void this.preload()
+        void this.preload(audioPath)
             .then((clip) => {
                 if (source.isValid) source.playOneShot(clip, volume);
             })
-            .catch((err) => console.warn('[GlobalButtonClickAudio] button click audio missing', err));
+            .catch((err) => console.warn(`[GlobalButtonClickAudio] button click audio missing: ${audioPath}`, err));
     }
 
-    private static preload(): Promise<AudioClip> {
-        if (this.clip) return Promise.resolve(this.clip);
-        this.clipPromise = this.clipPromise || new Promise((resolve, reject) => {
+    private static preload(audioPath: string): Promise<AudioClip> {
+        const clip = this.clips.get(audioPath);
+        if (clip) return Promise.resolve(clip);
+
+        const existing = this.clipPromises.get(audioPath);
+        if (existing) return existing;
+
+        const promise = new Promise<AudioClip>((resolve, reject) => {
             assetManager.loadBundle(RES_BUNDLE_NAME, (bundleErr, bundle) => {
                 if (bundleErr || !bundle) {
                     reject(bundleErr || new Error(`Bundle not found: ${RES_BUNDLE_NAME}`));
                     return;
                 }
 
-                bundle.load(CLICK_AUDIO_PATH, AudioClip, (clipErr, clip) => {
+                bundle.load(audioPath, AudioClip, (clipErr, clip) => {
                     if (clipErr || !clip) {
-                        reject(clipErr || new Error(`AudioClip not found: ${CLICK_AUDIO_PATH}`));
+                        reject(clipErr || new Error(`AudioClip not found: ${audioPath}`));
                         return;
                     }
-                    this.clip = clip;
+                    this.clips.set(audioPath, clip);
                     resolve(clip);
                 });
             });
         });
-        return this.clipPromise;
+        this.clipPromises.set(audioPath, promise);
+        return promise;
     }
 
     private static getEffectVolume(): number {

@@ -26,6 +26,7 @@ export const UI_MARKET_DETAIL_TITLE_BG = `${MARKET_UI_ROOT}/market_detail_title_
 export const UI_MARKET_DETAIL_BUTTON_BG = `${MARKET_UI_ROOT}/market_detail_button_bg`;
 export const UI_MARKET_SELL_ADD = `${MARKET_UI_ROOT}/market_sell_add`;
 export const UI_MARKET_SELL_SELECT_POPUP_BG = `${MARKET_UI_ROOT}/market_sell_select_popup_bg`;
+export const UI_MARKET_SELL_SELECT_DRAWER_BG = `${MARKET_UI_ROOT}/market_sell_select_drawer_bg`;
 export const UI_MARKET_SELL_PRICE_PLUS = `${MARKET_UI_ROOT}/market_sell_price_plus`;
 export const UI_MARKET_SELL_PRICE_MINUS = `${MARKET_UI_ROOT}/market_sell_price_minus`;
 export const UI_MARKET_SELL_QUANTITY_BG = `${MARKET_UI_ROOT}/market_sell_quantity_bg`;

@@ -36,6 +36,7 @@ export abstract class HomeFeatureRoleDisplay extends HomeViewBase {
         this.refreshRolePagePower(config);
     }
     protected refreshRolePagePower(config: RoleAssetConfig): void {
+        this.refreshPersistentCurrencyHud();
         if (!this.rolePagePowerFrame?.isValid) return;
     
         this.rolePagePowerFrame.active = !!this.rolePagePanel?.active;

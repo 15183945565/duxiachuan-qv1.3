@@ -28,11 +28,16 @@ export abstract class HomeFeatureProfileShell extends HomeViewBase {
         const avatarIcon = this.findNode('AvatarIcon', topHud);
         if (avatarIcon) {
             avatarIcon.active = true;
-            this.applyHomeAvatarSkin(avatarIcon, 104, 104);
+            this.applyHomeAvatarSkin(avatarIcon, HomeConfig.HOME_PROFILE_AVATAR_SIZE, HomeConfig.HOME_PROFILE_AVATAR_SIZE);
         }
         const targets = [
+            this.findNode('ProfileInfoFrame', topHud),
             this.findNode('AvatarFrame', topHud),
             avatarIcon,
+            this.findNode('LabelLevel', topHud),
+            this.findNode('LabelPlayerName', topHud),
+            this.findNode('LabelUid', topHud),
+            this.findNode('LabelCombatPower', topHud),
         ].filter((node): node is Node => !!node);
         const bound = new Set<Node>();
         targets.forEach((target) => {
@@ -363,7 +368,7 @@ export abstract class HomeFeatureProfileShell extends HomeViewBase {
     }
     protected refreshProfileAvatarSkins(): void {
         const topHud = this.persistentCurrencyHud || this.findNode('TopHud', this.uiMainLayer || this.node) || this.findNode('TopHud');
-        this.applyHomeAvatarSkin(topHud ? this.findNode('AvatarIcon', topHud) : null, 104, 104);
+        this.applyHomeAvatarSkin(topHud ? this.findNode('AvatarIcon', topHud) : null, HomeConfig.HOME_PROFILE_AVATAR_SIZE, HomeConfig.HOME_PROFILE_AVATAR_SIZE);
 
         const board = this.profilePopupBoard?.isValid ? this.profilePopupBoard : this.findNode('ProfilePopupBoard');
         this.applyHomeAvatarSkin(board ? this.findNode('ProfileAvatarIcon', board) : null, 92, 92);
@@ -428,6 +433,7 @@ export abstract class HomeFeatureProfileShell extends HomeViewBase {
         if (this.playerNameLabel) {
             this.playerNameLabel.string = this.profile.name;
         }
+        this.refreshPersistentCurrencyHud();
         this.refreshRolePageNameLabel(this.getCurrentRoleAssetConfig(this.profile.gender));
         this.refreshProfilePopupLabels();
     }
