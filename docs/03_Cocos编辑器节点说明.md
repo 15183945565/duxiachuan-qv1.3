@@ -85,7 +85,7 @@ MainScene 中 `PageLayer` 和 `PopupLayer` 保持空容器。不要把功能 Pre
 
 ## 可变内容
 
-- 邮件：`MailListRoot/MailRowTemplate`。
+- 邮件：`MailPanel/MailBoard/MailListRoot` 是邮件列表显示和滑动区域，带 `cc.Mask` 和 `cc.ScrollView`；`MailPanel/MailBoard/MailListRoot/MailListContent` 是 ScrollView 的 Content；`MailRowTemplate` 放在 `MailListContent` 下，作为单条邮件模板。
 - 公告：`NoticeScrollContent/NoticeArticleTemplate`。
 - 排行：`RankScrollContent/RankRowTemplate`。
 - 商城：`ShopGridRoot` 下的商品节点。
@@ -99,5 +99,30 @@ MainScene 中 `PageLayer` 和 `PopupLayer` 保持空容器。不要把功能 Pre
 - 位置修改使用 Node Position，尺寸修改使用 UITransform Content Size。
 - 图片替换优先替换 SpriteFrame；Spine 替换需同时核对 JSON、atlas、PNG 和动画名。
 - 若运行时与编辑器不同，先搜索脚本中的 `setPosition/setScale/setContentSize`。
+- 若编辑器模板文字显示为 `????`，先确认是否是占位或编码问题：Prefab/Scene 里应写真实 UTF-8 中文示例，或用 `\uXXXX` 转义写入；不要让模板保留问号占位再靠运行时替换，否则中文长度可能触发 Label 自适应尺寸，导致启动后和编辑器不一致。
+- 处理编辑器模板文字时，运行时代码只刷新 `Label.string`，不要重设模板节点的 Position、Scale、UITransform Content Size、字体和对齐；如果必须换 `string`，先记录并恢复编辑器里的 `UITransform.contentSize`。
+- 滑动列表统一按“外层 Viewport/Mask/ScrollView + 内层 Content + 模板 Row”处理。用户要调截图中的可见区域时优先改 Viewport 的位置和尺寸；用户要调单行样式时改模板 Row，不要把模板拖出 Content。
 
 执行 `npm run check:ui` 可校验关键节点的完整父子路径，不只是检查同名节点是否存在；执行 `npm run check:display` 可校验项目、场景和运行时的屏幕适配入口是否一致。
+
+## 邮件领取奖励确认弹窗
+
+截图里标题为“战场产出材料”的确认领取弹窗在：
+
+```txt
+assets/Bundle/UIHome/Prefabs/Popup/MailPanel.prefab
+MailPanel
+  BattleHostMailDetailTemplate
+    BattleHostMailDetailDim
+    BattleHostMailDetailBoard
+      BattleHostMailDetailBoardSkin
+      BattleHostMailDetailTitleSkin
+      BattleHostMailDetailTitle
+      BattleHostMailRewardViewport
+        BattleHostMailRewardContent
+          BattleHostMailRewardSlot_1..8
+      BattleHostMailCancelButton
+      BattleHostMailClaimButton
+```
+
+`BattleHostMailDetailTemplate` 默认 inactive。需要在编辑器里改这个弹窗时，临时勾上 Active；改完后仍保持默认 inactive。运行时会复用这个模板，只替换标题文本、奖励图标/数量和按钮点击事件，不应覆盖已有节点的位置、尺寸、字体和对齐。

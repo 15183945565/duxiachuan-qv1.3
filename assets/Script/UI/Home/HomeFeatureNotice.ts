@@ -101,6 +101,7 @@ export abstract class HomeFeatureNotice extends HomeViewBase {
         title.enableOutline = true;
         title.outlineColor = new Color(37, 71, 72, 255);
         title.outlineWidth = 3;
+        this.ensureNoticePanelTitleFrame();
         this.createMailButton(this.noticeBoard, 'NoticeClose', '', 294, 504, 72, 72, new Color(110, 72, 52, 0), () => this.closeNoticePanel(), HomeConfig.UI_NOTICE_BTN_CLOSE).setSiblingIndex(8);
 
         this.noticeScrollNode = this.createNode('NoticeScrollView', this.noticeBoard, 596, 930, 0, -38);
@@ -134,14 +135,11 @@ export abstract class HomeFeatureNotice extends HomeViewBase {
             const size = boardSkin.getComponent(UITransform)?.contentSize;
             this.applySlicedUiSkin(boardSkin, HomeConfig.UI_FRAME_NOTICE, size?.width || 680, size?.height || 1120);
         }
+        this.ensureNoticePanelTitleFrame(true);
         const titleLabel = this.findNode('NoticeTitle', this.noticeBoard)?.getComponent(Label);
         if (titleLabel) {
             titleLabel.string = '\u516c\u544a';
-            titleLabel.color = new Color(255, 250, 226, 255);
-            titleLabel.enableOutline = true;
-            titleLabel.outlineColor = new Color(37, 71, 72, 255);
-            titleLabel.outlineWidth = 3;
-            applySimKaiFont(titleLabel);
+            titleLabel.node.active = true;
         }
         const close = this.findNode('NoticeClose', this.noticeBoard);
         if (close) {
@@ -169,6 +167,50 @@ export abstract class HomeFeatureNotice extends HomeViewBase {
         }
         this.noticeArticleTemplate.active = false;
         this.setupNoticeScrollView(this.noticeScrollNode, this.noticeScrollContent);
+    }
+
+    protected ensureNoticePanelTitleFrame(preserveEditorLayout = false): void {
+        if (!this.noticeBoard) return;
+
+        let titleSkin = this.findNode('NoticeTitleSkin', this.noticeBoard);
+        if (!titleSkin) {
+            titleSkin = this.createSkinnedNode(
+                'NoticeTitleSkin',
+                this.noticeBoard,
+                HomeConfig.POPUP_TITLE_FRAME_WIDTH,
+                HomeConfig.POPUP_TITLE_FRAME_HEIGHT,
+                0,
+                HomeConfig.POPUP_TITLE_Y,
+                HomeConfig.UI_POPUP_TITLE_BG,
+            );
+        } else {
+            titleSkin.active = true;
+            const titleSkinTransform = titleSkin.getComponent(UITransform) || titleSkin.addComponent(UITransform);
+            let width = titleSkinTransform.contentSize.width || HomeConfig.POPUP_TITLE_FRAME_WIDTH;
+            let height = titleSkinTransform.contentSize.height || HomeConfig.POPUP_TITLE_FRAME_HEIGHT;
+            if (!preserveEditorLayout) {
+                titleSkin.setPosition(0, HomeConfig.POPUP_TITLE_Y, 0);
+                width = HomeConfig.POPUP_TITLE_FRAME_WIDTH;
+                height = HomeConfig.POPUP_TITLE_FRAME_HEIGHT;
+                titleSkinTransform.setContentSize(width, height);
+            } else if (!titleSkinTransform.contentSize.width || !titleSkinTransform.contentSize.height) {
+                titleSkinTransform.setContentSize(width, height);
+            }
+            this.applyUiSkin(
+                titleSkin,
+                HomeConfig.UI_POPUP_TITLE_BG,
+                width,
+                height,
+            );
+        }
+        if (!preserveEditorLayout) {
+            titleSkin.setSiblingIndex(1);
+        }
+
+        const titleLabel = this.findNode('NoticeTitle', this.noticeBoard)?.getComponent(Label);
+        if (titleLabel && !preserveEditorLayout) {
+            titleLabel.node.setSiblingIndex(2);
+        }
     }
 
     protected closeNoticePanel(): void {

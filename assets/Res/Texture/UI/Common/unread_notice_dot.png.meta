@@ -2,7 +2,7 @@
   "ver": "1.0.27",
   "importer": "image",
   "imported": true,
-  "uuid": "1f66bff1-7df3-4541-be4b-57a912d430fd",
+  "uuid": "4481e4b1-7725-4df0-bbaa-07c6b5efa00e",
   "files": [
     ".json",
     ".png"
@@ -10,19 +10,18 @@
   "subMetas": {
     "6c48a": {
       "importer": "texture",
-      "uuid": "1f66bff1-7df3-4541-be4b-57a912d430fd@6c48a",
-      "displayName": "confirm_title_bg",
       "id": "6c48a",
       "name": "texture",
       "userData": {
-        "wrapModeS": "repeat",
-        "wrapModeT": "repeat",
+        "wrapModeS": "clamp-to-edge",
+        "wrapModeT": "clamp-to-edge",
         "minfilter": "linear",
         "magfilter": "linear",
         "mipfilter": "none",
+        "premultiplyAlpha": false,
         "anisotropy": 0,
         "isUuid": true,
-        "imageUuidOrDatabaseUri": "1f66bff1-7df3-4541-be4b-57a912d430fd",
+        "imageUuidOrDatabaseUri": "4481e4b1-7725-4df0-bbaa-07c6b5efa00e",
         "visible": false
       },
       "ver": "1.0.22",
@@ -30,18 +29,18 @@
       "files": [
         ".json"
       ],
-      "subMetas": {}
+      "subMetas": {},
+      "uuid": "4481e4b1-7725-4df0-bbaa-07c6b5efa00e@6c48a",
+      "displayName": "unread_notice_dot"
     },
     "f9941": {
       "importer": "sprite-frame",
-      "uuid": "1f66bff1-7df3-4541-be4b-57a912d430fd@f9941",
-      "displayName": "confirm_title_bg",
       "id": "f9941",
       "name": "spriteFrame",
       "userData": {
-        "width": 130,
+        "width": 35,
         "height": 37,
-        "rawWidth": 130,
+        "rawWidth": 35,
         "rawHeight": 37,
         "trimType": "none",
         "trimThreshold": 1,
@@ -49,7 +48,7 @@
         "offsetX": 0,
         "offsetY": 0,
         "isUuid": true,
-        "imageUuidOrDatabaseUri": "1f66bff1-7df3-4541-be4b-57a912d430fd@6c48a",
+        "imageUuidOrDatabaseUri": "4481e4b1-7725-4df0-bbaa-07c6b5efa00e@6c48a",
         "packable": true,
         "pixelsToUnit": 100,
         "pivotX": 0.5,
@@ -63,16 +62,16 @@
         "meshType": 0,
         "vertices": {
           "rawPosition": [
-            -65,
+            -17.5,
             -18.5,
             0,
-            65,
+            17.5,
             -18.5,
             0,
-            -65,
+            -17.5,
             18.5,
             0,
-            65,
+            17.5,
             18.5,
             0
           ],
@@ -87,11 +86,11 @@
           "uv": [
             0,
             37,
-            130,
+            35,
             37,
             0,
             0,
-            130,
+            35,
             0
           ],
           "nuv": [
@@ -105,12 +104,12 @@
             1
           ],
           "minPos": [
-            -65,
+            -17.5,
             -18.5,
             0
           ],
           "maxPos": [
-            65,
+            17.5,
             18.5,
             0
           ]
@@ -122,13 +121,15 @@
       "files": [
         ".json"
       ],
-      "subMetas": {}
+      "subMetas": {},
+      "uuid": "4481e4b1-7725-4df0-bbaa-07c6b5efa00e@f9941",
+      "displayName": "unread_notice_dot"
     }
   },
   "userData": {
     "type": "sprite-frame",
-    "fixAlphaTransparencyArtifacts": false,
+    "fixAlphaTransparencyArtifacts": true,
     "hasAlpha": true,
-    "redirect": "1f66bff1-7df3-4541-be4b-57a912d430fd@6c48a"
+    "redirect": "4481e4b1-7725-4df0-bbaa-07c6b5efa00e@6c48a"
   }
 }

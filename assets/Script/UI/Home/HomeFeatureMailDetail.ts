@@ -1,11 +1,15 @@
 import {
     Color,
     EventTouch,
+    Graphics,
     HorizontalTextAlignment,
     Label,
+    Mask,
     Node,
     Overflow,
+    UITransform,
     VerticalTextAlignment,
+    instantiate,
 } from 'cc';
 import {
     BAG_ILLUSTRATION_CATALOG,
@@ -70,8 +74,8 @@ export abstract class HomeFeatureMailDetail extends HomeFeatureMailDetailHost {
     
         const canClaim = mail.rewards.length > 0 && mail.state !== 2;
         const canDelete = mail.state > 0 || mail.rewards.length <= 0;
-        const deleteButton = this.createMailButton(board, 'MailDetailDelete', '删除', -116, -232, 200, 60, new Color(204, 238, 232, 0), () => this.deleteMail(mail.id), HomeConfig.UI_BTN_DELETE);
-        const claimButton = this.createMailButton(board, 'MailDetailClaim', '领取', 116, -232, 200, 60, new Color(204, 238, 232, 0), () => this.claimMailReward(mail.id), HomeConfig.UI_BTN_CLAIM);
+        const deleteButton = this.createMailButton(board, 'MailDetailDelete', '删除', -116, -232, HomeConfig.MAIL_BUTTON_WIDTH, HomeConfig.MAIL_BUTTON_HEIGHT, new Color(204, 238, 232, 0), () => this.deleteMail(mail.id), HomeConfig.UI_MAIL_BUTTON_BG);
+        const claimButton = this.createMailButton(board, 'MailDetailClaim', '领取', 116, -232, HomeConfig.MAIL_BUTTON_WIDTH, HomeConfig.MAIL_BUTTON_HEIGHT, new Color(204, 238, 232, 0), () => this.claimMailReward(mail.id), HomeConfig.UI_MAIL_BUTTON_BG);
         claimButton.active = canClaim;
         deleteButton.active = canDelete;
     }
@@ -79,56 +83,102 @@ export abstract class HomeFeatureMailDetail extends HomeFeatureMailDetailHost {
         if (!this.mailPanel) return;
     
         this.closeMailDetail();
-        this.mailDetailPanel = this.createNode('MailDetailPanel', this.mailPanel, HomeConfig.VIEW_WIDTH, HomeConfig.VIEW_HEIGHT, 0, 0);
+        const editorTemplate = this.mailPanel.getChildByName('BattleHostMailDetailTemplate');
+        const preserveEditorLayout = !!editorTemplate?.isValid;
+        this.mailDetailPanel = editorTemplate || this.createNode('MailDetailPanel', this.mailPanel, HomeConfig.VIEW_WIDTH, HomeConfig.VIEW_HEIGHT, 0, 0);
+        this.mailDetailPanel.active = true;
+        const panelTransform = this.mailDetailPanel.getComponent(UITransform) || this.mailDetailPanel.addComponent(UITransform);
+        if (!preserveEditorLayout || panelTransform.contentSize.width <= 0 || panelTransform.contentSize.height <= 0) {
+            this.mailDetailPanel.setPosition(0, 0, 0);
+            panelTransform.setContentSize(HomeConfig.VIEW_WIDTH, HomeConfig.VIEW_HEIGHT);
+        }
         this.mailDetailPanel.setSiblingIndex((this.mailDetailPanel.parent?.children.length || 1) - 1);
+        this.ensureInputBlocker(this.mailDetailPanel, panelTransform.contentSize.width, panelTransform.contentSize.height);
+        this.mailDetailPanel.off(Node.EventType.TOUCH_END);
         this.mailDetailPanel.on(Node.EventType.TOUCH_END, (event: EventTouch) => {
             event.propagationStopped = true;
         }, this);
-        this.drawRect(this.mailDetailPanel, HomeConfig.VIEW_WIDTH, HomeConfig.VIEW_HEIGHT, new Color(0, 0, 0, 110));
-    
-        const board = this.createNode(
-            'BattleHostMailDetailBoard',
+
+        const dim = this.getOrCreateMailDetailChild(
             this.mailDetailPanel,
+            'BattleHostMailDetailDim',
+            HomeConfig.VIEW_WIDTH,
+            HomeConfig.VIEW_HEIGHT,
+            0,
+            0,
+            preserveEditorLayout,
+        );
+        this.paintMailDetailDim(dim.node, new Color(0, 0, 0, 110));
+        dim.node.setSiblingIndex(0);
+    
+        const boardResult = this.getOrCreateMailDetailChild(
+            this.mailDetailPanel,
+            'BattleHostMailDetailBoard',
             HomeConfig.BATTLE_TARGET_CHALLENGE_POPUP_WIDTH,
             HomeConfig.BATTLE_TARGET_CHALLENGE_POPUP_HEIGHT,
             0,
             0,
+            preserveEditorLayout,
         );
+        const board = boardResult.node;
+        board.active = true;
+        board.off(Node.EventType.TOUCH_START);
+        board.off(Node.EventType.TOUCH_END);
+        board.on(Node.EventType.TOUCH_START, (event: EventTouch) => {
+            event.propagationStopped = true;
+        }, this);
         board.on(Node.EventType.TOUCH_END, (event: EventTouch) => {
             event.propagationStopped = true;
         }, this);
-        this.createSkinnedNode(
-            'BattleHostMailDetailBoardSkin',
+        board.setSiblingIndex(1);
+        const boardSkin = this.getOrCreateMailDetailChild(
             board,
+            'BattleHostMailDetailBoardSkin',
             HomeConfig.BATTLE_TARGET_CHALLENGE_POPUP_WIDTH,
             HomeConfig.BATTLE_TARGET_CHALLENGE_POPUP_HEIGHT,
             0,
             0,
-            HomeConfig.UI_CONFIRM_POPUP_BG,
-        ).setSiblingIndex(0);
-        this.createSkinnedNode(
-            'BattleHostMailDetailTitleSkin',
+            preserveEditorLayout && boardResult.existed,
+        ).node;
+        this.applyUiSkinKeepingEditorSize(boardSkin, HomeConfig.UI_CONFIRM_POPUP_BG, HomeConfig.BATTLE_TARGET_CHALLENGE_POPUP_WIDTH, HomeConfig.BATTLE_TARGET_CHALLENGE_POPUP_HEIGHT);
+        boardSkin.setSiblingIndex(0);
+        const titleSkin = this.getOrCreateMailDetailChild(
             board,
+            'BattleHostMailDetailTitleSkin',
             HomeConfig.BATTLE_TARGET_CHALLENGE_TITLE_WIDTH,
             HomeConfig.BATTLE_TARGET_CHALLENGE_TITLE_HEIGHT,
             0,
             HomeConfig.BATTLE_TARGET_CHALLENGE_TITLE_Y,
-            HomeConfig.UI_CONFIRM_TITLE_BG,
-        ).setSiblingIndex(1);
+            preserveEditorLayout && boardResult.existed,
+        ).node;
+        this.applyUiSkinKeepingEditorSize(titleSkin, HomeConfig.UI_CONFIRM_TITLE_BG, HomeConfig.BATTLE_TARGET_CHALLENGE_TITLE_WIDTH, HomeConfig.BATTLE_TARGET_CHALLENGE_TITLE_HEIGHT);
+        titleSkin.setSiblingIndex(1);
     
-        const title = this.createLabel(
+        const titleResult = this.getOrCreateMailDetailChild(
             board,
             'BattleHostMailDetailTitle',
-            '\u6218\u573a\u4ea7\u51fa\u6750\u6599',
-            30,
-            0,
-            HomeConfig.BATTLE_TARGET_CHALLENGE_TITLE_Y + 3,
             360,
             52,
-            new Color(126, 74, 36, 255),
+            0,
+            HomeConfig.BATTLE_TARGET_CHALLENGE_TITLE_Y + 3,
+            preserveEditorLayout && boardResult.existed,
         );
-        title.overflow = Overflow.SHRINK;
-        this.setLabelOutline(title, new Color(255, 245, 215, 255), 2);
+        const titleNode = titleResult.node;
+        const title = titleNode.getComponent(Label) || titleNode.addComponent(Label);
+        const titleSize = titleNode.getComponent(UITransform)?.contentSize;
+        title.string = mail.title || '\u6218\u573a\u4ea7\u51fa\u6750\u6599';
+        if (!preserveEditorLayout || !titleResult.existed) {
+            title.fontSize = 30;
+            title.lineHeight = 38;
+            title.color = new Color(126, 74, 36, 255);
+            title.horizontalAlign = HorizontalTextAlignment.CENTER;
+            title.verticalAlign = VerticalTextAlignment.CENTER;
+            title.overflow = Overflow.SHRINK;
+            this.setLabelOutline(title, new Color(255, 245, 215, 255), 2);
+        }
+        if (preserveEditorLayout && titleSize && titleSize.width > 0 && titleSize.height > 0) {
+            titleNode.getComponent(UITransform)?.setContentSize(titleSize.width, titleSize.height);
+        }
         title.node.setSiblingIndex(2);
     
         this.createMailRewardGrid(board, mail);
@@ -138,28 +188,150 @@ export abstract class HomeFeatureMailDetail extends HomeFeatureMailDetailHost {
             this.claimMailReward(mail.id, false);
         });
     }
+    protected getOrCreateMailDetailChild(
+        parent: Node,
+        name: string,
+        width: number,
+        height: number,
+        x: number,
+        y: number,
+        preserveEditorLayout = true,
+    ): { node: Node; existed: boolean } {
+        const existing = parent.getChildByName(name);
+        const node = existing || this.createNode(name, parent, width, height, x, y);
+        const transform = node.getComponent(UITransform) || node.addComponent(UITransform);
+        if (!existing || !preserveEditorLayout) {
+            node.setPosition(x, y, 0);
+            transform.setContentSize(width, height);
+        } else if (transform.contentSize.width <= 0 || transform.contentSize.height <= 0) {
+            transform.setContentSize(width, height);
+        }
+        node.active = true;
+        return { node, existed: !!existing };
+    }
+    protected paintMailDetailDim(node: Node, color: Color): void {
+        const transform = node.getComponent(UITransform) || node.addComponent(UITransform);
+        const width = transform.contentSize.width || HomeConfig.VIEW_WIDTH;
+        const height = transform.contentSize.height || HomeConfig.VIEW_HEIGHT;
+        const graphics = node.getComponent(Graphics) || node.addComponent(Graphics);
+        graphics.clear();
+        graphics.fillColor = color;
+        graphics.rect(-width / 2, -height / 2, width, height);
+        graphics.fill();
+        node.off(Node.EventType.TOUCH_END);
+        node.on(Node.EventType.TOUCH_END, (event: EventTouch) => {
+            event.propagationStopped = true;
+        }, this);
+    }
     protected createMailRewardGrid(parent: Node, mail: MailData): void {
-        const root = this.createNode('BattleHostMailRewardItemsRoot', parent, 610, 210, 0, 12);
-        root.setSiblingIndex(3);
+        const viewport = this.getOrCreateMailDetailChild(parent, 'BattleHostMailRewardViewport', 610, 210, 0, 12, true).node;
+        viewport.setSiblingIndex(3);
+        const viewportTransform = viewport.getComponent(UITransform) || viewport.addComponent(UITransform);
+        const viewportWidth = viewportTransform.contentSize.width || 610;
+        const viewportHeight = viewportTransform.contentSize.height || 210;
+        const mask = viewport.getComponent(Mask) || viewport.addComponent(Mask);
+        mask.type = Mask.Type.GRAPHICS_RECT;
+
+        const contentResult = this.getOrCreateMailDetailChild(viewport, 'BattleHostMailRewardContent', viewportWidth, viewportHeight, 0, 0, true);
+        const content = contentResult.node;
+        if (!contentResult.existed) {
+            content.setPosition(0, 0, 0);
+        }
+        content.setSiblingIndex(0);
+        const generatedPrefix = 'BattleHostMailRewardGenerated_';
+        content.children
+            .filter((child) => child.name.startsWith(generatedPrefix) || child.name === 'BattleHostMailRewardEmpty')
+            .forEach((child) => {
+                child.active = false;
+                child.destroy();
+            });
+        content.children
+            .filter((child) => /^BattleHostMailRewardSlot_\d+$/.test(child.name))
+            .forEach((child) => {
+                child.active = false;
+            });
+
         const rewards = mail.rewards
             .map((reward) => ({ reward, item: this.resolveMailRewardItem(reward) }))
             .filter((entry): entry is { reward: MailReward; item: BagIllustrationCatalogItem } => !!entry.item);
         if (rewards.length <= 0) {
-            const empty = this.createLabel(root, 'BattleHostMailRewardEmpty', '\u6682\u65e0\u9644\u4ef6', 28, 0, 0, 320, 60, new Color(107, 75, 46, 255));
+            const empty = this.createLabel(content, 'BattleHostMailRewardEmpty', '\u6682\u65e0\u9644\u4ef6', 28, 0, 0, 320, 60, new Color(107, 75, 46, 255));
             this.setLabelOutline(empty, new Color(255, 246, 220, 255), 1);
             return;
         }
     
         const columns = HomeConfig.BATTLE_REWARD_GRID_COLUMNS;
-        const firstRowCount = Math.min(columns, rewards.length);
+        const rowCount = Math.max(1, Math.ceil(rewards.length / columns));
+        const contentHeight = rowCount <= 2
+            ? viewportHeight
+            : Math.max(viewportHeight, rowCount * HomeConfig.BATTLE_REWARD_GRID_ROW_GAP + 86);
+        (content.getComponent(UITransform) || content.addComponent(UITransform)).setContentSize(viewportWidth, contentHeight);
+        const templateSlot = content.getChildByName('BattleHostMailRewardSlot_1');
+        const startY = rowCount <= 2
+            ? HomeConfig.BATTLE_REWARD_GRID_ROW_GAP / 2
+            : contentHeight / 2 - HomeConfig.BATTLE_REWARD_SLOT_SIZE / 2;
         rewards.forEach((entry, index) => {
-            const row = index < firstRowCount ? 0 : 1;
-            const rowStart = row === 0 ? 0 : firstRowCount;
-            const rowItemCount = row === 0 ? firstRowCount : rewards.length - firstRowCount;
+            const row = Math.floor(index / columns);
+            const rowStart = row * columns;
+            const rowItemCount = Math.min(columns, rewards.length - rowStart);
             const column = index - rowStart;
             const x = (column - (rowItemCount - 1) / 2) * HomeConfig.BATTLE_REWARD_GRID_COLUMN_GAP;
-            const y = (row === 0 ? 0.5 : -0.5) * HomeConfig.BATTLE_REWARD_GRID_ROW_GAP;
-            this.createBattleRewardItem(root, index, entry.item, entry.reward.count, x, y);
+            const y = startY - row * HomeConfig.BATTLE_REWARD_GRID_ROW_GAP;
+            const editorSlot = content.getChildByName(`BattleHostMailRewardSlot_${index + 1}`);
+            if (editorSlot) {
+                this.syncMailRewardSlot(editorSlot, entry.item, entry.reward.count, index);
+                return;
+            }
+            if (templateSlot) {
+                const clone = instantiate(templateSlot);
+                clone.name = `${generatedPrefix}${index + 1}`;
+                clone.setParent(content);
+                clone.setPosition(x, y, 0);
+                this.syncMailRewardSlot(clone, entry.item, entry.reward.count, index);
+                return;
+            }
+            this.createBattleRewardItem(content, index, entry.item, entry.reward.count, x, y);
+        });
+        const maxScrollY = Math.max(0, contentHeight - viewportHeight);
+        this.bindBagGridScroll(viewport, content, maxScrollY);
+        this.bindBagGridScroll(content, content, maxScrollY);
+    }
+    protected syncMailRewardSlot(slot: Node, item: BagIllustrationCatalogItem, amount: string, index: number): void {
+        slot.active = true;
+        slot.setSiblingIndex(index + 1);
+        const frame = slot.getChildByName('BattleHostMailRewardItemFrame')
+            || this.createSkinnedNode('BattleHostMailRewardItemFrame', slot, HomeConfig.BATTLE_REWARD_FRAME_SIZE, HomeConfig.BATTLE_REWARD_FRAME_SIZE, 0, 0, item.framePath);
+        frame.active = true;
+        this.applyUiSkinKeepingEditorSize(frame, item.framePath, HomeConfig.BATTLE_REWARD_FRAME_SIZE, HomeConfig.BATTLE_REWARD_FRAME_SIZE);
+        frame.setSiblingIndex(0);
+
+        const icon = slot.getChildByName('BattleHostMailRewardItemIcon')
+            || this.createSkinnedNode('BattleHostMailRewardItemIcon', slot, HomeConfig.BATTLE_REWARD_ICON_SIZE, HomeConfig.BATTLE_REWARD_ICON_SIZE, 0, 3, item.iconPath);
+        icon.active = true;
+        this.applyUiSkinKeepingEditorSize(icon, item.iconPath, HomeConfig.BATTLE_REWARD_ICON_SIZE, HomeConfig.BATTLE_REWARD_ICON_SIZE);
+        icon.setSiblingIndex(1);
+
+        let count = slot.getChildByName('BattleHostMailRewardItemCount')?.getComponent(Label) || null;
+        const countExisted = !!count;
+        if (!count) {
+            count = this.createLabel(slot, 'BattleHostMailRewardItemCount', amount, 20, 25, -30, 56, 28, Color.WHITE);
+        }
+        const countSize = count.node.getComponent(UITransform)?.contentSize;
+        count.string = amount;
+        if (!countExisted) {
+            count.fontSize = 20;
+            count.lineHeight = 28;
+            count.color = Color.WHITE;
+            count.horizontalAlign = HorizontalTextAlignment.RIGHT;
+            this.setLabelOutline(count, new Color(25, 20, 14, 255), 2);
+        }
+        if (countSize && countSize.width > 0 && countSize.height > 0) {
+            count.node.getComponent(UITransform)?.setContentSize(countSize.width, countSize.height);
+        }
+        count.node.active = true;
+        count.node.setSiblingIndex(2);
+        this.bindGridItemTap(slot, () => {
+            this.openBagIllustrationItemDetailPopup(item, HomeConfig.MARKET_CATEGORY_TITLES[item.category] || '\u6750\u6599');
         });
     }
     protected resolveMailRewardItem(reward: MailReward): BagIllustrationCatalogItem | null {
@@ -177,27 +349,49 @@ export abstract class HomeFeatureMailDetail extends HomeFeatureMailDetailHost {
         };
     }
     protected createMailDetailActionButton(parent: Node, name: string, text: string, x: number, onClick: () => void): Node {
-        const button = this.createSkinnedNode(
+        const existing = parent.getChildByName(name);
+        const button = existing || this.createSkinnedNode(
             name,
             parent,
             HomeConfig.BATTLE_TARGET_CHALLENGE_BUTTON_WIDTH,
             HomeConfig.BATTLE_TARGET_CHALLENGE_BUTTON_HEIGHT,
             x,
             HomeConfig.BATTLE_TARGET_CHALLENGE_BUTTON_Y,
-            HomeConfig.UI_BATTLE_ACTION_BUTTON_BG,
+            HomeConfig.UI_MAIL_BUTTON_BG,
         );
-        const label = this.createLabel(
-            button,
-            `${name}Label`,
-            text,
-            text.length > 2 ? 26 : 31,
-            0,
-            1,
-            HomeConfig.BATTLE_TARGET_CHALLENGE_BUTTON_WIDTH - 24,
-            42,
-            new Color(255, 238, 218, 255),
-        );
-        this.setLabelOutline(label, new Color(94, 36, 35, 255), 2);
+        button.active = true;
+        if (!existing) {
+            button.setPosition(x, HomeConfig.BATTLE_TARGET_CHALLENGE_BUTTON_Y, 0);
+        }
+        this.applyUiSkinKeepingEditorSize(button, HomeConfig.UI_MAIL_BUTTON_BG, HomeConfig.BATTLE_TARGET_CHALLENGE_BUTTON_WIDTH, HomeConfig.BATTLE_TARGET_CHALLENGE_BUTTON_HEIGHT);
+        let label = button.getChildByName(`${name}Label`)?.getComponent(Label) || null;
+        const labelExisted = !!label;
+        if (!label) {
+            label = this.createLabel(
+                button,
+                `${name}Label`,
+                text,
+                text.length > 2 ? 26 : 31,
+                0,
+                1,
+                HomeConfig.BATTLE_TARGET_CHALLENGE_BUTTON_WIDTH - 24,
+                42,
+                new Color(255, 238, 218, 255),
+            );
+        }
+        const labelSize = label.node.getComponent(UITransform)?.contentSize;
+        label.string = text;
+        if (!labelExisted) {
+            label.fontSize = text.length > 2 ? 26 : 31;
+            label.lineHeight = label.fontSize + 8;
+            label.color = new Color(255, 238, 218, 255);
+            label.horizontalAlign = HorizontalTextAlignment.CENTER;
+            label.verticalAlign = VerticalTextAlignment.CENTER;
+            this.setLabelOutline(label, new Color(94, 36, 35, 255), 2);
+        }
+        if (labelSize && labelSize.width > 0 && labelSize.height > 0) {
+            label.node.getComponent(UITransform)?.setContentSize(labelSize.width, labelSize.height);
+        }
         label.node.setSiblingIndex(1);
         this.bindScaledClick(button, () => onClick());
         button.setSiblingIndex(parent.children.length - 1);
@@ -206,8 +400,11 @@ export abstract class HomeFeatureMailDetail extends HomeFeatureMailDetailHost {
     protected closeMailDetail(): void {
         if (!this.mailDetailPanel) return;
     
-        this.mailDetailPanel.active = false;
-        this.mailDetailPanel.destroy();
+        const panel = this.mailDetailPanel;
+        panel.active = false;
+        if (panel.name !== 'BattleHostMailDetailTemplate') {
+            panel.destroy();
+        }
         this.mailDetailPanel = null;
     }
     protected getMailRewardPopupItems(mail: MailData): Array<{ item: BagIllustrationCatalogItem; amount: string }> {
@@ -297,10 +494,26 @@ export abstract class HomeFeatureMailDetail extends HomeFeatureMailDetailHost {
     
         let badge = mailButton.getChildByName('MailBadge');
         if (!badge) {
-            badge = this.createNode('MailBadge', mailButton, 22, 22, 38, 38);
-            this.drawCircle(badge, 8, new Color(228, 28, 48, 255));
+            badge = this.createSkinnedNode(
+                'MailBadge',
+                mailButton,
+                HomeConfig.GLOBAL_UNREAD_DOT_WIDTH,
+                HomeConfig.GLOBAL_UNREAD_DOT_HEIGHT,
+                38,
+                38,
+                HomeConfig.UI_GLOBAL_UNREAD_DOT,
+            );
+        } else {
+            badge.setPosition(38, 38, 0);
+            (badge.getComponent(UITransform) || badge.addComponent(UITransform)).setContentSize(
+                HomeConfig.GLOBAL_UNREAD_DOT_WIDTH,
+                HomeConfig.GLOBAL_UNREAD_DOT_HEIGHT,
+            );
+            const graphics = badge.getComponent(Graphics);
+            if (graphics) graphics.clear();
+            this.applyUiSkin(badge, HomeConfig.UI_GLOBAL_UNREAD_DOT, HomeConfig.GLOBAL_UNREAD_DOT_WIDTH, HomeConfig.GLOBAL_UNREAD_DOT_HEIGHT);
         }
-    
+
         badge.active = this.mailData.some((mail) => mail.state === 0);
     }
     protected createMailButton(parent: Node, name: string, text: string, x: number, y: number, width: number, height: number, color: Color, onClick: () => void, skinPath?: string): Node {

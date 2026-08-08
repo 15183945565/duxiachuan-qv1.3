@@ -832,17 +832,26 @@ export class MainHomeView extends HomeViewWithShop {
         this.playDuelLuanshiEffectSound(HomeConfig.DUEL_LUANSHI_NORMAL_ATTACK_AUDIO_PATH, 'normal attack audio missing');
     }
 
-    private playDuelLuanshiEffectSound(audioPath: string, label: string, delaySeconds = 0): void {
-        if (!audioPath || !this.duelLuanshiMusicActive) return;
+    protected playDuelLuanshiResultSound(success: boolean): void {
+        this.playDuelLuanshiEffectSound(
+            success ? HomeConfig.DUEL_LUANSHI_SUCCESS_AUDIO_PATH : HomeConfig.DUEL_LUANSHI_FAILURE_AUDIO_PATH,
+            success ? 'result success audio missing' : 'result failure audio missing',
+            0,
+            false,
+        );
+    }
+
+    private playDuelLuanshiEffectSound(audioPath: string, label: string, delaySeconds = 0, requireActive = true): void {
+        if (!audioPath || (requireActive && !this.duelLuanshiMusicActive)) return;
 
         const playEffect = (): void => {
-            if (!this.duelLuanshiMusicActive) return;
+            if (requireActive && !this.duelLuanshiMusicActive) return;
             const source = this.getOrCreateDuelLuanshiSkillEffectSource();
             if (!source) return;
 
             void this.getDuelLuanshiSkillEffectClipPromise(audioPath)
                 .then((clip) => {
-                    if (!this.duelLuanshiMusicActive || !source.isValid) return;
+                    if ((requireActive && !this.duelLuanshiMusicActive) || !source.isValid) return;
                     const effectVolume = this.getDuelJianghuEffectVolume();
                     if (effectVolume <= 0) return;
                     source.playOneShot(clip, effectVolume);
@@ -945,6 +954,10 @@ export class MainHomeView extends HomeViewWithShop {
         });
         void this.getDuelLuanshiSkillEffectClipPromise(HomeConfig.DUEL_LUANSHI_NORMAL_ATTACK_AUDIO_PATH)
             .catch((err) => console.warn('[MainHomeView] duel luanshi normal attack audio preload failed', err));
+        void this.getDuelLuanshiSkillEffectClipPromise(HomeConfig.DUEL_LUANSHI_SUCCESS_AUDIO_PATH)
+            .catch((err) => console.warn('[MainHomeView] duel luanshi success audio preload failed', err));
+        void this.getDuelLuanshiSkillEffectClipPromise(HomeConfig.DUEL_LUANSHI_FAILURE_AUDIO_PATH)
+            .catch((err) => console.warn('[MainHomeView] duel luanshi failure audio preload failed', err));
     }
 
     private playDuelJianghuEffect(path: string, fallbackSeconds: number, label: string): void {

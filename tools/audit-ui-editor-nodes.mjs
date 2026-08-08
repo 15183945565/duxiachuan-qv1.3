@@ -364,7 +364,18 @@ const requirements = {
 
         'Canvas/MainRoot/PopupLayer/MailPanel',
         'Canvas/MainRoot/PopupLayer/MailPanel/MailBoard',
-        'Canvas/MainRoot/PopupLayer/MailPanel/MailBoard/MailListRoot/MailRowTemplate',
+        'Canvas/MainRoot/PopupLayer/MailPanel/MailBoard/MailListRoot',
+        'Canvas/MainRoot/PopupLayer/MailPanel/MailBoard/MailListRoot/MailListContent',
+        'Canvas/MainRoot/PopupLayer/MailPanel/MailBoard/MailListRoot/MailListContent/MailRowTemplate',
+        'Canvas/MainRoot/PopupLayer/MailPanel/BattleHostMailDetailTemplate',
+        'Canvas/MainRoot/PopupLayer/MailPanel/BattleHostMailDetailTemplate/BattleHostMailDetailBoard',
+        'Canvas/MainRoot/PopupLayer/MailPanel/BattleHostMailDetailTemplate/BattleHostMailDetailBoard/BattleHostMailDetailTitleSkin',
+        'Canvas/MainRoot/PopupLayer/MailPanel/BattleHostMailDetailTemplate/BattleHostMailDetailBoard/BattleHostMailDetailTitle',
+        'Canvas/MainRoot/PopupLayer/MailPanel/BattleHostMailDetailTemplate/BattleHostMailDetailBoard/BattleHostMailRewardViewport',
+        'Canvas/MainRoot/PopupLayer/MailPanel/BattleHostMailDetailTemplate/BattleHostMailDetailBoard/BattleHostMailRewardViewport/BattleHostMailRewardContent',
+        'Canvas/MainRoot/PopupLayer/MailPanel/BattleHostMailDetailTemplate/BattleHostMailDetailBoard/BattleHostMailRewardViewport/BattleHostMailRewardContent/BattleHostMailRewardSlot_1',
+        'Canvas/MainRoot/PopupLayer/MailPanel/BattleHostMailDetailTemplate/BattleHostMailDetailBoard/BattleHostMailCancelButton',
+        'Canvas/MainRoot/PopupLayer/MailPanel/BattleHostMailDetailTemplate/BattleHostMailDetailBoard/BattleHostMailClaimButton',
         'Canvas/MainRoot/PopupLayer/NoticePanel',
         'Canvas/MainRoot/PopupLayer/NoticePanel/NoticeBoard/NoticeScrollView/NoticeScrollContent/NoticeArticleTemplate',
         'Canvas/MainRoot/PopupLayer/RankPanel',
@@ -492,6 +503,8 @@ const blockInputRequirements = {
         'Canvas/MainRoot/PageLayer/BattlePanel/BattleCombatLayer',
         'Canvas/MainRoot/PageLayer/ShopPanel',
         'Canvas/MainRoot/PopupLayer/MailPanel',
+        'Canvas/MainRoot/PopupLayer/MailPanel/BattleHostMailDetailTemplate',
+        'Canvas/MainRoot/PopupLayer/MailPanel/BattleHostMailDetailTemplate/BattleHostMailDetailBoard',
         'Canvas/MainRoot/PopupLayer/NoticePanel',
         'Canvas/MainRoot/PopupLayer/RankPanel',
         'Canvas/MainRoot/PopupLayer/GiftPanel',
@@ -548,6 +561,9 @@ const forbiddenEditorPaths = {
 };
 
 const activeStateRequirements = {
+    'assets/Bundle/UIHome/Prefabs/Popup/MailPanel.prefab': [
+        { path: 'MailPanel/BattleHostMailDetailTemplate', active: false },
+    ],
     'assets/Bundle/UIHome/Prefabs/Popup/SharePanel.prefab': [
         { path: 'SharePanel', active: false },
     ],
@@ -556,6 +572,38 @@ const activeStateRequirements = {
         { path: 'ProfilePopup/ProfilePopupBoard', active: true },
         { path: 'ProfilePopup/ProfileDaoYouPanel', active: false },
         { path: 'ProfilePopup/ProfileBillPanel', active: false },
+    ],
+};
+
+const componentRequirements = {
+    'assets/Bundle/UIHome/Prefabs/Popup/MailPanel.prefab': [
+        {
+            path: 'MailPanel/MailBoard/MailListRoot',
+            component: 'cc.Mask',
+            describe: 'enabled rectangular cc.Mask',
+            validate: (_scene, _node, component) => component._enabled !== false && component._type === 0,
+        },
+        {
+            path: 'MailPanel/MailBoard/MailListRoot',
+            component: 'cc.ScrollView',
+            describe: 'enabled vertical cc.ScrollView using MailListContent',
+            validate: (scene, _node, component, nodesByPath) => {
+                const content = nodesByPath.get('MailPanel/MailBoard/MailListRoot/MailListContent');
+                return component._enabled !== false
+                    && component.vertical === true
+                    && component.horizontal === false
+                    && component.elastic === false
+                    && component.bounceDuration === 0
+                    && component._content?.__id__ !== undefined
+                    && scene[component._content.__id__] === content;
+            },
+        },
+        {
+            path: 'MailPanel/BattleHostMailDetailTemplate/BattleHostMailDetailBoard/BattleHostMailRewardViewport',
+            component: 'cc.Mask',
+            describe: 'enabled rectangular cc.Mask',
+            validate: (_scene, _node, component) => component._enabled !== false && component._type === 0,
+        },
     ],
 };
 
@@ -643,6 +691,12 @@ function hasEnabledBlockInput(scene, node) {
         .some((component) => component?.__type__ === 'cc.BlockInputEvents' && component._enabled !== false);
 }
 
+function getComponent(scene, node, componentType) {
+    return (node._components || [])
+        .map((componentRef) => scene[componentRef.__id__])
+        .find((component) => component?.__type__ === componentType);
+}
+
 let failed = false;
 for (const [relativePath, requiredPaths] of Object.entries(artifactRequirements)) {
     const scenePath = path.join(projectRoot, relativePath);
@@ -676,6 +730,22 @@ for (const [relativePath, requiredPaths] of Object.entries(artifactRequirements)
         invalidActiveStates.forEach((requirement) => {
             const actual = nodesByPath.get(requirement.path)?._active;
             console.error(`  - ${requirement.path}: expected ${requirement.active}, got ${actual}`);
+        });
+    }
+
+    const requiredComponents = componentRequirements[relativePath] || [];
+    const invalidComponents = requiredComponents.filter((requirement) => {
+        const node = nodesByPath.get(requirement.path);
+        if (!node) return true;
+        const component = getComponent(scene, node, requirement.component);
+        if (!component) return true;
+        return requirement.validate && !requirement.validate(scene, node, component, nodesByPath);
+    });
+    if (invalidComponents.length > 0) {
+        failed = true;
+        console.error(`${relativePath}: invalid editor components:`);
+        invalidComponents.forEach((requirement) => {
+            console.error(`  - ${requirement.path}: expected ${requirement.describe}`);
         });
     }
 

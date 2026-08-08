@@ -2,7 +2,7 @@
   "ver": "1.0.27",
   "importer": "image",
   "imported": true,
-  "uuid": "1f66bff1-7df3-4541-be4b-57a912d430fd",
+  "uuid": "ef1caddd-273e-47a7-a675-64b3a9e6e8ff",
   "files": [
     ".json",
     ".png"
@@ -10,19 +10,20 @@
   "subMetas": {
     "6c48a": {
       "importer": "texture",
-      "uuid": "1f66bff1-7df3-4541-be4b-57a912d430fd@6c48a",
-      "displayName": "confirm_title_bg",
+      "uuid": "ef1caddd-273e-47a7-a675-64b3a9e6e8ff@6c48a",
+      "displayName": "mail_button_bg",
       "id": "6c48a",
       "name": "texture",
       "userData": {
-        "wrapModeS": "repeat",
-        "wrapModeT": "repeat",
+        "wrapModeS": "clamp-to-edge",
+        "wrapModeT": "clamp-to-edge",
         "minfilter": "linear",
         "magfilter": "linear",
         "mipfilter": "none",
+        "premultiplyAlpha": false,
         "anisotropy": 0,
         "isUuid": true,
-        "imageUuidOrDatabaseUri": "1f66bff1-7df3-4541-be4b-57a912d430fd",
+        "imageUuidOrDatabaseUri": "ef1caddd-273e-47a7-a675-64b3a9e6e8ff",
         "visible": false
       },
       "ver": "1.0.22",
@@ -34,22 +35,22 @@
     },
     "f9941": {
       "importer": "sprite-frame",
-      "uuid": "1f66bff1-7df3-4541-be4b-57a912d430fd@f9941",
-      "displayName": "confirm_title_bg",
+      "uuid": "ef1caddd-273e-47a7-a675-64b3a9e6e8ff@f9941",
+      "displayName": "mail_button_bg",
       "id": "f9941",
       "name": "spriteFrame",
       "userData": {
-        "width": 130,
-        "height": 37,
-        "rawWidth": 130,
-        "rawHeight": 37,
+        "width": 162,
+        "height": 62,
+        "rawWidth": 162,
+        "rawHeight": 62,
         "trimType": "none",
         "trimThreshold": 1,
         "rotated": false,
         "offsetX": 0,
         "offsetY": 0,
         "isUuid": true,
-        "imageUuidOrDatabaseUri": "1f66bff1-7df3-4541-be4b-57a912d430fd@6c48a",
+        "imageUuidOrDatabaseUri": "ef1caddd-273e-47a7-a675-64b3a9e6e8ff@6c48a",
         "packable": true,
         "pixelsToUnit": 100,
         "pivotX": 0.5,
@@ -63,17 +64,17 @@
         "meshType": 0,
         "vertices": {
           "rawPosition": [
-            -65,
-            -18.5,
+            -81,
+            -31,
             0,
-            65,
-            -18.5,
+            81,
+            -31,
             0,
-            -65,
-            18.5,
+            -81,
+            31,
             0,
-            65,
-            18.5,
+            81,
+            31,
             0
           ],
           "indexes": [
@@ -86,12 +87,12 @@
           ],
           "uv": [
             0,
-            37,
-            130,
-            37,
+            62,
+            162,
+            62,
             0,
             0,
-            130,
+            162,
             0
           ],
           "nuv": [
@@ -105,13 +106,13 @@
             1
           ],
           "minPos": [
-            -65,
-            -18.5,
+            -81,
+            -31,
             0
           ],
           "maxPos": [
-            65,
-            18.5,
+            81,
+            31,
             0
           ]
         },
@@ -126,9 +127,9 @@
     }
   },
   "userData": {
-    "type": "sprite-frame",
-    "fixAlphaTransparencyArtifacts": false,
     "hasAlpha": true,
-    "redirect": "1f66bff1-7df3-4541-be4b-57a912d430fd@6c48a"
+    "type": "sprite-frame",
+    "redirect": "ef1caddd-273e-47a7-a675-64b3a9e6e8ff@6c48a",
+    "fixAlphaTransparencyArtifacts": false
   }
 }

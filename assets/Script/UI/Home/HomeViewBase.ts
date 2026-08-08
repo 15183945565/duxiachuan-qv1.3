@@ -288,6 +288,8 @@ export abstract class HomeViewBase extends Component {
     protected commerceQuantityMax = 1;
     protected mailPanel: Node | null = null;
     protected mailListRoot: Node | null = null;
+    protected mailListContent: Node | null = null;
+    protected mailListScrollView: ScrollView | null = null;
     protected mailRowTemplate: Node | null = null;
     protected mailEmptyLabel: Label | null = null;
     protected mailCountLabel: Label | null = null;
@@ -1142,7 +1144,7 @@ export abstract class HomeViewBase extends Component {
     protected abstract refreshMailPanel(): void;
     protected abstract createMailRow(mail: MailData, index: number): void;
     protected abstract createMailRowFromTemplate(mail: MailData, index: number): boolean;
-    protected abstract setMailRowLabel(row: Node, labelName: string, text: string): void;
+    protected abstract setMailRowLabel(row: Node, labelName: string, text: string, preserveEditorLayout?: boolean): void;
     protected abstract clearMailListRuntimeChildren(): void;
     protected abstract openMailDetail(mailId: string): void;
     protected abstract closeMailDetail(): void;

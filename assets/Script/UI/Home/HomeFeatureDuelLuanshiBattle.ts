@@ -64,6 +64,7 @@ abstract class HomeFeatureDuelLuanshiBattleHost extends HomeViewBase {
     protected abstract playDuelJianghuSkeletonAnimation(target: sp.Skeleton, candidates: string[], loop: boolean): number;
     protected abstract playDuelLuanshiSkillSound(config: DuelLuanshiSkillConfig): void;
     protected abstract playDuelLuanshiNormalAttackSound(): void;
+    protected abstract playDuelLuanshiResultSound(success: boolean): void;
     protected abstract prepareSkeletonRenderer(target: sp.Skeleton | null): void;
 }
 
@@ -827,6 +828,7 @@ export abstract class HomeFeatureDuelLuanshiBattle extends HomeFeatureDuelLuansh
         const layer = this.getOrCreateDuelLuanshiNode('LuanshiZhengxiongResultLayer', mainPage, HomeConfig.VIEW_WIDTH, HomeConfig.VIEW_HEIGHT, 0, 0);
         layer.setSiblingIndex((mainPage.children.length || 1) - 1);
         layer.active = true;
+        this.playDuelLuanshiResultSound(victory);
 
         let dim = layer.getChildByName('LuanshiZhengxiongResultDim');
         if (!dim) {

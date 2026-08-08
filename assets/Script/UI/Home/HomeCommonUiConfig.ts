@@ -1,8 +1,11 @@
-import { CONFIRM_UI_ROOT, MAIL_UI_ROOT, NOTICE_UI_ROOT, RANK_UI_ROOT } from './HomeBaseConfig';
+import { COMMON_UI_ROOT, CONFIRM_UI_ROOT, MAIL_UI_ROOT, NOTICE_UI_ROOT, RANK_UI_ROOT } from './HomeBaseConfig';
 
 export const UI_FRAME_NOTICE = `${NOTICE_UI_ROOT}/notice_board_bg`;
 export const UI_FRAME_NOTICE_CONTENT = `${NOTICE_UI_ROOT}/notice_content_bg`;
 export const UI_NOTICE_BTN_CLOSE = `${NOTICE_UI_ROOT}/notice_btn_close`;
+export const UI_GLOBAL_UNREAD_DOT = `${COMMON_UI_ROOT}/unread_notice_dot`;
+export const GLOBAL_UNREAD_DOT_WIDTH = 35;
+export const GLOBAL_UNREAD_DOT_HEIGHT = 37;
 export const UI_FRAME_MAIL = `${MAIL_UI_ROOT}/mail_board_bg`;
 export const UI_FRAME_MAIL_DETAIL = `${MAIL_UI_ROOT}/mail_detail_bg`;
 export const UI_FRAME_MAIL_ROW = `${MAIL_UI_ROOT}/mail_row_bg`;
@@ -10,7 +13,15 @@ export const UI_FRAME_MAIL_TAB_ACTIVE = `${MAIL_UI_ROOT}/mail_tab_active`;
 export const UI_FRAME_MAIL_TAB_NORMAL = `${MAIL_UI_ROOT}/mail_tab_normal`;
 export const UI_MAIL_ATTACH_ICON = `${MAIL_UI_ROOT}/mail_attach_icon`;
 export const UI_MAIL_ATTACH_SLOT = `${MAIL_UI_ROOT}/mail_attach_slot`;
-export const UI_MAIL_UNREAD_DOT = `${MAIL_UI_ROOT}/mail_unread_dot`;
+export const UI_MAIL_UNREAD_DOT = UI_GLOBAL_UNREAD_DOT;
+export const UI_MAIL_BUTTON_BG = `${MAIL_UI_ROOT}/mail_button_bg`;
+export const UI_MAIL_TITLE_BG = `${MAIL_UI_ROOT}/mail_title_bg`;
+export const UI_POPUP_TITLE_BG = `${CONFIRM_UI_ROOT}/confirm_title_bg`;
+export const POPUP_TITLE_FRAME_WIDTH = 190;
+export const POPUP_TITLE_FRAME_HEIGHT = 54;
+export const POPUP_TITLE_LABEL_WIDTH = 180;
+export const POPUP_TITLE_LABEL_HEIGHT = 58;
+export const POPUP_TITLE_Y = 506;
 
 export const UI_CONFIRM_POPUP_BG = `${CONFIRM_UI_ROOT}/confirm_popup_bg`;
 export const UI_CONFIRM_TITLE_BG = `${CONFIRM_UI_ROOT}/confirm_title_bg`;
