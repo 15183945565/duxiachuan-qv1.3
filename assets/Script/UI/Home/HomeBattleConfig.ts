@@ -31,7 +31,7 @@ export const BATTLE_BG_OFFSET_Y = -10;
 export const BATTLE_LEVEL_SUBTITLE_WIDTH = 250;
 export const BATTLE_LEVEL_SUBTITLE_HEIGHT = 36;
 export const BATTLE_LEVEL_SUBTITLE_Y = 670;
-export const BATTLE_LEVEL_SUBTITLE_TEXT = '\u6218\u573a\u7b49\u7ea7\uff1a0\u7ea7';
+export const BATTLE_LEVEL_SUBTITLE_TEXT = '\u6218\u573a\u7b49\u7ea7\uff1a1\u7ea7';
 export const BATTLE_ENTRY_MATERIAL_BAR_WIDTH = 470;
 export const BATTLE_ENTRY_MATERIAL_BAR_HEIGHT = 184;
 export const BATTLE_ENTRY_MATERIAL_BAR_Y = 535;
@@ -80,8 +80,9 @@ export const BATTLE_ENTRY_MATERIALS = [
     { icon: `${UI_BATTLE_MATERIAL_ROOT}/battle_material_4`, amount: '814' },
     { icon: `${UI_BATTLE_MATERIAL_ROOT}/battle_material_5`, amount: '0' },
 ] as const;
-export const BATTLE_UPGRADE_POPUP_WIDTH = 536;
+export const BATTLE_UPGRADE_POPUP_WIDTH = 530;
 export const BATTLE_UPGRADE_POPUP_HEIGHT = 768;
+export const BATTLE_UPGRADE_POPUP_SCALE = 1.12;
 export const BATTLE_UPGRADE_CARD_CURRENT_X = -130;
 export const BATTLE_UPGRADE_CARD_NEXT_X = 130;
 export const BATTLE_UPGRADE_CARD_Y = 214;
@@ -89,7 +90,8 @@ export const BATTLE_UPGRADE_CURRENT_FRAME_WIDTH = 169;
 export const BATTLE_UPGRADE_CURRENT_FRAME_HEIGHT = 264;
 export const BATTLE_UPGRADE_NEXT_FRAME_WIDTH = 169;
 export const BATTLE_UPGRADE_NEXT_FRAME_HEIGHT = 269;
-export const BATTLE_UPGRADE_ICON_SIZE = 108;
+export const BATTLE_UPGRADE_ICON_WIDTH = 72;
+export const BATTLE_UPGRADE_ICON_HEIGHT = 76;
 export const BATTLE_UPGRADE_ICON_Y = 270;
 export const BATTLE_UPGRADE_LEVEL_Y = 202;
 export const BATTLE_UPGRADE_ARROW_Y = 256;
@@ -97,6 +99,23 @@ export const BATTLE_UPGRADE_OUTPUT_PANEL_WIDTH = 244;
 export const BATTLE_UPGRADE_OUTPUT_PANEL_HEIGHT = 178;
 export const BATTLE_UPGRADE_OUTPUT_PANEL_X = 128;
 export const BATTLE_UPGRADE_OUTPUT_PANEL_Y = -18;
+export const BATTLE_UPGRADE_OUTPUT_TITLE_X = -66;
+export const BATTLE_UPGRADE_OUTPUT_TITLE_Y = 66;
+export const BATTLE_UPGRADE_OUTPUT_TITLE_WIDTH = 130;
+export const BATTLE_UPGRADE_OUTPUT_TITLE_HEIGHT = 28;
+export const BATTLE_UPGRADE_OUTPUT_TITLE_FONT_SIZE = 18;
+export const BATTLE_UPGRADE_OUTPUT_SCROLL_WIDTH = 218;
+export const BATTLE_UPGRADE_OUTPUT_SCROLL_HEIGHT = 122;
+export const BATTLE_UPGRADE_OUTPUT_SCROLL_Y = -20;
+export const BATTLE_UPGRADE_OUTPUT_ROW_WIDTH = 206;
+export const BATTLE_UPGRADE_OUTPUT_ROW_HEIGHT = 34;
+export const BATTLE_UPGRADE_OUTPUT_ROW_GAP = 36;
+export const BATTLE_UPGRADE_OUTPUT_ROW_ICON_SIZE = 30;
+export const BATTLE_UPGRADE_OUTPUT_ROW_ICON_X = -84;
+export const BATTLE_UPGRADE_OUTPUT_ROW_LABEL_X = 14;
+export const BATTLE_UPGRADE_OUTPUT_ROW_LABEL_WIDTH = 166;
+export const BATTLE_UPGRADE_OUTPUT_ROW_LABEL_HEIGHT = 30;
+export const BATTLE_UPGRADE_OUTPUT_ROW_LABEL_FONT_SIZE = 18;
 export const BATTLE_UPGRADE_OUTPUT_ITEM_WIDTH = 72;
 export const BATTLE_UPGRADE_OUTPUT_ITEM_HEIGHT = 54;
 export const BATTLE_UPGRADE_OUTPUT_ITEM_COLUMN_GAP = 76;
@@ -106,14 +125,20 @@ export const BATTLE_UPGRADE_OUTPUT_LABEL_WIDTH = 78;
 export const BATTLE_UPGRADE_OUTPUT_LABEL_HEIGHT = 24;
 export const BATTLE_UPGRADE_OUTPUT_LABEL_FONT_SIZE = 15;
 export const BATTLE_UPGRADE_MATERIAL_BAR_WIDTH = 510;
-export const BATTLE_UPGRADE_MATERIAL_BAR_HEIGHT = 70;
+export const BATTLE_UPGRADE_MATERIAL_BAR_HEIGHT = 96;
 export const BATTLE_UPGRADE_MATERIAL_BAR_Y = -216;
-export const BATTLE_UPGRADE_MATERIAL_ITEM_WIDTH = 160;
+export const BATTLE_UPGRADE_MATERIAL_FIRST_ROW_COUNT = 3;
+export const BATTLE_UPGRADE_MATERIAL_COLUMN_SPACING = 150;
+export const BATTLE_UPGRADE_MATERIAL_ROW_SPACING = 42;
+export const BATTLE_UPGRADE_MATERIAL_ITEM_WIDTH = 148;
 export const BATTLE_UPGRADE_MATERIAL_ITEM_HEIGHT = 46;
-export const BATTLE_UPGRADE_MATERIAL_ITEM_SPACING = 168;
-export const BATTLE_UPGRADE_MATERIAL_ICON_SIZE = 42;
-export const BATTLE_UPGRADE_MATERIAL_ICON_X = -54;
-export const BATTLE_UPGRADE_MATERIAL_TEXT_X = 28;
+export const BATTLE_UPGRADE_MATERIAL_ICON_SIZE = 40;
+export const BATTLE_UPGRADE_MATERIAL_ICON_X = -58;
+export const BATTLE_UPGRADE_MATERIAL_LABEL_FONT_SIZE = 20;
+export const BATTLE_UPGRADE_MATERIAL_OWNED_X = 12;
+export const BATTLE_UPGRADE_MATERIAL_OWNED_WIDTH = 82;
+export const BATTLE_UPGRADE_MATERIAL_NEED_X = 78;
+export const BATTLE_UPGRADE_MATERIAL_NEED_WIDTH = 56;
 export const BATTLE_UPGRADE_BUTTON_WIDTH = 162;
 export const BATTLE_UPGRADE_BUTTON_HEIGHT = 62;
 export const BATTLE_UPGRADE_BUTTON_Y = -310;
@@ -121,24 +146,26 @@ export const BATTLE_UPGRADE_MATERIALS = [
     { icon: `${UI_BATTLE_MATERIAL_ROOT}/battle_material_1`, owned: '82604', need: '17250' },
     { icon: `${UI_BATTLE_MATERIAL_ROOT}/battle_material_2`, owned: '7376', need: '3330' },
     { icon: `${UI_BATTLE_MATERIAL_ROOT}/battle_material_3`, owned: '11933', need: '990' },
+    { icon: `${UI_BATTLE_MATERIAL_ROOT}/battle_material_4`, owned: '814', need: '0' },
+    { icon: `${UI_BATTLE_MATERIAL_ROOT}/battle_material_5`, owned: '0', need: '0' },
 ] as const;
 export const BATTLE_UPGRADE_CURRENT_OUTPUTS = [
-    { name: '\u51e1\u6307\u6212', icon: `${UI_BATTLE_MATERIAL_ROOT}/battle_material_1` },
-    { name: '\u5e73\u5b89\u4f69', icon: `${UI_BATTLE_MATERIAL_ROOT}/battle_material_2` },
-    { name: '\u7f20\u4e1d\u73af', icon: `${UI_BATTLE_MATERIAL_ROOT}/battle_material_3` },
-    { name: '\u4e00\u7ea7\u7ecf\u9a8c\u73e0', icon: `${UI_BATTLE_UPGRADE_OUTPUT_ROOT}/battle_output_exp_1` },
-    { name: '\u4e00\u7ea7\u7a81\u7834\u73e0', icon: `${UI_BATTLE_UPGRADE_OUTPUT_ROOT}/battle_output_break_1` },
-    { name: '\u4e8c\u7ea7\u7ecf\u9a8c\u73e0', icon: `${UI_BATTLE_UPGRADE_OUTPUT_ROOT}/battle_output_exp_2` },
-    { name: '\u4e8c\u7ea7\u7a81\u7834\u73e0', icon: `${UI_BATTLE_UPGRADE_OUTPUT_ROOT}/battle_output_break_2` },
+    { name: '\u51e1\u6307\u6212', icon: `${UI_BATTLE_MATERIAL_ROOT}/battle_material_1`, catalogId: 'material_097' },
+    { name: '\u5e73\u5b89\u4f69', icon: `${UI_BATTLE_MATERIAL_ROOT}/battle_material_2`, catalogId: 'material_093' },
+    { name: '\u7f20\u4e1d\u73af', icon: `${UI_BATTLE_MATERIAL_ROOT}/battle_material_3`, catalogId: 'material_094' },
+    { name: '\u4e00\u7ea7\u7ecf\u9a8c\u73e0', icon: `${UI_BATTLE_UPGRADE_OUTPUT_ROOT}/battle_output_exp_1`, catalogId: 'material_081' },
+    { name: '\u4e00\u7ea7\u7a81\u7834\u73e0', icon: `${UI_BATTLE_UPGRADE_OUTPUT_ROOT}/battle_output_break_1`, catalogId: 'material_086' },
+    { name: '\u4e8c\u7ea7\u7ecf\u9a8c\u73e0', icon: `${UI_BATTLE_UPGRADE_OUTPUT_ROOT}/battle_output_exp_2`, catalogId: 'material_082' },
+    { name: '\u4e8c\u7ea7\u7a81\u7834\u73e0', icon: `${UI_BATTLE_UPGRADE_OUTPUT_ROOT}/battle_output_break_2`, catalogId: 'material_083' },
 ] as const;
 export const BATTLE_UPGRADE_NEXT_OUTPUTS = [
-    { name: '\u5e73\u5b89\u4f69', icon: `${UI_BATTLE_MATERIAL_ROOT}/battle_material_2` },
-    { name: '\u7f20\u4e1d\u73af', icon: `${UI_BATTLE_MATERIAL_ROOT}/battle_material_3` },
-    { name: '\u82cd\u7483\u7389', icon: `${UI_BATTLE_MATERIAL_ROOT}/battle_material_4` },
-    { name: '\u4e8c\u7ea7\u7ecf\u9a8c\u73e0', icon: `${UI_BATTLE_UPGRADE_OUTPUT_ROOT}/battle_output_exp_2` },
-    { name: '\u4e8c\u7ea7\u7a81\u7834\u73e0', icon: `${UI_BATTLE_UPGRADE_OUTPUT_ROOT}/battle_output_break_2` },
-    { name: '\u4e09\u7ea7\u7ecf\u9a8c\u73e0', icon: `${UI_BATTLE_UPGRADE_OUTPUT_ROOT}/battle_output_exp_3` },
-    { name: '\u4e09\u7ea7\u7a81\u7834\u73e0', icon: `${UI_BATTLE_UPGRADE_OUTPUT_ROOT}/battle_output_break_3` },
+    { name: '\u5e73\u5b89\u4f69', icon: `${UI_BATTLE_MATERIAL_ROOT}/battle_material_2`, catalogId: 'material_093' },
+    { name: '\u7f20\u4e1d\u73af', icon: `${UI_BATTLE_MATERIAL_ROOT}/battle_material_3`, catalogId: 'material_094' },
+    { name: '\u82cd\u7483\u7389', icon: `${UI_BATTLE_MATERIAL_ROOT}/battle_material_4`, catalogId: 'material_095' },
+    { name: '\u4e8c\u7ea7\u7ecf\u9a8c\u73e0', icon: `${UI_BATTLE_UPGRADE_OUTPUT_ROOT}/battle_output_exp_2`, catalogId: 'material_082' },
+    { name: '\u4e8c\u7ea7\u7a81\u7834\u73e0', icon: `${UI_BATTLE_UPGRADE_OUTPUT_ROOT}/battle_output_break_2`, catalogId: 'material_083' },
+    { name: '\u4e09\u7ea7\u7ecf\u9a8c\u73e0', icon: `${UI_BATTLE_UPGRADE_OUTPUT_ROOT}/battle_output_exp_3`, catalogId: 'material_169' },
+    { name: '\u4e09\u7ea7\u7a81\u7834\u73e0', icon: `${UI_BATTLE_UPGRADE_OUTPUT_ROOT}/battle_output_break_3`, catalogId: 'material_084' },
 ] as const;
 export const BATTLE_TARGET_CHALLENGE_POPUP_WIDTH = 725;
 export const BATTLE_TARGET_CHALLENGE_POPUP_HEIGHT = 505;

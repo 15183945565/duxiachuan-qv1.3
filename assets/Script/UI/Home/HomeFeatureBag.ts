@@ -44,6 +44,7 @@ type RoleEquipmentRuntimeItem = BagIllustrationCatalogItem & {
 abstract class HomeFeatureBagHost extends HomeViewBase {
     protected abstract readonly roleEquippedItems: Map<RoleEquipmentSlotId, RoleEquipmentRuntimeItem>;
     protected abstract bagDecomposeSelectedItem: BagIllustrationCatalogItem | null;
+    protected abstract bagSynthSelectedFragment: BagIllustrationCatalogItem | null;
 
     protected abstract addRoleInventory(itemId: string, amount: number): void;
     protected abstract consumeRoleInventory(itemId: string, amount: number): boolean;
@@ -427,6 +428,162 @@ export abstract class HomeFeatureBag extends HomeFeatureBagHost {
             0,
             HomeConfig.UI_BAG_ITEM_FRAME_LV1,
         ).setSiblingIndex(5);
+        const synthButton = this.getOrCreateBagModeSkin(
+            root,
+            'BagSynthButton',
+            HomeConfig.BAG_SYNTH_ACTION_BUTTON_WIDTH,
+            HomeConfig.BAG_SYNTH_ACTION_BUTTON_HEIGHT,
+            0,
+            HomeConfig.BAG_SYNTH_ACTION_BUTTON_Y,
+            HomeConfig.UI_BAG_ACTION_BUTTON_BG,
+        );
+        synthButton.setSiblingIndex(6);
+        this.ensureButtonText(synthButton, 'BagSynthButtonLabel', '\u5408\u6210');
+        this.bindScaledClick(synthButton, () => this.openBagSynthConfirm());
+        this.refreshBagSynthSlots();
+    }
+    protected refreshBagSynthSlots(): void {
+        if (!this.bagSynthModeFrame?.isValid) return;
+        if (this.bagSynthSelectedFragment && this.getRoleInventoryCount(this.bagSynthSelectedFragment.id) <= 0) {
+            this.bagSynthSelectedFragment = null;
+        }
+
+        const synthCard = this.getBagSynthCardItem();
+        const synthCardCount = synthCard ? this.getRoleInventoryCount(synthCard.id) : 0;
+        const output = this.bagSynthSelectedFragment ? this.getBagSynthOutputItem(this.bagSynthSelectedFragment) : null;
+
+        this.renderBagSynthSlot(
+            'BagSynthInputSlotTop',
+            this.bagSynthSelectedFragment,
+            this.bagSynthSelectedFragment ? this.getRoleInventoryCount(this.bagSynthSelectedFragment.id) : 0,
+            false,
+            true,
+        );
+        this.renderBagSynthSlot('BagSynthInputSlotBottom', synthCard, synthCardCount, synthCardCount <= 0, true);
+        this.renderBagSynthSlot('BagSynthOutputSlot', output, 1, false, false);
+    }
+    protected renderBagSynthSlot(slotName: string, item: BagIllustrationCatalogItem | null, count: number, dimmed: boolean, showCount: boolean): void {
+        const slot = this.bagSynthModeFrame?.getChildByName(slotName);
+        if (!slot?.isValid) return;
+
+        [...slot.children].forEach((child) => child.destroy());
+        const framePath = item?.framePath || HomeConfig.UI_BAG_ITEM_FRAME_LV1;
+        this.applyUiSkinKeepingEditorSize(slot, framePath, HomeConfig.BAG_SYNTH_MODE_SLOT_SIZE, HomeConfig.BAG_SYNTH_MODE_SLOT_SIZE);
+        if (!item) return;
+
+        const icon = this.createSkinnedNode(
+            `${slotName}Icon`,
+            slot,
+            HomeConfig.BAG_GRID_ICON_SIZE,
+            HomeConfig.BAG_GRID_ICON_SIZE,
+            0,
+            HomeConfig.BAG_GRID_ICON_OFFSET_Y,
+            item.iconPath,
+        );
+        icon.setSiblingIndex(1);
+        if (dimmed) {
+            (icon.getComponent(UIOpacity) || icon.addComponent(UIOpacity)).opacity = HomeConfig.BAG_SYNTH_DISABLED_CARD_OPACITY;
+        }
+
+        if (!showCount) return;
+        const countLabel = this.createLabel(slot, `${slotName}Count`, `\u00d7${Math.max(0, count)}`, 19, 22, -34, 70, 26, Color.WHITE);
+        countLabel.horizontalAlign = HorizontalTextAlignment.RIGHT;
+        this.setLabelOutline(countLabel, Color.BLACK, 2);
+        countLabel.node.setSiblingIndex(2);
+    }
+    protected getBagSynthCardItem(): BagIllustrationCatalogItem | null {
+        return BAG_ILLUSTRATION_CATALOG.find((item) => item.id === HomeConfig.BAG_SYNTH_CARD_ITEM_ID) || null;
+    }
+    protected getBagSynthFragmentItems(): BagIllustrationCatalogItem[] {
+        return BAG_ILLUSTRATION_CATALOG.filter((item) => (
+            this.isBagSynthFragmentItem(item)
+            && this.getRoleInventoryCount(item.id) > 0
+        ));
+    }
+    protected isBagSynthFragmentItem(item: BagIllustrationCatalogItem): boolean {
+        return item.category === 'item' && this.getCatalogDisplayName(item).includes('\u517d\u5361\u788e\u7247');
+    }
+    protected getBagSynthOutputItem(fragment: BagIllustrationCatalogItem): BagIllustrationCatalogItem | null {
+        const targetName = this.getCatalogDisplayName(fragment).replace('\u788e\u7247', '');
+        return BAG_ILLUSTRATION_CATALOG.find((item) => (
+            item.category === 'item'
+            && this.getCatalogDisplayName(item) === targetName
+        )) || null;
+    }
+    protected selectBagSynthFragmentItem(item: BagIllustrationCatalogItem): void {
+        if (!this.isBagSynthFragmentItem(item)) return;
+        const synthCard = this.getBagSynthCardItem();
+        if (!synthCard || this.getRoleInventoryCount(synthCard.id) <= 0) {
+            this.showToast('\u5408\u6210\u5361\u4e0d\u8db3');
+            return;
+        }
+        if (this.getRoleInventoryCount(item.id) <= 0) {
+            this.showToast('\u517d\u5361\u788e\u7247\u4e0d\u8db3');
+            return;
+        }
+        this.bagSynthSelectedFragment = item;
+        this.refreshBagSynthSlots();
+    }
+    protected openBagSynthConfirm(): void {
+        const fragment = this.bagSynthSelectedFragment;
+        if (!fragment) {
+            this.showToast('\u8bf7\u5148\u9009\u62e9\u517d\u5361\u788e\u7247');
+            return;
+        }
+        const synthCard = this.getBagSynthCardItem();
+        const output = this.getBagSynthOutputItem(fragment);
+        if (!synthCard || this.getRoleInventoryCount(synthCard.id) < HomeConfig.BAG_SYNTH_CARD_COST) {
+            this.showToast('\u5408\u6210\u5361\u4e0d\u8db3');
+            return;
+        }
+        if (this.getRoleInventoryCount(fragment.id) < HomeConfig.BAG_SYNTH_FRAGMENT_COST) {
+            this.showToast(`${this.getCatalogDisplayName(fragment)}\u4e0d\u8db3`);
+            return;
+        }
+        if (!output) {
+            this.showToast('\u6682\u65e0\u53ef\u5408\u6210\u7684\u517d\u5361');
+            return;
+        }
+
+        this.openSharedFlowPopup('ConfirmPopup', {
+            title: '\u7cfb\u7edf\u63d0\u793a',
+            message: `\u662f\u5426\u6d88\u8017${HomeConfig.BAG_SYNTH_FRAGMENT_COST}\u4e2a${this.getCatalogDisplayName(fragment)}\u4ee5\u53ca${HomeConfig.BAG_SYNTH_CARD_COST}\u5f20\u5408\u6210\u5361\u5408\u6210${HomeConfig.BAG_SYNTH_CARD_COST}\u5f20${this.getCatalogDisplayName(output)}`,
+            onConfirm: () => this.confirmBagSynth(),
+        });
+    }
+    protected confirmBagSynth(): void {
+        const fragment = this.bagSynthSelectedFragment;
+        const synthCard = this.getBagSynthCardItem();
+        if (!fragment || !synthCard) return;
+        const output = this.getBagSynthOutputItem(fragment);
+        if (!output) return;
+        if (this.getRoleInventoryCount(fragment.id) < HomeConfig.BAG_SYNTH_FRAGMENT_COST) {
+            this.showToast(`${this.getCatalogDisplayName(fragment)}\u4e0d\u8db3`);
+            return;
+        }
+        if (this.getRoleInventoryCount(synthCard.id) < HomeConfig.BAG_SYNTH_CARD_COST) {
+            this.showToast('\u5408\u6210\u5361\u4e0d\u8db3');
+            return;
+        }
+
+        if (!this.consumeRoleInventory(fragment.id, HomeConfig.BAG_SYNTH_FRAGMENT_COST)) return;
+        if (!this.consumeRoleInventory(synthCard.id, HomeConfig.BAG_SYNTH_CARD_COST)) {
+            this.addRoleInventory(fragment.id, HomeConfig.BAG_SYNTH_FRAGMENT_COST);
+            this.showToast('\u5408\u6210\u5361\u4e0d\u8db3');
+            return;
+        }
+        this.addRoleInventory(output.id, 1);
+        if (this.getRoleInventoryCount(fragment.id) <= 0) {
+            this.bagSynthSelectedFragment = null;
+        }
+        this.refreshRoleInventoryViews(false);
+        this.refreshBagSynthSlots();
+        if (this.bagCatalogView?.board?.isValid && this.bagPageActiveTab === 'synth') {
+            this.bagCatalogView.itemSource = this.getBagSynthFragmentItems();
+            this.refreshBagCatalogGrid(this.bagCatalogView);
+            this.raiseActiveBagModeFrame();
+        }
+        this.showToast('\u5408\u6210\u6210\u529f');
     }
     protected raiseActiveBagModeFrame(): void {
         const activeFrame = this.bagPageActiveTab === 'decompose'
@@ -771,6 +928,10 @@ export abstract class HomeFeatureBag extends HomeFeatureBagHost {
                     this.selectBagDecomposeItem(item);
                     return;
                 }
+                if (this.bagPageActiveTab === 'synth' && this.isBagSynthFragmentItem(item)) {
+                    this.selectBagSynthFragmentItem(item);
+                    return;
+                }
                 const typeNames: Record<BagIllustrationCategory, string> = {
                     equipment: '\u88c5\u5907',
                     item: '\u9053\u5177',
@@ -931,11 +1092,11 @@ export abstract class HomeFeatureBag extends HomeFeatureBagHost {
                 ? this.getRoleSeededBagItems()
                 : tab === 'decompose'
                     ? this.getBagDecomposeItems()
-                    : [];
+                    : this.getBagSynthFragmentItems();
             const lockedCategory: BagIllustrationCategory | null = tab === 'decompose'
                 ? 'equipment'
                 : tab === 'synth'
-                    ? 'gem'
+                    ? 'item'
                     : null;
             if (lockedCategory) {
                 this.bagCatalogView.activeCategory = lockedCategory;
@@ -951,6 +1112,12 @@ export abstract class HomeFeatureBag extends HomeFeatureBagHost {
                     this.bagDecomposeSelectedItem = null;
                 }
                 this.refreshBagDecomposeSlots();
+            }
+            if (tab === 'synth') {
+                if (this.bagSynthSelectedFragment && this.getRoleInventoryCount(this.bagSynthSelectedFragment.id) <= 0) {
+                    this.bagSynthSelectedFragment = null;
+                }
+                this.refreshBagSynthSlots();
             }
             this.refreshBagCategoryTabs(this.bagCatalogView);
             this.refreshBagCatalogGrid(this.bagCatalogView);

@@ -11,6 +11,7 @@ export const HOME_ROLE_ASSET_BUNDLE_NAME = 'feature-role';
 
 const HOME_BAG_FEATURE_ASSET_PATHS = [
     'Texture/UI/Bag/Mode',
+    'Texture/UI/Bag/bag_action_button_bg',
     'Texture/UI/Bag/bag_bottom_button_bg',
     'Texture/UI/Bag/bag_category_tab_active',
     'Texture/UI/Bag/bag_category_tab_normal',

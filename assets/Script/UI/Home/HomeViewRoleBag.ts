@@ -182,6 +182,7 @@ export abstract class HomeViewRoleBag extends HomeViewBase {
     protected roleProgressSuccessSkeleton: sp.Skeleton | null = null;
     protected roleProgressSuccessLoadVersion = 0;
     protected bagDecomposeSelectedItem: BagIllustrationCatalogItem | null = null;
+    protected bagSynthSelectedFragment: BagIllustrationCatalogItem | null = null;
     protected duelJianghuSelectedRoomName = '';
     protected duelJianghuSelectedRoomId: DuelJianghuRoomId | '' = '';
     protected duelJianghuCountdown = HomeConfig.DUEL_JIANGHU_ROUND_SECONDS;
@@ -219,6 +220,7 @@ export abstract class HomeViewRoleBag extends HomeViewBase {
             roleProgressSuccessSkeleton: null,
             roleProgressSuccessLoadVersion: 0,
             bagDecomposeSelectedItem: null,
+            bagSynthSelectedFragment: null,
             duelJianghuSelectedRoomName: '',
             duelJianghuSelectedRoomId: '',
             duelJianghuCountdown: HomeConfig.DUEL_JIANGHU_ROUND_SECONDS,

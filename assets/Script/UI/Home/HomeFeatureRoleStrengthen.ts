@@ -73,6 +73,19 @@ export abstract class HomeFeatureRoleStrengthen extends HomeFeatureRoleStrengthe
             HomeConfig.ROLE_STRENGTHEN_BUTTON_Y,
             HomeConfig.UI_ROLE_STRENGTHEN_BUTTON,
         ).node;
+        const strengthenButtonLabel = this.getOrCreateRolePageLabel(
+            this.roleStrengthenButton,
+            'RoleStrengthenButtonLabel',
+            '\u5f3a\u5316',
+            27,
+            0,
+            2,
+            HomeConfig.ROLE_STRENGTHEN_BUTTON_WIDTH - 24,
+            HomeConfig.ROLE_STRENGTHEN_BUTTON_HEIGHT,
+            Color.WHITE,
+        ).label;
+        this.setLabelOutline(strengthenButtonLabel, new Color(67, 36, 18, 255), 2);
+        strengthenButtonLabel.node.setSiblingIndex(2);
         this.roleStrengthenButton.active = false;
         this.bindScaledClick(this.roleStrengthenButton, () => {
             this.handleRoleStrengthenClick();

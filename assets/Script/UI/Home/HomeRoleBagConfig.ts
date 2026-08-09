@@ -55,6 +55,7 @@ export const UI_BAG_TAB_BEAST_SYNTH = `${BAG_UI_ROOT}/bag_tab_beast_synth`;
 export const UI_BAG_TAB_SYNTH_ACTIVE = `${BAG_UI_ROOT}/bag_tab_synth_active`;
 export const UI_BAG_ITEM_FRAME_LV1 = `${BAG_UI_ROOT}/ItemFrames/item_frame_lv1`;
 export const UI_BAG_ONE_KEY_LOCK = `${BAG_UI_ROOT}/bag_one_key_lock`;
+export const UI_BAG_ACTION_BUTTON_BG = `${BAG_UI_ROOT}/bag_action_button_bg`;
 export const UI_BAG_MODE_ROOT = `${BAG_UI_ROOT}/Mode`;
 export const UI_BAG_DECOMPOSE_ARROW = `${UI_BAG_MODE_ROOT}/bag_decompose_arrow`;
 export const UI_BAG_SYNTH_PLUS = `${UI_BAG_MODE_ROOT}/bag_synth_plus`;
@@ -190,8 +191,8 @@ export const ROLE_STRENGTHEN_MATERIAL_ICON_Y = -23;
 export const ROLE_STRENGTHEN_MATERIAL_COUNT_X = 20;
 export const ROLE_STRENGTHEN_MATERIAL_COUNT_WIDTH = 82;
 export const ROLE_STRENGTHEN_STATUS_Y = -510;
-export const ROLE_STRENGTHEN_BUTTON_WIDTH = 180;
-export const ROLE_STRENGTHEN_BUTTON_HEIGHT = 50;
+export const ROLE_STRENGTHEN_BUTTON_WIDTH = 162;
+export const ROLE_STRENGTHEN_BUTTON_HEIGHT = 62;
 export const ROLE_STRENGTHEN_BUTTON_Y = -600;
 export const ROLE_SUCCESS_SKEL_PATH = 'Spine/Common/RewardText/shenglishibaigongxihuode/shenglishibaigongxihuode';
 export const ROLE_SUCCESS_POPUP_WIDTH = 752;
@@ -314,6 +315,13 @@ export const BAG_SYNTH_MODE_OUTPUT_X = 180;
 export const BAG_SYNTH_MODE_PLUS_SIZE = 82;
 export const BAG_SYNTH_MODE_ARROW_WIDTH = 132;
 export const BAG_SYNTH_MODE_ARROW_HEIGHT = 122;
+export const BAG_SYNTH_ACTION_BUTTON_WIDTH = 162;
+export const BAG_SYNTH_ACTION_BUTTON_HEIGHT = 62;
+export const BAG_SYNTH_ACTION_BUTTON_Y = -118;
+export const BAG_SYNTH_CARD_ITEM_ID = 'item_110';
+export const BAG_SYNTH_FRAGMENT_COST = 100;
+export const BAG_SYNTH_CARD_COST = 1;
+export const BAG_SYNTH_DISABLED_CARD_OPACITY = 90;
 
 export const ROLE_PAGE_LEFT_EQUIPS = [UI_ROLE_EQUIP_WEAPON, UI_ROLE_EQUIP_NECKLACE, UI_ROLE_EQUIP_WRIST, UI_ROLE_EQUIP_LEG];
 export const ROLE_PAGE_RIGHT_EQUIPS = [UI_ROLE_EQUIP_HELMET, UI_ROLE_EQUIP_ARMOR, UI_ROLE_EQUIP_RING, UI_ROLE_EQUIP_SHOES];
@@ -460,10 +468,18 @@ export const ROLE_INITIAL_BAG_EQUIPMENTS = BAG_ILLUSTRATION_CATALOG
 export const ROLE_INITIAL_BAG_GEMS = BAG_ILLUSTRATION_CATALOG
     .filter((item) => item.category === 'gem')
     .map((item) => ({ itemId: item.id, count: 12 }));
+export const ROLE_INITIAL_BAG_SYNTH_ITEMS = [
+    { itemId: 'item_102', count: 300 },
+    { itemId: 'item_104', count: 300 },
+    { itemId: 'item_106', count: 300 },
+    { itemId: 'item_108', count: 300 },
+    { itemId: 'item_110', count: 10 },
+] as const;
 export const ROLE_INITIAL_BAG_ITEMS = [
     ...ROLE_INITIAL_BAG_MATERIALS,
     ...ROLE_INITIAL_BAG_EQUIPMENTS,
     ...ROLE_INITIAL_BAG_GEMS,
+    ...ROLE_INITIAL_BAG_SYNTH_ITEMS,
 ];
 export const BAG_CATEGORY_TABS: Array<{ category: BagIllustrationCategory; title: string }> = [
     { category: 'equipment', title: '\u88c5\u5907' },

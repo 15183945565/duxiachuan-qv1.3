@@ -3,13 +3,22 @@ import {
     EventTouch,
     Graphics,
     HorizontalTextAlignment,
+    Mask,
     Node,
     Overflow,
+    ScrollView,
     UITransform,
     VerticalTextAlignment,
 } from 'cc';
+import { BAG_ILLUSTRATION_CATALOG } from './BagIllustrationCatalog.generated';
 import * as HomeConfig from './HomeConfig';
 import { HomeViewBase } from './HomeViewBase';
+
+type BattleUpgradeOutput = {
+    name: string;
+    icon: string;
+    catalogId?: string;
+};
 
 /**
  * Owns the Battle arena upgrade popup, output comparison and material confirmation.
@@ -56,6 +65,7 @@ export abstract class HomeFeatureBattleUpgrade extends HomeViewBase {
         const board = boardInfo.node;
         this.battleUpgradeBoard = board;
         board.active = true;
+        board.setScale(HomeConfig.BATTLE_UPGRADE_POPUP_SCALE, HomeConfig.BATTLE_UPGRADE_POPUP_SCALE, 1);
         if (!boardInfo.existed) {
             board.setPosition(0, 0, 0);
         }
@@ -89,7 +99,7 @@ export abstract class HomeFeatureBattleUpgrade extends HomeViewBase {
         }
         card.setSiblingIndex(3);
 
-        const iconInfo = this.getOrCreateBattleSkinnedNode(parent, `${prefix}Icon`, HomeConfig.BATTLE_UPGRADE_ICON_SIZE, HomeConfig.BATTLE_UPGRADE_ICON_SIZE, x, HomeConfig.BATTLE_UPGRADE_ICON_Y, HomeConfig.UI_BATTLE_UPGRADE_ICON);
+        const iconInfo = this.getOrCreateBattleSkinnedNode(parent, `${prefix}Icon`, HomeConfig.BATTLE_UPGRADE_ICON_WIDTH, HomeConfig.BATTLE_UPGRADE_ICON_HEIGHT, x, HomeConfig.BATTLE_UPGRADE_ICON_Y, HomeConfig.UI_BATTLE_UPGRADE_ICON);
         const icon = iconInfo.node;
         icon.active = true;
         if (!iconInfo.existed) {
@@ -131,7 +141,7 @@ export abstract class HomeFeatureBattleUpgrade extends HomeViewBase {
         parent: Node,
         name: string,
         x: number,
-        outputs: readonly { name: string; icon: string }[],
+        outputs: readonly BattleUpgradeOutput[],
     ): void {
         const panelInfo = this.getOrCreateBattleNode(
             parent,
@@ -158,61 +168,167 @@ export abstract class HomeFeatureBattleUpgrade extends HomeViewBase {
             HomeConfig.UI_BATTLE_UPGRADE_OUTPUT_PANEL_BG,
         ).node.setSiblingIndex(0);
 
-        const columns = 3;
-        const startX = -HomeConfig.BATTLE_UPGRADE_OUTPUT_ITEM_COLUMN_GAP;
-        const startY = HomeConfig.BATTLE_UPGRADE_OUTPUT_ITEM_ROW_GAP;
-        outputs.forEach((output, index) => {
-            const column = index % columns;
-            const row = Math.floor(index / columns);
-            const itemX = startX + column * HomeConfig.BATTLE_UPGRADE_OUTPUT_ITEM_COLUMN_GAP;
-            const itemY = startY - row * HomeConfig.BATTLE_UPGRADE_OUTPUT_ITEM_ROW_GAP;
-            const itemInfo = this.getOrCreateBattleNode(
-                panel,
-                `${name}Item_${index + 1}`,
-                HomeConfig.BATTLE_UPGRADE_OUTPUT_ITEM_WIDTH,
-                HomeConfig.BATTLE_UPGRADE_OUTPUT_ITEM_HEIGHT,
-                itemX,
-                itemY,
-            );
-            const item = itemInfo.node;
-            item.active = true;
-            if (!itemInfo.existed) {
-                item.setPosition(itemX, itemY, 0);
+        panel.children.forEach((child) => {
+            if (new RegExp(`^${name}Item_\\d+$`).test(child.name)) {
+                child.active = false;
             }
-            item.setSiblingIndex(index + 1);
+        });
+
+        const title = this.getOrCreateBattleLabel(
+            panel,
+            `${name}OutputTitle`,
+            '\u4ea7\u51fa\u6750\u6599\uff1a',
+            HomeConfig.BATTLE_UPGRADE_OUTPUT_TITLE_FONT_SIZE,
+            HomeConfig.BATTLE_UPGRADE_OUTPUT_TITLE_X,
+            HomeConfig.BATTLE_UPGRADE_OUTPUT_TITLE_Y,
+            HomeConfig.BATTLE_UPGRADE_OUTPUT_TITLE_WIDTH,
+            HomeConfig.BATTLE_UPGRADE_OUTPUT_TITLE_HEIGHT,
+            new Color(84, 58, 36, 255),
+        ).label;
+        title.string = '\u4ea7\u51fa\u6750\u6599\uff1a';
+        title.fontSize = HomeConfig.BATTLE_UPGRADE_OUTPUT_TITLE_FONT_SIZE;
+        title.lineHeight = HomeConfig.BATTLE_UPGRADE_OUTPUT_TITLE_FONT_SIZE + 6;
+        title.color = new Color(84, 58, 36, 255);
+        title.horizontalAlign = HorizontalTextAlignment.LEFT;
+        title.verticalAlign = VerticalTextAlignment.CENTER;
+        title.overflow = Overflow.SHRINK;
+        title.node.setSiblingIndex(1);
+
+        const viewportInfo = this.getOrCreateBattleNode(
+            panel,
+            `${name}ScrollView`,
+            HomeConfig.BATTLE_UPGRADE_OUTPUT_SCROLL_WIDTH,
+            HomeConfig.BATTLE_UPGRADE_OUTPUT_SCROLL_HEIGHT,
+            0,
+            HomeConfig.BATTLE_UPGRADE_OUTPUT_SCROLL_Y,
+        );
+        const viewport = viewportInfo.node;
+        viewport.active = true;
+        if (!viewportInfo.existed) {
+            viewport.setPosition(0, HomeConfig.BATTLE_UPGRADE_OUTPUT_SCROLL_Y, 0);
+        }
+        const viewportTransform = viewport.getComponent(UITransform) || viewport.addComponent(UITransform);
+        if (!viewportInfo.existed || viewportTransform.contentSize.width <= 0 || viewportTransform.contentSize.height <= 0) {
+            viewportTransform.setContentSize(
+                HomeConfig.BATTLE_UPGRADE_OUTPUT_SCROLL_WIDTH,
+                HomeConfig.BATTLE_UPGRADE_OUTPUT_SCROLL_HEIGHT,
+            );
+        }
+        const viewportWidth = viewportTransform.contentSize.width || HomeConfig.BATTLE_UPGRADE_OUTPUT_SCROLL_WIDTH;
+        const viewportHeight = viewportTransform.contentSize.height || HomeConfig.BATTLE_UPGRADE_OUTPUT_SCROLL_HEIGHT;
+        const mask = viewport.getComponent(Mask) || viewport.addComponent(Mask);
+        mask.type = Mask.Type.GRAPHICS_RECT;
+        viewport.setSiblingIndex(2);
+
+        const listHeight = Math.max(
+            viewportHeight,
+            outputs.length * HomeConfig.BATTLE_UPGRADE_OUTPUT_ROW_GAP + 8,
+        );
+        const contentInfo = this.getOrCreateBattleNode(
+            viewport,
+            `${name}ScrollContent`,
+            viewportWidth,
+            listHeight,
+            0,
+            0,
+        );
+        const content = contentInfo.node;
+        content.active = true;
+        if (!contentInfo.existed) {
+            content.setPosition(0, (viewportHeight - listHeight) / 2, 0);
+        }
+        const contentTransform = content.getComponent(UITransform) || content.addComponent(UITransform);
+        if (!contentInfo.existed || contentTransform.contentSize.width <= 0 || contentTransform.contentSize.height <= 0) {
+            contentTransform.setContentSize(
+                viewportWidth,
+                listHeight,
+            );
+        }
+
+        const scroll = viewport.getComponent(ScrollView) || viewport.addComponent(ScrollView);
+        scroll.content = content;
+        scroll.horizontal = false;
+        scroll.vertical = true;
+        scroll.inertia = true;
+        scroll.brake = 0.75;
+        scroll.elastic = false;
+        scroll.bounceDuration = 0;
+        scroll.cancelInnerEvents = true;
+        scroll.enabled = true;
+
+        content.children.forEach((child) => {
+            if (new RegExp(`^${name}Row_\\d+$`).test(child.name)) {
+                child.active = false;
+            }
+        });
+
+        const startY = listHeight / 2 - HomeConfig.BATTLE_UPGRADE_OUTPUT_ROW_HEIGHT / 2 - 4;
+        outputs.forEach((output, index) => {
+            const rowY = startY - index * HomeConfig.BATTLE_UPGRADE_OUTPUT_ROW_GAP;
+            const rowInfo = this.getOrCreateBattleNode(
+                content,
+                `${name}Row_${index + 1}`,
+                HomeConfig.BATTLE_UPGRADE_OUTPUT_ROW_WIDTH,
+                HomeConfig.BATTLE_UPGRADE_OUTPUT_ROW_HEIGHT,
+                0,
+                rowY,
+            );
+            const row = rowInfo.node;
+            row.active = true;
+            if (!rowInfo.existed) {
+                row.setPosition(0, rowY, 0);
+            }
+            const rowTransform = row.getComponent(UITransform) || row.addComponent(UITransform);
+            if (!rowInfo.existed || rowTransform.contentSize.width <= 0 || rowTransform.contentSize.height <= 0) {
+                rowTransform.setContentSize(
+                    HomeConfig.BATTLE_UPGRADE_OUTPUT_ROW_WIDTH,
+                    HomeConfig.BATTLE_UPGRADE_OUTPUT_ROW_HEIGHT,
+                );
+            }
+            row.setSiblingIndex(index);
 
             const icon = this.getOrCreateBattleSkinnedNode(
-                item,
-                `${name}ItemIcon_${index + 1}`,
-                HomeConfig.BATTLE_UPGRADE_OUTPUT_ICON_SIZE,
-                HomeConfig.BATTLE_UPGRADE_OUTPUT_ICON_SIZE,
+                row,
+                `${name}RowIcon_${index + 1}`,
+                HomeConfig.BATTLE_UPGRADE_OUTPUT_ROW_ICON_SIZE,
+                HomeConfig.BATTLE_UPGRADE_OUTPUT_ROW_ICON_SIZE,
+                HomeConfig.BATTLE_UPGRADE_OUTPUT_ROW_ICON_X,
                 0,
-                10,
                 output.icon,
             ).node;
             icon.active = true;
             icon.setSiblingIndex(0);
 
+            const displayName = this.getBattleUpgradeOutputDisplayName(output);
             const label = this.getOrCreateBattleLabel(
-                item,
-                `${name}ItemName_${index + 1}`,
-                output.name,
-                HomeConfig.BATTLE_UPGRADE_OUTPUT_LABEL_FONT_SIZE,
+                row,
+                `${name}RowName_${index + 1}`,
+                displayName,
+                HomeConfig.BATTLE_UPGRADE_OUTPUT_ROW_LABEL_FONT_SIZE,
+                HomeConfig.BATTLE_UPGRADE_OUTPUT_ROW_LABEL_X,
                 0,
-                -18,
-                HomeConfig.BATTLE_UPGRADE_OUTPUT_LABEL_WIDTH,
-                HomeConfig.BATTLE_UPGRADE_OUTPUT_LABEL_HEIGHT,
+                HomeConfig.BATTLE_UPGRADE_OUTPUT_ROW_LABEL_WIDTH,
+                HomeConfig.BATTLE_UPGRADE_OUTPUT_ROW_LABEL_HEIGHT,
                 new Color(62, 40, 23, 255),
             ).label;
-            label.string = output.name;
-            label.fontSize = HomeConfig.BATTLE_UPGRADE_OUTPUT_LABEL_FONT_SIZE;
-            label.lineHeight = HomeConfig.BATTLE_UPGRADE_OUTPUT_LABEL_FONT_SIZE + 4;
+            label.string = displayName;
+            label.fontSize = HomeConfig.BATTLE_UPGRADE_OUTPUT_ROW_LABEL_FONT_SIZE;
+            label.lineHeight = HomeConfig.BATTLE_UPGRADE_OUTPUT_ROW_LABEL_FONT_SIZE + 6;
             label.color = new Color(62, 40, 23, 255);
-            label.horizontalAlign = HorizontalTextAlignment.CENTER;
+            label.horizontalAlign = HorizontalTextAlignment.LEFT;
             label.verticalAlign = VerticalTextAlignment.CENTER;
             label.overflow = Overflow.SHRINK;
             label.node.setSiblingIndex(1);
         });
+        scroll.scrollToTop(0.01);
+    }
+
+    protected getBattleUpgradeOutputDisplayName(output: BattleUpgradeOutput): string {
+        const catalogItem = output.catalogId
+            ? BAG_ILLUSTRATION_CATALOG.find((item) => item.id === output.catalogId)
+            : BAG_ILLUSTRATION_CATALOG.find((item) => item.name.includes(output.name));
+        const catalogName = catalogItem ? this.getCatalogDisplayName(catalogItem) : output.name;
+        return catalogName.replace(/^(?:\d+|[\u4e00\u4e8c\u4e09\u56db\u4e94\u516d\u4e03\u516b\u4e5d\u5341]+)\u7ea7\u6750\u6599\uff1a/, '') || output.name;
     }
 
     protected createBattleUpgradeMaterialBar(parent: Node): void {
@@ -224,13 +340,23 @@ export abstract class HomeFeatureBattleUpgrade extends HomeViewBase {
         }
         bar.setSiblingIndex(8);
 
+        const materialCount = HomeConfig.BATTLE_UPGRADE_MATERIALS.length;
+        const firstRowCount = Math.min(HomeConfig.BATTLE_UPGRADE_MATERIAL_FIRST_ROW_COUNT, materialCount);
+        const hasSecondRow = materialCount > firstRowCount;
         HomeConfig.BATTLE_UPGRADE_MATERIALS.forEach((material, index) => {
-            const x = (index - 1) * HomeConfig.BATTLE_UPGRADE_MATERIAL_ITEM_SPACING;
-            const itemInfo = this.getOrCreateBattleNode(bar, `BattleUpgradeMaterialItem_${index + 1}`, HomeConfig.BATTLE_UPGRADE_MATERIAL_ITEM_WIDTH, HomeConfig.BATTLE_UPGRADE_MATERIAL_ITEM_HEIGHT, x, 0);
+            const isSecondRow = index >= firstRowCount;
+            const rowStartIndex = isSecondRow ? firstRowCount : 0;
+            const rowCount = isSecondRow ? materialCount - firstRowCount : firstRowCount;
+            const columnIndex = index - rowStartIndex;
+            const x = (columnIndex - (rowCount - 1) / 2) * HomeConfig.BATTLE_UPGRADE_MATERIAL_COLUMN_SPACING;
+            const y = hasSecondRow
+                ? (isSecondRow ? -HomeConfig.BATTLE_UPGRADE_MATERIAL_ROW_SPACING / 2 : HomeConfig.BATTLE_UPGRADE_MATERIAL_ROW_SPACING / 2)
+                : 0;
+            const itemInfo = this.getOrCreateBattleNode(bar, `BattleUpgradeMaterialItem_${index + 1}`, HomeConfig.BATTLE_UPGRADE_MATERIAL_ITEM_WIDTH, HomeConfig.BATTLE_UPGRADE_MATERIAL_ITEM_HEIGHT, x, y);
             const item = itemInfo.node;
             item.active = true;
             if (!itemInfo.existed) {
-                item.setPosition(x, 0, 0);
+                item.setPosition(x, y, 0);
             }
             item.setSiblingIndex(index);
             const oldMaterialBg = item.getChildByName(`BattleUpgradeMaterialBg_${index + 1}`);
@@ -239,15 +365,37 @@ export abstract class HomeFeatureBattleUpgrade extends HomeViewBase {
             }
             this.getOrCreateBattleSkinnedNode(item, `BattleUpgradeMaterialIcon_${index + 1}`, HomeConfig.BATTLE_UPGRADE_MATERIAL_ICON_SIZE, HomeConfig.BATTLE_UPGRADE_MATERIAL_ICON_SIZE, HomeConfig.BATTLE_UPGRADE_MATERIAL_ICON_X, 1, material.icon).node.setSiblingIndex(1);
 
-            const owned = this.getOrCreateBattleLabel(item, `BattleUpgradeMaterialOwned_${index + 1}`, `${material.owned} /`, 18, HomeConfig.BATTLE_UPGRADE_MATERIAL_TEXT_X - 18, 0, 74, 32, new Color(94, 224, 83, 255)).label;
-            owned.fontSize = 18;
+            const owned = this.getOrCreateBattleLabel(
+                item,
+                `BattleUpgradeMaterialOwned_${index + 1}`,
+                `${material.owned} /`,
+                HomeConfig.BATTLE_UPGRADE_MATERIAL_LABEL_FONT_SIZE,
+                HomeConfig.BATTLE_UPGRADE_MATERIAL_OWNED_X,
+                0,
+                HomeConfig.BATTLE_UPGRADE_MATERIAL_OWNED_WIDTH,
+                32,
+                new Color(94, 224, 83, 255),
+            ).label;
+            owned.fontSize = HomeConfig.BATTLE_UPGRADE_MATERIAL_LABEL_FONT_SIZE;
+            owned.lineHeight = HomeConfig.BATTLE_UPGRADE_MATERIAL_LABEL_FONT_SIZE + 8;
             owned.color = new Color(94, 224, 83, 255);
             owned.horizontalAlign = HorizontalTextAlignment.RIGHT;
             this.applyBattleEntryTextStyle(owned, 2);
             owned.node.setSiblingIndex(2);
 
-            const need = this.getOrCreateBattleLabel(item, `BattleUpgradeMaterialNeed_${index + 1}`, material.need, 18, HomeConfig.BATTLE_UPGRADE_MATERIAL_TEXT_X + 44, 0, 58, 32, Color.WHITE).label;
-            need.fontSize = 18;
+            const need = this.getOrCreateBattleLabel(
+                item,
+                `BattleUpgradeMaterialNeed_${index + 1}`,
+                material.need,
+                HomeConfig.BATTLE_UPGRADE_MATERIAL_LABEL_FONT_SIZE,
+                HomeConfig.BATTLE_UPGRADE_MATERIAL_NEED_X,
+                0,
+                HomeConfig.BATTLE_UPGRADE_MATERIAL_NEED_WIDTH,
+                32,
+                Color.WHITE,
+            ).label;
+            need.fontSize = HomeConfig.BATTLE_UPGRADE_MATERIAL_LABEL_FONT_SIZE;
+            need.lineHeight = HomeConfig.BATTLE_UPGRADE_MATERIAL_LABEL_FONT_SIZE + 8;
             need.color = Color.WHITE;
             need.horizontalAlign = HorizontalTextAlignment.LEFT;
             this.applyBattleEntryTextStyle(need, 2);

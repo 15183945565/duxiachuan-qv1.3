@@ -316,6 +316,11 @@ export abstract class HomeFeatureRoleEquipment extends HomeFeatureRoleEquipmentH
             this.applyRoleEquipmentSlotVisualState(slot, icon, level.node, !display.equipped);
             this.bindScaledClick(slot, () => {
                 if (this.rolePageActiveTab === 'forge') {
+                    if (!this.getCurrentRoleEquipment(config)) {
+                        this.resetRoleStrengthenSelection();
+                        this.showToast('\u8bf7\u4f69\u6234\u88c5\u5907');
+                        return;
+                    }
                     this.selectRoleStrengthenEquipment(config);
                     return;
                 }
