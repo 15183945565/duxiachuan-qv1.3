@@ -6,6 +6,7 @@ import {
     Node,
     Tween,
     UIOpacity,
+    UITransform,
 } from 'cc';
 import * as HomeConfig from './HomeConfig';
 import { HomeViewBase } from './HomeViewBase';
@@ -49,6 +50,37 @@ export abstract class HomeFeatureCharacter extends HomeFeatureCharacterHost {
         this.roleAttrDetailPanel.active = false;
     }
 
+    protected getOrCreateRoleAttrNode(parent: Node, name: string, width: number, height: number, x: number, y: number): Node {
+        let node = parent.getChildByName(name);
+        if (!node?.isValid) {
+            node = this.createNode(name, parent, width, height, x, y);
+        } else {
+            node.active = true;
+        }
+        return node;
+    }
+
+    protected getOrCreateRoleAttrSkin(parent: Node, name: string, width: number, height: number, x: number, y: number, skinPath: string): Node {
+        const node = this.getOrCreateRoleAttrNode(parent, name, width, height, x, y);
+        this.applyUiSkinKeepingEditorSize(node, skinPath, width, height);
+        return node;
+    }
+
+    protected getOrCreateRoleAttrLabel(parent: Node, name: string, text: string, fontSize: number, x: number, y: number, width: number, height: number, color: Color): Label {
+        const node = this.getOrCreateRoleAttrNode(parent, name, width, height, x, y);
+        const transform = node.getComponent(UITransform) || node.addComponent(UITransform);
+        if (transform.contentSize.width <= 0 || transform.contentSize.height <= 0) {
+            transform.setContentSize(width, height);
+        }
+        const label = node.getComponent(Label) || node.addComponent(Label);
+        label.string = text;
+        label.fontSize = fontSize;
+        label.lineHeight = fontSize + 8;
+        label.color = color;
+        label.horizontalAlign = HorizontalTextAlignment.CENTER;
+        return label;
+    }
+
     protected buildRoleAttrDetailPanel(): void {
         if (!this.rolePagePanel || this.roleAttrDetailPanel) return;
 
@@ -62,17 +94,18 @@ export abstract class HomeFeatureCharacter extends HomeFeatureCharacterHost {
         }, this);
 
         this.drawRect(this.roleAttrDetailPanel, HomeConfig.VIEW_WIDTH, HomeConfig.VIEW_HEIGHT, new Color(0, 0, 0, 72));
-        const board = this.createNode('RoleAttrDetailBoard', this.roleAttrDetailPanel, HomeConfig.ROLE_ATTR_DETAIL_WIDTH, HomeConfig.ROLE_ATTR_DETAIL_HEIGHT, 0, HomeConfig.ROLE_ATTR_DETAIL_Y);
+        const board = this.getOrCreateRoleAttrNode(this.roleAttrDetailPanel, 'RoleAttrDetailBoard', HomeConfig.ROLE_ATTR_DETAIL_WIDTH, HomeConfig.ROLE_ATTR_DETAIL_HEIGHT, 0, HomeConfig.ROLE_ATTR_DETAIL_Y);
         board.off(Node.EventType.TOUCH_END);
         board.on(Node.EventType.TOUCH_END, (event: EventTouch) => {
             event.propagationStopped = true;
         }, this);
-        this.createSkinnedNode('RoleAttrDetailBoardSkin', board, HomeConfig.ROLE_ATTR_DETAIL_WIDTH, HomeConfig.ROLE_ATTR_DETAIL_HEIGHT, 0, 0, HomeConfig.UI_CONFIRM_POPUP_BG).setSiblingIndex(0);
-        this.createSkinnedNode('RoleAttrDetailTitleSkin', board, HomeConfig.BAG_ITEM_DETAIL_TITLE_WIDTH, HomeConfig.BAG_ITEM_DETAIL_TITLE_HEIGHT, 0, 182, HomeConfig.UI_CONFIRM_TITLE_BG).setSiblingIndex(1);
-        const titleLabel = this.createLabel(board, 'RoleAttrDetailTitle', '\u5c5e\u6027\u8be6\u60c5', 30, 0, 186, 220, 42, Color.BLACK);
+        this.getOrCreateRoleAttrSkin(board, 'RoleAttrDetailBoardSkin', HomeConfig.ROLE_ATTR_DETAIL_WIDTH, HomeConfig.ROLE_ATTR_DETAIL_HEIGHT, 0, 0, HomeConfig.UI_CONFIRM_POPUP_BG).setSiblingIndex(0);
+        this.getOrCreateRoleAttrSkin(board, 'RoleAttrDetailTitleSkin', HomeConfig.BAG_ITEM_DETAIL_TITLE_WIDTH, HomeConfig.BAG_ITEM_DETAIL_TITLE_HEIGHT, 0, 182, HomeConfig.UI_CONFIRM_TITLE_BG).setSiblingIndex(1);
+        const titleLabel = this.getOrCreateRoleAttrLabel(board, 'RoleAttrDetailTitle', '\u5c5e\u6027\u8be6\u60c5', 30, 0, 186, 220, 42, Color.BLACK);
         this.applyRoleAttrLabelStyle(titleLabel, 3);
         titleLabel.node.setSiblingIndex(2);
-        this.createMailButton(board, 'RoleAttrDetailClose', '', 315, 182, 52, 52, new Color(110, 72, 52, 0), () => this.closeRoleAttrDetailPanel(), HomeConfig.UI_BTN_CLOSE).setSiblingIndex(10);
+        const closeButton = board.getChildByName('RoleAttrDetailClose');
+        if (closeButton?.isValid) closeButton.active = false;
 
         const totalAttrs = this.getRoleTotalAttrs();
         const attrs = [
@@ -84,16 +117,16 @@ export abstract class HomeFeatureCharacter extends HomeFeatureCharacterHost {
 
         attrs.forEach(([name, value], index) => {
             const y = 84 - index * 44;
-            const nameLabel = this.createLabel(board, `RoleAttrName_${index}`, name, 22, -88, y, 100, 34, Color.BLACK);
+            const nameLabel = this.getOrCreateRoleAttrLabel(board, `RoleAttrName_${index}`, name, 22, -88, y, 100, 34, Color.BLACK);
             nameLabel.horizontalAlign = HorizontalTextAlignment.RIGHT;
             this.applyRoleAttrLabelStyle(nameLabel, 2);
 
-            const valueLabel = this.createLabel(board, `RoleAttrValue_${index}`, value, 22, 28, y, 120, 34, Color.BLACK);
+            const valueLabel = this.getOrCreateRoleAttrLabel(board, `RoleAttrValue_${index}`, value, 22, 28, y, 120, 34, Color.BLACK);
             valueLabel.horizontalAlign = HorizontalTextAlignment.LEFT;
             this.applyRoleAttrLabelStyle(valueLabel, 2);
         });
 
-        const hintLabel = this.createLabel(board, 'RoleAttrCloseHint', '\u70b9\u51fb\u7a7a\u767d\u533a\u57df\u5173\u95ed\u7a97\u53e3', 20, 0, -150, 360, 34, Color.BLACK);
+        const hintLabel = this.getOrCreateRoleAttrLabel(board, 'RoleAttrCloseHint', '\u70b9\u51fb\u7a7a\u767d\u533a\u57df\u5173\u95ed\u7a97\u53e3', 20, 0, -150, 360, 34, Color.BLACK);
         this.applyRoleAttrLabelStyle(hintLabel, 2);
     }
 

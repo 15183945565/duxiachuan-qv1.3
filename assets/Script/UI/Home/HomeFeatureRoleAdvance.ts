@@ -1,5 +1,6 @@
 import {
     Color,
+    EventTouch,
     Graphics,
     HorizontalTextAlignment,
     Label,
@@ -17,6 +18,13 @@ import { HomeViewBase } from './HomeViewBase';
 type RoleProgressSuccessKind = 'upgrade' | 'breakthrough' | 'strengthen';
 type RoleAttributeSet = { attack: number; life: number; defense: number };
 type RoleProgressSnapshot = { level: number; attrs: RoleAttributeSet; power: number };
+type RoleAdvanceExpOrbUseResult = {
+    used: boolean;
+    leveled: boolean;
+    exp: number;
+    pending: boolean;
+    blocked: boolean;
+};
 
 abstract class HomeFeatureRoleAdvanceHost extends HomeViewBase {
     protected abstract roleRuntimeLevel: number;
@@ -275,9 +283,108 @@ export abstract class HomeFeatureRoleAdvance extends HomeFeatureRoleAdvanceHost 
         const expLabel = this.getOrCreateRolePageLabel(this.rolePageAdvanceRoot, `RoleAdvanceExpOrbValue_${index}`, `${exp}\u7ecf\u9a8c\u503c`, 20, x, HomeConfig.ROLE_ADVANCE_ORB_Y - 68, 120, 30, Color.BLACK).label;
         this.applyRoleAttrLabelStyle(expLabel, 2);
     
-        this.bindScaledClick(slot, () => {
-            this.handleRoleAdvanceExpOrbClick(index);
-        });
+        this.bindRoleAdvanceExpOrbHold(slot, index);
+    }
+    protected bindRoleAdvanceExpOrbHold(slot: Node, index: number): void {
+        slot.off(Node.EventType.TOUCH_START);
+        slot.off(Node.EventType.TOUCH_END);
+        slot.off(Node.EventType.TOUCH_CANCEL);
+        if (!this.buttonBaseScales.has(slot)) {
+            this.buttonBaseScales.set(slot, slot.scale.clone());
+        }
+
+        slot.on(Node.EventType.TOUCH_START, (event: EventTouch) => {
+            event.propagationStopped = true;
+            this.playButtonScale(slot, true);
+            this.startRoleAdvanceExpOrbHold(index);
+        }, this);
+        const stopHold = (event: EventTouch): void => {
+            event.propagationStopped = true;
+            this.playButtonScale(slot, false);
+            this.stopRoleAdvanceExpOrbHold(true);
+        };
+        slot.on(Node.EventType.TOUCH_END, stopHold, this);
+        slot.on(Node.EventType.TOUCH_CANCEL, stopHold, this);
+    }
+    protected startRoleAdvanceExpOrbHold(index: number): void {
+        this.stopRoleAdvanceExpOrbHold(false);
+        this.roleAdvanceExpHoldOrbIndex = index;
+        this.roleAdvanceExpHoldBefore = this.getRoleSnapshot();
+        this.roleAdvanceExpHoldUsedCount = 0;
+        this.roleAdvanceExpHoldExpGained = 0;
+        this.roleAdvanceExpHoldLeveled = false;
+        this.roleAdvanceExpHoldRepeating = false;
+
+        if (!this.consumeRoleAdvanceExpOrbForHold(index)) {
+            this.stopRoleAdvanceExpOrbHold(true);
+            return;
+        }
+
+        const startRepeat = (): void => {
+            this.roleAdvanceExpHoldStartCallback = null;
+            if (this.roleAdvanceExpHoldOrbIndex !== index) return;
+
+            this.roleAdvanceExpHoldRepeating = true;
+            const tick = (): void => {
+                if (this.rolePageActiveTab !== 'advance' || !this.rolePagePanel?.active || !this.rolePageAdvanceRoot?.active) {
+                    this.stopRoleAdvanceExpOrbHold(true);
+                    return;
+                }
+                if (!this.consumeRoleAdvanceExpOrbForHold(index)) {
+                    this.stopRoleAdvanceExpOrbHold(true);
+                }
+            };
+            this.roleAdvanceExpHoldTickCallback = tick;
+            this.schedule(tick, HomeConfig.ROLE_ADVANCE_EXP_ORB_HOLD_INTERVAL);
+        };
+        this.roleAdvanceExpHoldStartCallback = startRepeat;
+        this.scheduleOnce(startRepeat, HomeConfig.ROLE_ADVANCE_EXP_ORB_HOLD_DELAY);
+    }
+    protected consumeRoleAdvanceExpOrbForHold(index: number): boolean {
+        const result = this.consumeRoleAdvanceExpOrbOnce(index, true);
+        if (!result.used) return false;
+
+        this.roleAdvanceExpHoldUsedCount += 1;
+        this.roleAdvanceExpHoldExpGained += result.exp;
+        this.roleAdvanceExpHoldLeveled = this.roleAdvanceExpHoldLeveled || result.leveled;
+        return !result.pending && this.roleRuntimeLevel < 50 && !result.blocked;
+    }
+    protected stopRoleAdvanceExpOrbHold(showSummary: boolean): void {
+        if (this.roleAdvanceExpHoldStartCallback) {
+            this.unschedule(this.roleAdvanceExpHoldStartCallback);
+            this.roleAdvanceExpHoldStartCallback = null;
+        }
+        if (this.roleAdvanceExpHoldTickCallback) {
+            this.unschedule(this.roleAdvanceExpHoldTickCallback);
+            this.roleAdvanceExpHoldTickCallback = null;
+        }
+
+        const usedCount = this.roleAdvanceExpHoldUsedCount;
+        const expGained = this.roleAdvanceExpHoldExpGained;
+        const leveled = this.roleAdvanceExpHoldLeveled;
+        const before = this.roleAdvanceExpHoldBefore;
+        const repeating = this.roleAdvanceExpHoldRepeating;
+
+        this.roleAdvanceExpHoldOrbIndex = 0;
+        this.roleAdvanceExpHoldBefore = null;
+        this.roleAdvanceExpHoldUsedCount = 0;
+        this.roleAdvanceExpHoldExpGained = 0;
+        this.roleAdvanceExpHoldLeveled = false;
+        this.roleAdvanceExpHoldRepeating = false;
+
+        if (!showSummary || usedCount <= 0) return;
+
+        if (leveled && before) {
+            this.openRoleProgressSuccessPopup('upgrade', before, this.getRoleSnapshot());
+            return;
+        }
+        if (this.isRoleBreakthroughPending()) {
+            this.showToast('\u7ecf\u9a8c\u5df2\u6ee1\uff0c\u8bf7\u4f7f\u7528\u7a81\u7834\u73e0\u7a81\u7834');
+            return;
+        }
+        this.showToast(repeating || usedCount > 1
+            ? `\u8fde\u7eed\u4f7f\u7528\u7ecf\u9a8c\u73e0 +${expGained}`
+            : `\u4f7f\u7528\u7ecf\u9a8c\u73e0 +${expGained}`);
     }
     protected createRoleAdvanceBreakthroughOrbs(): void {
         if (!this.rolePageAdvanceRoot) return;
@@ -453,25 +560,36 @@ export abstract class HomeFeatureRoleAdvance extends HomeFeatureRoleAdvanceHost 
         this.openRoleProgressSuccessPopup('breakthrough', before, this.getRoleSnapshot());
     }
     protected handleRoleAdvanceExpOrbClick(index: number): void {
+        const before = this.getRoleSnapshot();
+        const result = this.consumeRoleAdvanceExpOrbOnce(index, true);
+        if (!result.used) return;
+
+        if (result.leveled) {
+            this.openRoleProgressSuccessPopup('upgrade', before, this.getRoleSnapshot());
+        } else if (result.pending) {
+            this.showToast('\u7ecf\u9a8c\u5df2\u6ee1\uff0c\u8bf7\u4f7f\u7528\u7a81\u7834\u73e0\u7a81\u7834');
+        } else {
+            this.showToast(`\u4f7f\u7528\u7ecf\u9a8c\u73e0 +${result.exp}`);
+        }
+    }
+    protected consumeRoleAdvanceExpOrbOnce(index: number, showBlockToast: boolean): RoleAdvanceExpOrbUseResult {
         const orb = HomeConfig.ROLE_ADVANCE_EXP_ORBS[index - 1];
-        if (!orb) return;
+        if (!orb) return { used: false, leveled: false, exp: 0, pending: false, blocked: true };
         if (this.roleRuntimeLevel >= 50) {
-            this.showToast('\u89d2\u8272\u5df2\u6ee1\u7ea7');
-            return;
+            if (showBlockToast) this.showToast('\u89d2\u8272\u5df2\u6ee1\u7ea7');
+            return { used: false, leveled: false, exp: 0, pending: false, blocked: true };
         }
         if (this.isRoleBreakthroughPending()) {
-            this.showToast('\u7ecf\u9a8c\u5df2\u6ee1\uff0c\u8bf7\u5148\u4f7f\u7528\u7a81\u7834\u73e0\u7a81\u7834');
-            return;
+            if (showBlockToast) this.showToast('\u7ecf\u9a8c\u5df2\u6ee1\uff0c\u8bf7\u5148\u4f7f\u7528\u7a81\u7834\u73e0\u7a81\u7834');
+            return { used: false, leveled: false, exp: 0, pending: true, blocked: true };
         }
         if (!this.consumeRoleInventory(orb.itemId, 1)) {
-            this.showToast(`${orb.exp}\u7ecf\u9a8c\u73e0\u6570\u91cf\u4e0d\u8db3`);
-            return;
+            if (showBlockToast) this.showToast(`${orb.exp}\u7ecf\u9a8c\u73e0\u6570\u91cf\u4e0d\u8db3`);
+            return { used: false, leveled: false, exp: 0, pending: false, blocked: true };
         }
 
         const beforeExpRatio = this.getRoleExpProgressRatio();
-        const before = this.getRoleSnapshot();
         this.roleRuntimeExp += orb.exp;
-        let successKind: RoleProgressSuccessKind | null = null;
         let leveled = false;
 
         while (this.roleRuntimeLevel < 50) {
@@ -488,19 +606,18 @@ export abstract class HomeFeatureRoleAdvance extends HomeFeatureRoleAdvanceHost 
             this.roleRuntimeExp -= needExp;
             this.roleRuntimeLevel = targetLevel;
             leveled = true;
-            successKind = 'upgrade';
         }
 
         this.refreshRoleInventoryViews(false);
         this.playRoleAdvanceExpEffect(beforeExpRatio, leveled);
         this.refreshRolePagePower(this.getCurrentRoleAssetConfig(this.profile.gender));
-        if (leveled && successKind) {
-            this.openRoleProgressSuccessPopup(successKind, before, this.getRoleSnapshot());
-        } else if (this.isRoleBreakthroughPending()) {
-            this.showToast('\u7ecf\u9a8c\u5df2\u6ee1\uff0c\u8bf7\u4f7f\u7528\u7a81\u7834\u73e0\u7a81\u7834');
-        } else {
-            this.showToast(`\u4f7f\u7528\u7ecf\u9a8c\u73e0 +${orb.exp}`);
-        }
+        return {
+            used: true,
+            leveled,
+            exp: orb.exp,
+            pending: this.isRoleBreakthroughPending(),
+            blocked: false,
+        };
     }
     protected playRoleAdvanceExpEffect(fromRatio = this.getRoleExpProgressRatio(), passedLevel = false): void {
         if (!this.roleAdvanceExpFill?.isValid) return;

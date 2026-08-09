@@ -24,6 +24,7 @@ export const UI_ROLE_ADVANCE_EXP_BAR_FILL = `${ROLE_UI_ROOT}/role_advance_exp_ba
 export const UI_ROLE_ADVANCE_EXP_ORB_ROOT = `${ROLE_UI_ROOT}/AdvanceExpOrbs/advance_exp_orb`;
 export const UI_ROLE_ADVANCE_EXP_ORB_FRAME_ROOT = `${BAG_UI_ROOT}/ItemFrames/item_frame_lv`;
 export const UI_ROLE_STRENGTHEN_BUTTON = `${ROLE_UI_ROOT}/role_strengthen_button`;
+export const UI_ROLE_EQUIP_DETAIL_BUTTON_BG = `${ROLE_UI_ROOT}/role_equip_detail_button_bg`;
 export const UI_ROLE_STRENGTHEN_MATERIAL_BG = `${COMMON_UI_ROOT}/common_upgrade_material_bg`;
 export const UI_ROLE_STRENGTHEN_MATERIAL_ROOT = `${ROLE_UI_ROOT}/StrengthenMaterials`;
 export const UI_ROLE_SUCCESS_POPUP_BG = `${ROLE_UI_ROOT}/role_success_popup_bg`;
@@ -166,6 +167,8 @@ export const ROLE_ADVANCE_EXP_BAR_WIDTH = 610;
 export const ROLE_ADVANCE_EXP_BAR_HEIGHT = 24;
 export const ROLE_ADVANCE_EXP_FILL_WIDTH = 610;
 export const ROLE_ADVANCE_EXP_EFFECT_DURATION = 0.35;
+export const ROLE_ADVANCE_EXP_ORB_HOLD_DELAY = 0.35;
+export const ROLE_ADVANCE_EXP_ORB_HOLD_INTERVAL = 0.12;
 export const ROLE_ADVANCE_EXP_Y = -228;
 export const ROLE_ADVANCE_BREAKTHROUGH_COST_Y = -274;
 export const ROLE_ADVANCE_BREAKTHROUGH_COST_TITLE_X = -246;
@@ -481,7 +484,7 @@ export const ROLE_ASSETS: Record<RoleGender, RoleAssetConfig> = {
         previewScale: 4.5,
         previewOffsetX: 0,
         previewOffsetY: -20,
-        pageScale: 5.2,
+        pageScale: 5.85,
         pageOffsetX: 0,
         pageOffsetY: 0,
     },
@@ -496,7 +499,7 @@ export const ROLE_ASSETS: Record<RoleGender, RoleAssetConfig> = {
         previewScale: 4.2,
         previewOffsetX: 0,
         previewOffsetY: -20,
-        pageScale: 5.2,
+        pageScale: 5.85,
         pageOffsetX: 0,
         pageOffsetY: 0,
     },

@@ -753,7 +753,38 @@ export abstract class HomeFeatureMailPanel extends HomeViewBase {
         overlaySprite.color = new Color(0, 0, 0, 92);
         overlaySprite.grayscale = false;
         this.applyUiSkinKeepingEditorSize(overlay, HomeConfig.UI_FRAME_MAIL_ROW, rowWidth, rowHeight);
+        this.bindClaimedMailRowOverlayTap(overlay, mail.id);
         overlay.setSiblingIndex(row.children.length - 1);
+    }
+    protected bindClaimedMailRowOverlayTap(overlay: Node, mailId: string): void {
+        let startX = 0;
+        let startY = 0;
+        let moved = false;
+        overlay.off(Node.EventType.TOUCH_START);
+        overlay.off(Node.EventType.TOUCH_MOVE);
+        overlay.off(Node.EventType.TOUCH_END);
+        overlay.off(Node.EventType.TOUCH_CANCEL);
+        overlay.on(Node.EventType.TOUCH_START, (event: EventTouch) => {
+            const location = event.getUILocation();
+            startX = location.x;
+            startY = location.y;
+            moved = false;
+        }, this);
+        overlay.on(Node.EventType.TOUCH_MOVE, (event: EventTouch) => {
+            const location = event.getUILocation();
+            if (Math.abs(location.x - startX) > 14 || Math.abs(location.y - startY) > 14) {
+                moved = true;
+            }
+        }, this);
+        overlay.on(Node.EventType.TOUCH_END, (event: EventTouch) => {
+            event.propagationStopped = true;
+            if (!moved) {
+                this.openMailDetail(mailId);
+            }
+        }, this);
+        overlay.on(Node.EventType.TOUCH_CANCEL, () => {
+            moved = false;
+        }, this);
     }
     protected setMailRowUnreadDotVisible(row: Node, visible: boolean): void {
         const visit = (node: Node): void => {

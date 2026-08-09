@@ -8,6 +8,104 @@
     ".png"
   ],
   "subMetas": {
+    "f9941": {
+      "importer": "sprite-frame",
+      "uuid": "e53596c5-8739-4918-aa25-60e6126bbf00@f9941",
+      "displayName": "bag_item_086",
+      "id": "f9941",
+      "name": "spriteFrame",
+      "userData": {
+        "width": 108,
+        "height": 108,
+        "rawWidth": 108,
+        "rawHeight": 108,
+        "trimType": "none",
+        "trimThreshold": 1,
+        "rotated": false,
+        "offsetX": 0,
+        "offsetY": 0,
+        "isUuid": true,
+        "imageUuidOrDatabaseUri": "e53596c5-8739-4918-aa25-60e6126bbf00@6c48a",
+        "packable": true,
+        "pixelsToUnit": 100,
+        "pivotX": 0.5,
+        "pivotY": 0.5,
+        "trimX": 0,
+        "trimY": 0,
+        "borderTop": 0,
+        "borderBottom": 0,
+        "borderLeft": 0,
+        "borderRight": 0,
+        "meshType": 0,
+        "vertices": {
+          "rawPosition": [
+            -54,
+            -54,
+            0,
+            54,
+            -54,
+            0,
+            -54,
+            54,
+            0,
+            54,
+            54,
+            0
+          ],
+          "indexes": [
+            0,
+            1,
+            2,
+            2,
+            1,
+            3
+          ],
+          "uv": [
+            0,
+            108,
+            108,
+            108,
+            0,
+            0,
+            108,
+            0
+          ],
+          "nui": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "nuv": [
+            0,
+            0,
+            1,
+            0,
+            0,
+            1,
+            1,
+            1
+          ],
+          "minPos": [
+            -54,
+            -54,
+            0
+          ],
+          "maxPos": [
+            54,
+            54,
+            0
+          ]
+        },
+        "atlasUuid": ""
+      },
+      "ver": "1.0.12",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
     "6c48a": {
       "importer": "texture",
       "uuid": "e53596c5-8739-4918-aa25-60e6126bbf00@6c48a",
@@ -34,7 +132,7 @@
     }
   },
   "userData": {
-    "type": "texture",
+    "type": "sprite-frame",
     "fixAlphaTransparencyArtifacts": false,
     "hasAlpha": true,
     "redirect": "e53596c5-8739-4918-aa25-60e6126bbf00@6c48a"

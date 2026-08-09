@@ -8,6 +8,30 @@
     ".png"
   ],
   "subMetas": {
+    "6c48a": {
+      "importer": "texture",
+      "uuid": "826f9267-4c09-4340-8aac-515055ca485e@6c48a",
+      "displayName": "role_power_detail_btn",
+      "id": "6c48a",
+      "name": "texture",
+      "userData": {
+        "wrapModeS": "repeat",
+        "wrapModeT": "repeat",
+        "minfilter": "linear",
+        "magfilter": "linear",
+        "mipfilter": "none",
+        "anisotropy": 0,
+        "isUuid": true,
+        "imageUuidOrDatabaseUri": "826f9267-4c09-4340-8aac-515055ca485e",
+        "visible": false
+      },
+      "ver": "1.0.22",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
     "f9941": {
       "importer": "sprite-frame",
       "uuid": "826f9267-4c09-4340-8aac-515055ca485e@f9941",
@@ -15,10 +39,10 @@
       "id": "f9941",
       "name": "spriteFrame",
       "userData": {
-        "width": 32,
-        "height": 34,
-        "rawWidth": 32,
-        "rawHeight": 34,
+        "width": 75,
+        "height": 78,
+        "rawWidth": 75,
+        "rawHeight": 78,
         "trimType": "none",
         "trimThreshold": 1,
         "rotated": false,
@@ -39,17 +63,17 @@
         "meshType": 0,
         "vertices": {
           "rawPosition": [
-            -16,
-            -17,
+            -37.5,
+            -39,
             0,
-            16,
-            -17,
+            37.5,
+            -39,
             0,
-            -16,
-            17,
+            -37.5,
+            39,
             0,
-            16,
-            17,
+            37.5,
+            39,
             0
           ],
           "indexes": [
@@ -62,12 +86,12 @@
           ],
           "uv": [
             0,
-            34,
-            32,
-            34,
+            78,
+            75,
+            78,
             0,
             0,
-            32,
+            75,
             0
           ],
           "nui": [
@@ -87,43 +111,19 @@
             1
           ],
           "minPos": [
-            -16,
-            -17,
+            -37.5,
+            -39,
             0
           ],
           "maxPos": [
-            16,
-            17,
+            37.5,
+            39,
             0
           ]
         },
         "atlasUuid": ""
       },
       "ver": "1.0.12",
-      "imported": true,
-      "files": [
-        ".json"
-      ],
-      "subMetas": {}
-    },
-    "6c48a": {
-      "importer": "texture",
-      "uuid": "826f9267-4c09-4340-8aac-515055ca485e@6c48a",
-      "displayName": "role_power_detail_btn",
-      "id": "6c48a",
-      "name": "texture",
-      "userData": {
-        "wrapModeS": "repeat",
-        "wrapModeT": "repeat",
-        "minfilter": "linear",
-        "magfilter": "linear",
-        "mipfilter": "none",
-        "anisotropy": 0,
-        "isUuid": true,
-        "imageUuidOrDatabaseUri": "826f9267-4c09-4340-8aac-515055ca485e",
-        "visible": false
-      },
-      "ver": "1.0.22",
       "imported": true,
       "files": [
         ".json"

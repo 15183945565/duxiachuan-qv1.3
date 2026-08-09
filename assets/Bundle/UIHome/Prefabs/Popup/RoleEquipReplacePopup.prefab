@@ -413,9 +413,6 @@
       },
       {
         "__id__": 23
-      },
-      {
-        "__id__": 25
       }
     ],
     "_prefab": {
@@ -671,7 +668,7 @@
     "__prefab": {
       "__id__": 31
     },
-    "_type": 1,
+    "_type": 0,
     "_segments": 64,
     "_N$spriteFrame": null,
     "_N$alphaThreshold": 0.1,

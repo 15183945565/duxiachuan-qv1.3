@@ -236,6 +236,14 @@ export abstract class HomeViewBase extends Component {
     protected rolePageNameUsesEditorTransform = false;
     protected roleBottomTabButtons = new Map<RolePageTab, RoleBottomTabButton>();
     protected roleAdvanceExpFill: Node | null = null;
+    protected roleAdvanceExpHoldOrbIndex = 0;
+    protected roleAdvanceExpHoldStartCallback: (() => void) | null = null;
+    protected roleAdvanceExpHoldTickCallback: (() => void) | null = null;
+    protected roleAdvanceExpHoldBefore: HomeRoleProgressSnapshot | null = null;
+    protected roleAdvanceExpHoldUsedCount = 0;
+    protected roleAdvanceExpHoldExpGained = 0;
+    protected roleAdvanceExpHoldLeveled = false;
+    protected roleAdvanceExpHoldRepeating = false;
     protected roleAttrDetailPanel: Node | null = null;
     protected noticePanel: Node | null = null;
     protected noticeBoard: Node | null = null;
@@ -654,9 +662,9 @@ export abstract class HomeViewBase extends Component {
     protected abstract getRoleStrengthenCost(level: number): number;
     protected abstract syncRoleEquipmentSlot(config: any): void;
     protected abstract drawRoleEquipDim(node: Node): void;
-    protected abstract getOrCreateRoleEquipChild(parent: Node, name: string, width: number, height: number, x: number, y: number): Node;
-    protected abstract getOrCreateRoleEquipSkin(parent: Node, name: string, width: number, height: number, x: number, y: number, skinPath: string): Node;
-    protected abstract getOrCreateRoleEquipLabel(parent: Node, name: string, text: string, fontSize: number, x: number, y: number, width: number, height: number, color: Color): Label;
+    protected abstract getOrCreateRoleEquipChild(parent: Node, name: string, width: number, height: number, x: number, y: number, preserveExistingTransform?: boolean): Node;
+    protected abstract getOrCreateRoleEquipSkin(parent: Node, name: string, width: number, height: number, x: number, y: number, skinPath: string, preserveExistingTransform?: boolean): Node;
+    protected abstract getOrCreateRoleEquipLabel(parent: Node, name: string, text: string, fontSize: number, x: number, y: number, width: number, height: number, color: Color, preserveExistingTransform?: boolean): Label;
     protected abstract fadeRoleEquipPopup(node: Node, from: number, to: number, duration?: number): Promise<void>;
     protected abstract applyRoleEquipSelectedFrameSkin(node: Node): void;
     protected abstract closeRoleEquipDetailPopup(fade?: boolean): void;

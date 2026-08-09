@@ -211,7 +211,7 @@ export abstract class HomeFeatureRoleEquipment extends HomeFeatureRoleEquipmentH
         }
         return 0;
     }
-    protected getCatalogDisplayName(item: BagIllustrationCatalogItem | null | undefined): string {
+    protected getCatalogDisplayName(item: BagIllustrationCatalogItem | RoleEquipmentRuntimeItem | null | undefined): string {
         if (!item) return '';
         const equipmentIndex = item.category === 'equipment' ? this.getBagItemIdIndex(item) : this.getBagItemIconIndex(item);
         const equipmentNameMap: Record<number, string> = {
@@ -272,7 +272,13 @@ export abstract class HomeFeatureRoleEquipment extends HomeFeatureRoleEquipmentH
             167: '\u9752\u72ee\u817f\u7532',
             168: '\u9752\u72ee\u80f8\u6302',
         };
-        return equipmentNameMap[equipmentIndex] || item.name;
+        const baseName = equipmentNameMap[equipmentIndex] || item.name;
+        const runtimeLevel = (item as RoleEquipmentRuntimeItem).displayLevel;
+        if (item.category === 'equipment' && runtimeLevel) {
+            const suffix = baseName.replace(/^(?:\d+|[\u4e00\u4e8c\u4e09\u56db\u4e94\u516d\u4e03\u516b\u4e5d\u5341]+)\u7ea7/, '');
+            return `${runtimeLevel}\u7ea7${suffix || baseName}`;
+        }
+        return baseName;
     }
     protected createRolePageSideFrame(parent: Node, name: string, x: number, y: number, equipIconPaths: string[]): Node {
         const frame = this.getOrCreateRolePageNode(parent, name, 124, 650, x, y).node;
@@ -311,6 +317,10 @@ export abstract class HomeFeatureRoleEquipment extends HomeFeatureRoleEquipmentH
             this.bindScaledClick(slot, () => {
                 if (this.rolePageActiveTab === 'forge') {
                     this.selectRoleStrengthenEquipment(config);
+                    return;
+                }
+                if (!this.getCurrentRoleEquipment(config)) {
+                    this.openRoleEquipmentReplacePopup(config);
                     return;
                 }
                 this.openRoleEquipmentDetail(config);
@@ -469,23 +479,31 @@ export abstract class HomeFeatureRoleEquipment extends HomeFeatureRoleEquipmentH
     protected getRoleStrengthenCost(level: number): number {
         return HomeConfig.ROLE_STRENGTHEN_COST_BASE + Math.max(1, Math.floor(level)) * HomeConfig.ROLE_STRENGTHEN_COST_PER_LEVEL;
     }
-    protected getOrCreateRoleEquipChild(parent: Node, name: string, width: number, height: number, x: number, y: number): Node {
+    protected getOrCreateRoleEquipChild(parent: Node, name: string, width: number, height: number, x: number, y: number, preserveExistingTransform = false): Node {
         let node = parent.getChildByName(name);
+        const created = !node?.isValid;
         if (!node?.isValid) {
             node = this.createNode(name, parent, width, height, x, y);
         }
         node.active = true;
-        node.setPosition(x, y, 0);
-        (node.getComponent(UITransform) || node.addComponent(UITransform)).setContentSize(width, height);
+        const transform = node.getComponent(UITransform) || node.addComponent(UITransform);
+        if (created || !preserveExistingTransform) {
+            node.setPosition(x, y, 0);
+            transform.setContentSize(width, height);
+        }
         return node;
     }
-    protected getOrCreateRoleEquipSkin(parent: Node, name: string, width: number, height: number, x: number, y: number, skinPath: string): Node {
-        const node = this.getOrCreateRoleEquipChild(parent, name, width, height, x, y);
-        this.applyUiSkin(node, skinPath, width, height);
+    protected getOrCreateRoleEquipSkin(parent: Node, name: string, width: number, height: number, x: number, y: number, skinPath: string, preserveExistingTransform = false): Node {
+        const node = this.getOrCreateRoleEquipChild(parent, name, width, height, x, y, preserveExistingTransform);
+        if (preserveExistingTransform) {
+            this.applyUiSkinKeepingEditorSize(node, skinPath, width, height);
+        } else {
+            this.applyUiSkin(node, skinPath, width, height);
+        }
         return node;
     }
-    protected getOrCreateRoleEquipLabel(parent: Node, name: string, text: string, fontSize: number, x: number, y: number, width: number, height: number, color: Color): Label {
-        const node = this.getOrCreateRoleEquipChild(parent, name, width, height, x, y);
+    protected getOrCreateRoleEquipLabel(parent: Node, name: string, text: string, fontSize: number, x: number, y: number, width: number, height: number, color: Color, preserveExistingTransform = false): Label {
+        const node = this.getOrCreateRoleEquipChild(parent, name, width, height, x, y, preserveExistingTransform);
         const label = node.getComponent(Label) || node.addComponent(Label);
         applySimKaiFont(label);
         label.enabled = true;
@@ -508,6 +526,19 @@ export abstract class HomeFeatureRoleEquipment extends HomeFeatureRoleEquipmentH
     protected clearRoleEquipDim(node: Node): void {
         const graphics = node.getComponent(Graphics);
         if (graphics) graphics.clear();
+    }
+    protected setRoleEquipDetailIconVisible(iconFrame: Node, visible: boolean): void {
+        const opacity = iconFrame.getComponent(UIOpacity) || iconFrame.addComponent(UIOpacity);
+        iconFrame.active = visible;
+        opacity.opacity = visible ? 255 : 0;
+        const applyVisible = (node: Node): void => {
+            const sprite = node.getComponent(Sprite);
+            if (sprite) sprite.enabled = visible;
+            const label = node.getComponent(Label);
+            if (label) label.enabled = visible;
+            node.children.forEach((child) => applyVisible(child));
+        };
+        applyVisible(iconFrame);
     }
     protected ensureRoleEquipDetailPopup(): Node {
         const parent = this.popupRoot || this.rolePagePanel || this.node;
@@ -540,7 +571,7 @@ export abstract class HomeFeatureRoleEquipment extends HomeFeatureRoleEquipmentH
             this.closeRoleEquipDetailPopup();
         }, this);
 
-        const board = this.getOrCreateRoleEquipSkin(popup, 'RoleEquipDetailBoard', HomeConfig.ROLE_EQUIP_DETAIL_WIDTH, HomeConfig.ROLE_EQUIP_DETAIL_HEIGHT, 0, 0, HomeConfig.UI_CONFIRM_POPUP_BG);
+        const board = this.getOrCreateRoleEquipSkin(popup, 'RoleEquipDetailBoard', HomeConfig.ROLE_EQUIP_DETAIL_WIDTH, HomeConfig.ROLE_EQUIP_DETAIL_HEIGHT, 0, 0, HomeConfig.UI_CONFIRM_POPUP_BG, true);
         board.setSiblingIndex(1);
         board.off(Node.EventType.TOUCH_START);
         board.off(Node.EventType.TOUCH_END);
@@ -551,8 +582,8 @@ export abstract class HomeFeatureRoleEquipment extends HomeFeatureRoleEquipmentH
             event.propagationStopped = true;
         }, this);
 
-        this.getOrCreateRoleEquipSkin(board, 'RoleEquipDetailTitleSkin', HomeConfig.BAG_ITEM_DETAIL_TITLE_WIDTH, HomeConfig.BAG_ITEM_DETAIL_TITLE_HEIGHT, 0, 182, HomeConfig.UI_CONFIRM_TITLE_BG).setSiblingIndex(1);
-        this.getOrCreateRoleEquipLabel(board, 'RoleEquipDetailTitle', '\u88c5\u5907\u8be6\u60c5', 30, 0, 186, 260, 42, new Color(126, 74, 36, 255)).node.setSiblingIndex(2);
+        this.getOrCreateRoleEquipSkin(board, 'RoleEquipDetailTitleSkin', HomeConfig.BAG_ITEM_DETAIL_TITLE_WIDTH, HomeConfig.BAG_ITEM_DETAIL_TITLE_HEIGHT, 0, 182, HomeConfig.UI_CONFIRM_TITLE_BG, true).setSiblingIndex(1);
+        this.getOrCreateRoleEquipLabel(board, 'RoleEquipDetailTitle', '\u88c5\u5907\u8be6\u60c5', 30, 0, 186, 260, 42, new Color(126, 74, 36, 255), true).node.setSiblingIndex(2);
         return popup;
     }
     protected ensureRoleEquipReplacePopup(): Node {
@@ -633,6 +664,10 @@ export abstract class HomeFeatureRoleEquipment extends HomeFeatureRoleEquipmentH
         this.activeRoleEquipSlot = config;
         this.pendingRoleEquipItem = null;
         const item = this.getCurrentRoleEquipment(config);
+        if (!item) {
+            this.openRoleEquipmentReplacePopup(config);
+            return;
+        }
         const popup = this.ensureRoleEquipDetailPopup();
         this.layoutRoleEquipDetailPopup(config, item, 'detail');
         popup.active = true;
@@ -664,21 +699,23 @@ export abstract class HomeFeatureRoleEquipment extends HomeFeatureRoleEquipmentH
             this.setLabelOutline(title, new Color(255, 245, 215, 255), 2);
         }
 
-        const iconFrame = this.getOrCreateRoleEquipSkin(board, 'RoleEquipDetailIconFrame', 116, 116, -210, 56, displayItem?.framePath || HomeConfig.UI_ROLE_EQUIP_FRAME_LV1);
+        const iconFrame = this.getOrCreateRoleEquipSkin(board, 'RoleEquipDetailIconFrame', 116, 116, -210, 56, displayItem?.framePath || HomeConfig.UI_ROLE_EQUIP_FRAME_LV1, true);
         iconFrame.setSiblingIndex(3);
-        const icon = this.getOrCreateRoleEquipSkin(iconFrame, 'RoleEquipDetailIcon', 84, 84, 0, 3, displayItem?.iconPath || config.iconPath);
+        const icon = this.getOrCreateRoleEquipSkin(iconFrame, 'RoleEquipDetailIcon', 84, 84, 0, 3, displayItem?.iconPath || config.iconPath, true);
         icon.setSiblingIndex(1);
         const displayLevel = mode === 'detail'
             ? (currentItem ? this.getEquipmentLevelBySlot(config) : 1)
             : this.getEquipmentLevel(item);
-        const levelLabel = this.getOrCreateRoleEquipLabel(iconFrame, 'RoleEquipDetailLevel', `lv.${displayLevel}`, 18, 28, -38, 58, 24, Color.WHITE);
+        const levelLabel = this.getOrCreateRoleEquipLabel(iconFrame, 'RoleEquipDetailLevel', `lv.${displayLevel}`, 18, 28, -38, 58, 24, Color.WHITE, true);
         levelLabel.horizontalAlign = HorizontalTextAlignment.RIGHT;
         this.setLabelOutline(levelLabel, Color.BLACK, 2);
         levelLabel.node.setSiblingIndex(2);
+        this.setRoleEquipDetailIconVisible(iconFrame, mode === 'detail');
 
-        const nameLabel = this.getOrCreateRoleEquipLabel(board, 'RoleEquipDetailName', this.getCatalogDisplayName(displayItem) || config.displayName, 28, 86, 104, 360, 42, new Color(92, 55, 28, 255));
+        const nameLabel = this.getOrCreateRoleEquipLabel(board, 'RoleEquipDetailName', this.getCatalogDisplayName(displayItem) || config.displayName, 28, 86, 104, 360, 42, new Color(92, 55, 28, 255), true);
         nameLabel.horizontalAlign = HorizontalTextAlignment.LEFT;
         this.setLabelOutline(nameLabel, new Color(255, 245, 222, 255), 2);
+        nameLabel.node.active = mode === 'detail';
         nameLabel.node.setSiblingIndex(4);
 
         const messageBg = board.getChildByName('RoleEquipDetailMessageBg');
@@ -697,6 +734,7 @@ export abstract class HomeFeatureRoleEquipment extends HomeFeatureRoleEquipmentH
             500,
             92,
             new Color(111, 70, 42, 255),
+            true,
         );
         confirmMessage.horizontalAlign = HorizontalTextAlignment.CENTER;
         confirmMessage.verticalAlign = VerticalTextAlignment.CENTER;
@@ -706,7 +744,7 @@ export abstract class HomeFeatureRoleEquipment extends HomeFeatureRoleEquipmentH
         const attrLines = this.getEquipmentAttrLines(mode === 'detail' ? displayItem : item, config);
         for (let index = 0; index < 4; index++) {
             const line = attrLines[index] || '';
-            const attr = this.getOrCreateRoleEquipLabel(board, `RoleEquipDetailAttr_${index + 1}`, line, 23, 70, 56 - index * 30, 360, 32, new Color(79, 50, 29, 255));
+            const attr = this.getOrCreateRoleEquipLabel(board, `RoleEquipDetailAttr_${index + 1}`, line, 23, 70, 56 - index * 30, 360, 32, new Color(79, 50, 29, 255), true);
             attr.horizontalAlign = HorizontalTextAlignment.LEFT;
             this.setLabelOutline(attr, new Color(255, 245, 222, 255), 1);
             attr.node.active = mode === 'detail' && index < attrLines.length;
@@ -716,18 +754,20 @@ export abstract class HomeFeatureRoleEquipment extends HomeFeatureRoleEquipmentH
         if (mode === 'confirm') {
             const targetName = this.getCatalogDisplayName(item) || config.displayName;
             const currentName = this.getCatalogDisplayName(currentItem) || config.displayName;
-            confirmMessage.string = `\u662f\u5426\u786e\u5b9a\u5c06\u6b64${targetName}\u88c5\u5907\u66ff\u6362\u5230\u5f53\u524d${currentName}\u88c5\u5907\uff1f`;
+            confirmMessage.string = currentItem
+                ? `\u662f\u5426\u786e\u5b9a\u5c06\u6b64${targetName}\u88c5\u5907\u66ff\u6362\u5230\u5f53\u524d${currentName}\u88c5\u5907\uff1f`
+                : `\u662f\u5426\u786e\u5b9a\u7a7f\u6234\u6b64${targetName}\u88c5\u5907\uff1f`;
             confirmMessage.node.active = true;
         } else {
             confirmMessage.node.active = false;
         }
 
-        const leftButton = this.getOrCreateRoleEquipSkin(board, 'RoleEquipDetailLeftButton', 154, 55, -115, -184, HomeConfig.UI_BTN_CLAIM);
-        const rightButton = this.getOrCreateRoleEquipSkin(board, 'RoleEquipDetailRightButton', 154, 55, 115, -184, HomeConfig.UI_BTN_CLAIM);
+        const leftButton = this.getOrCreateRoleEquipSkin(board, 'RoleEquipDetailLeftButton', 154, 55, -115, -184, HomeConfig.UI_ROLE_EQUIP_DETAIL_BUTTON_BG, true);
+        const rightButton = this.getOrCreateRoleEquipSkin(board, 'RoleEquipDetailRightButton', 154, 55, 115, -184, HomeConfig.UI_ROLE_EQUIP_DETAIL_BUTTON_BG, true);
         leftButton.setSiblingIndex(8);
         rightButton.setSiblingIndex(8);
-        const leftLabel = this.getOrCreateRoleEquipLabel(leftButton, 'RoleEquipDetailLeftButtonLabel', mode === 'confirm' ? '\u53d6\u6d88' : '\u66ff\u6362', 27, 0, 2, 130, 40, Color.WHITE);
-        const rightLabel = this.getOrCreateRoleEquipLabel(rightButton, 'RoleEquipDetailRightButtonLabel', mode === 'confirm' ? '\u786e\u8ba4' : '\u953b\u9020', 27, 0, 2, 130, 40, Color.WHITE);
+        const leftLabel = this.getOrCreateRoleEquipLabel(leftButton, 'RoleEquipDetailLeftButtonLabel', mode === 'confirm' ? '\u53d6\u6d88' : '\u66ff\u6362', 27, 0, 2, 130, 40, Color.WHITE, true);
+        const rightLabel = this.getOrCreateRoleEquipLabel(rightButton, 'RoleEquipDetailRightButtonLabel', mode === 'confirm' ? '\u786e\u8ba4' : '\u953b\u9020', 27, 0, 2, 130, 40, Color.WHITE, true);
         [leftLabel, rightLabel].forEach((label) => this.setLabelOutline(label, new Color(67, 36, 18, 255), 2));
 
         if (mode === 'confirm') {
@@ -773,7 +813,10 @@ export abstract class HomeFeatureRoleEquipment extends HomeFeatureRoleEquipmentH
         this.refreshRootLayerOrder();
     }
     protected layoutRoleEquipReplacePopup(board: Node, config: RoleEquipmentSlotConfig): void {
-        const title = this.getOrCreateRoleEquipLabel(board, 'RoleEquipReplaceTitle', `\u66ff\u6362${config.displayName}`, 32, 0, HomeConfig.ROLE_EQUIP_REPLACE_DRAWER_TITLE_Y, 280, 48, new Color(255, 236, 188, 255));
+        const titleText = this.getCurrentRoleEquipment(config)
+            ? `\u66ff\u6362${config.displayName}`
+            : '\u7a7f\u6234\u88c5\u5907';
+        const title = this.getOrCreateRoleEquipLabel(board, 'RoleEquipReplaceTitle', titleText, 32, 0, HomeConfig.ROLE_EQUIP_REPLACE_DRAWER_TITLE_Y, 280, 48, new Color(255, 236, 188, 255));
         this.setLabelOutline(title, new Color(61, 31, 16, 255), 3);
         title.node.setSiblingIndex(2);
 
@@ -849,6 +892,7 @@ export abstract class HomeFeatureRoleEquipment extends HomeFeatureRoleEquipmentH
         const config = this.activeRoleEquipSlot;
         const item = this.pendingRoleEquipItem;
         if (!config || !item) return;
+        const wasEquipped = !!this.getCurrentRoleEquipment(config);
         this.roleEquippedItems.set(config.id, item);
         this.roleEquipmentLevels.set(config.id, this.getEquipmentLevel(item));
         this.syncRoleEquipmentSlot(config);
@@ -862,7 +906,7 @@ export abstract class HomeFeatureRoleEquipment extends HomeFeatureRoleEquipmentH
         this.closeRoleEquipDetailPopup(false);
         this.closeRoleEquipReplacePopup(false);
         this.refreshRolePagePower(this.getCurrentRoleAssetConfig(this.profile.gender));
-        this.showToast(`\u5df2\u66ff\u6362\uff1a${this.getCatalogDisplayName(item)}`);
+        this.showToast(`${wasEquipped ? '\u5df2\u66ff\u6362' : '\u5df2\u7a7f\u6234'}\uff1a${this.getCatalogDisplayName(item)}`);
     }
     protected syncRoleEquipmentSlot(config: RoleEquipmentSlotConfig): void {
         const display = this.getRoleEquipmentSlotDisplay(config);

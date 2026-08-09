@@ -2,7 +2,7 @@
   "ver": "1.0.27",
   "importer": "image",
   "imported": true,
-  "uuid": "5833a0a8-2f87-4e42-ad79-96b329846269",
+  "uuid": "748d7c92-2542-4f13-81b5-5933f58bfff4",
   "files": [
     ".json",
     ".png"
@@ -10,22 +10,22 @@
   "subMetas": {
     "f9941": {
       "importer": "sprite-frame",
-      "uuid": "5833a0a8-2f87-4e42-ad79-96b329846269@f9941",
-      "displayName": "btn_close",
+      "uuid": "748d7c92-2542-4f13-81b5-5933f58bfff4@f9941",
+      "displayName": "role_equip_detail_button_bg",
       "id": "f9941",
       "name": "spriteFrame",
       "userData": {
-        "width": 77,
-        "height": 71,
-        "rawWidth": 77,
-        "rawHeight": 71,
+        "width": 162,
+        "height": 62,
+        "rawWidth": 162,
+        "rawHeight": 62,
         "trimType": "none",
         "trimThreshold": 1,
         "rotated": false,
         "offsetX": 0,
         "offsetY": 0,
         "isUuid": true,
-        "imageUuidOrDatabaseUri": "5833a0a8-2f87-4e42-ad79-96b329846269@6c48a",
+        "imageUuidOrDatabaseUri": "748d7c92-2542-4f13-81b5-5933f58bfff4@6c48a",
         "packable": true,
         "pixelsToUnit": 100,
         "pivotX": 0.5,
@@ -39,17 +39,17 @@
         "meshType": 0,
         "vertices": {
           "rawPosition": [
-            -38.5,
-            -35.5,
+            -81,
+            -31,
             0,
-            38.5,
-            -35.5,
+            81,
+            -31,
             0,
-            -38.5,
-            35.5,
+            -81,
+            31,
             0,
-            38.5,
-            35.5,
+            81,
+            31,
             0
           ],
           "indexes": [
@@ -62,12 +62,12 @@
           ],
           "uv": [
             0,
-            71,
-            77,
-            71,
+            62,
+            162,
+            62,
             0,
             0,
-            77,
+            162,
             0
           ],
           "nui": [
@@ -87,13 +87,13 @@
             1
           ],
           "minPos": [
-            -38.5,
-            -35.5,
+            -81,
+            -31,
             0
           ],
           "maxPos": [
-            38.5,
-            35.5,
+            81,
+            31,
             0
           ]
         },
@@ -108,8 +108,8 @@
     },
     "6c48a": {
       "importer": "texture",
-      "uuid": "5833a0a8-2f87-4e42-ad79-96b329846269@6c48a",
-      "displayName": "btn_close",
+      "uuid": "748d7c92-2542-4f13-81b5-5933f58bfff4@6c48a",
+      "displayName": "role_equip_detail_button_bg",
       "id": "6c48a",
       "name": "texture",
       "userData": {
@@ -120,7 +120,7 @@
         "mipfilter": "none",
         "anisotropy": 0,
         "isUuid": true,
-        "imageUuidOrDatabaseUri": "5833a0a8-2f87-4e42-ad79-96b329846269",
+        "imageUuidOrDatabaseUri": "748d7c92-2542-4f13-81b5-5933f58bfff4",
         "visible": false
       },
       "ver": "1.0.22",
@@ -135,6 +135,6 @@
     "type": "sprite-frame",
     "fixAlphaTransparencyArtifacts": false,
     "hasAlpha": true,
-    "redirect": "5833a0a8-2f87-4e42-ad79-96b329846269@6c48a"
+    "redirect": "748d7c92-2542-4f13-81b5-5933f58bfff4@6c48a"
   }
 }

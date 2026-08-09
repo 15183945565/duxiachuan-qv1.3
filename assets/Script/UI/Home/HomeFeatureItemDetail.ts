@@ -14,8 +14,29 @@ import { HomeViewBase } from './HomeViewBase';
 
 abstract class HomeFeatureItemDetailHost extends HomeViewBase {
     protected abstract getCatalogDisplayName(item: BagIllustrationCatalogItem | null | undefined): string;
+    protected abstract getBagEquipmentSlotId(item: BagIllustrationCatalogItem): string | null;
+    protected abstract getEquipmentLevel(item?: BagIllustrationCatalogItem | null): number;
     protected abstract setLabelOutline(label: Label, color: Color, width: number): void;
 }
+
+const BAG_ILLUSTRATION_DETAIL_LAYOUT = {
+    board: { width: 600, height: 380 },
+    titleSkin: { x: 2.266, y: 121.974, width: 250, height: 60 },
+    title: { x: 0, y: 124.974, width: 300, height: 52 },
+    iconFrame: { x: -132.088, y: -10.589, width: 120, height: 120 },
+    icon: { x: 0, y: 2, width: 90, height: 90 },
+    equipmentLevel: { x: 142.648, y: 52.28, width: 360, height: 32 },
+    equipmentStat: { x: 142.648, y: 22.28, width: 360, height: 32 },
+    usageTitle: { x: 14.648, y: 31.28, width: 104, height: 36 },
+    usageValue: { x: 232.648, y: 31.28, width: 420, height: 36 },
+    obtainTitle: { x: 14.648, y: -10.72, width: 104, height: 36 },
+    obtainValue: { x: 231, y: -10.589, width: 420, height: 36 },
+    equipmentUsageY: -12.72,
+    equipmentObtainY: -49.72,
+} as const;
+const BAG_ILLUSTRATION_TITLE_FONT_SIZE = 30;
+const BAG_ILLUSTRATION_TITLE_HORIZONTAL_PADDING = 108;
+const BAG_ILLUSTRATION_TITLE_MAX_WIDTH = 450;
 
 /**
  * 通用物品详情、背包图鉴详情与市场物品详情布局。
@@ -187,15 +208,15 @@ export abstract class HomeFeatureItemDetail extends HomeFeatureItemDetailHost {
         if (!board?.isValid) return;
 
         (board.getComponent(UITransform) || board.addComponent(UITransform)).setContentSize(
-            HomeConfig.BAG_ITEM_DETAIL_ATTR_FRAME_WIDTH,
-            HomeConfig.BAG_ITEM_DETAIL_ATTR_FRAME_HEIGHT,
+            BAG_ILLUSTRATION_DETAIL_LAYOUT.board.width,
+            BAG_ILLUSTRATION_DETAIL_LAYOUT.board.height,
         );
         board.setPosition(0, 0, 0);
         this.applyUiSkin(
             board,
             this.getItemDetailAttrFramePath(item.framePath),
-            HomeConfig.BAG_ITEM_DETAIL_ATTR_FRAME_WIDTH,
-            HomeConfig.BAG_ITEM_DETAIL_ATTR_FRAME_HEIGHT,
+            BAG_ILLUSTRATION_DETAIL_LAYOUT.board.width,
+            BAG_ILLUSTRATION_DETAIL_LAYOUT.board.height,
         );
 
         this.layoutBagIllustrationDetailPopup(popup, board, item, type);
@@ -217,29 +238,42 @@ export abstract class HomeFeatureItemDetail extends HomeFeatureItemDetailHost {
         });
     }
     protected layoutBagIllustrationDetailPopup(popup: Node, board: Node, item: BagIllustrationCatalogItem, type: string): void {
+        const displayTitle = this.getCatalogDisplayName(item);
+        const titleSkinWidth = this.getBagIllustrationDetailTitleSkinWidth(displayTitle);
+        const titleLabelWidth = Math.max(BAG_ILLUSTRATION_DETAIL_LAYOUT.title.width, titleSkinWidth + 24);
+
         const titleSkin = board.getChildByName('BagIllustrationDetailPopupTitleSkin');
         if (titleSkin?.isValid) {
+            const titleSkinLayout = BAG_ILLUSTRATION_DETAIL_LAYOUT.titleSkin;
             titleSkin.active = true;
-            titleSkin.setPosition(0, 182, 0);
-            (titleSkin.getComponent(UITransform) || titleSkin.addComponent(UITransform)).setContentSize(
-                HomeConfig.BAG_ITEM_DETAIL_TITLE_WIDTH,
-                HomeConfig.BAG_ITEM_DETAIL_TITLE_HEIGHT,
-            );
+            titleSkin.setPosition(titleSkinLayout.x, titleSkinLayout.y, 0);
+            (titleSkin.getComponent(UITransform) || titleSkin.addComponent(UITransform)).setContentSize(titleSkinWidth, titleSkinLayout.height);
             this.applyUiSkin(
                 titleSkin,
                 HomeConfig.UI_BAG_ITEM_DETAIL_TITLE_BG,
-                HomeConfig.BAG_ITEM_DETAIL_TITLE_WIDTH,
-                HomeConfig.BAG_ITEM_DETAIL_TITLE_HEIGHT,
+                titleSkinWidth,
+                titleSkinLayout.height,
             );
             titleSkin.setSiblingIndex(1);
         }
 
-        const titleLabel = this.getOrCreatePopupLabel(board, 'BagIllustrationDetailPopupTitle', this.getCatalogDisplayName(item), 30, 0, 185, 300, 52, new Color(126, 74, 36, 255));
+        const titleLayout = BAG_ILLUSTRATION_DETAIL_LAYOUT.title;
+        const titleLabel = this.getOrCreatePopupLabel(
+            board,
+            'BagIllustrationDetailPopupTitle',
+            displayTitle,
+            BAG_ILLUSTRATION_TITLE_FONT_SIZE,
+            titleLayout.x,
+            titleLayout.y,
+            titleLabelWidth,
+            titleLayout.height,
+            new Color(126, 74, 36, 255),
+        );
         titleLabel.horizontalAlign = HorizontalTextAlignment.CENTER;
         titleLabel.verticalAlign = VerticalTextAlignment.CENTER;
         titleLabel.overflow = Overflow.SHRINK;
         titleLabel.color = new Color(126, 74, 36, 255);
-        titleLabel.fontSize = 30;
+        titleLabel.fontSize = BAG_ILLUSTRATION_TITLE_FONT_SIZE;
         titleLabel.lineHeight = 38;
         this.setLabelOutline(titleLabel, new Color(255, 245, 215, 255), 2);
         titleLabel.node.setSiblingIndex(2);
@@ -250,39 +284,112 @@ export abstract class HomeFeatureItemDetail extends HomeFeatureItemDetailHost {
             close.setSiblingIndex(20);
         }
 
-        const iconFrame = this.findNode('BagIllustrationDetailIconFrame', popup) || this.createSkinnedNode('BagIllustrationDetailIconFrame', board, 120, 120, -232, 72, item.framePath);
+        const iconFrameLayout = BAG_ILLUSTRATION_DETAIL_LAYOUT.iconFrame;
+        const iconFrame = this.findNode('BagIllustrationDetailIconFrame', popup)
+            || this.createSkinnedNode(
+                'BagIllustrationDetailIconFrame',
+                board,
+                iconFrameLayout.width,
+                iconFrameLayout.height,
+                iconFrameLayout.x,
+                iconFrameLayout.y,
+                item.framePath,
+            );
         iconFrame.active = true;
-        iconFrame.setPosition(-232, 72, 0);
-        (iconFrame.getComponent(UITransform) || iconFrame.addComponent(UITransform)).setContentSize(120, 120);
-        this.applyUiSkin(iconFrame, item.framePath, 120, 120);
+        iconFrame.setPosition(iconFrameLayout.x, iconFrameLayout.y, 0);
+        (iconFrame.getComponent(UITransform) || iconFrame.addComponent(UITransform)).setContentSize(iconFrameLayout.width, iconFrameLayout.height);
+        this.applyUiSkin(iconFrame, item.framePath, iconFrameLayout.width, iconFrameLayout.height);
         iconFrame.setSiblingIndex(3);
 
+        const iconLayout = BAG_ILLUSTRATION_DETAIL_LAYOUT.icon;
         const existingDetailIcon = this.findNode('BagIllustrationDetailIcon', popup);
-        const detailIcon = existingDetailIcon || this.createSkinnedNode('BagIllustrationDetailIcon', iconFrame, 90, 90, 0, 2, item.iconPath);
+        const detailIcon = existingDetailIcon
+            || this.createSkinnedNode('BagIllustrationDetailIcon', iconFrame, iconLayout.width, iconLayout.height, iconLayout.x, iconLayout.y, item.iconPath);
         detailIcon.active = true;
         if (!existingDetailIcon && detailIcon.parent !== iconFrame) detailIcon.setParent(iconFrame);
-        detailIcon.setPosition(0, 2, 0);
-        (detailIcon.getComponent(UITransform) || detailIcon.addComponent(UITransform)).setContentSize(90, 90);
-        this.applyUiSkin(detailIcon, item.iconPath, 90, 90);
+        detailIcon.setPosition(iconLayout.x, iconLayout.y, 0);
+        (detailIcon.getComponent(UITransform) || detailIcon.addComponent(UITransform)).setContentSize(iconLayout.width, iconLayout.height);
+        this.applyUiSkin(detailIcon, item.iconPath, iconLayout.width, iconLayout.height);
         detailIcon.setSiblingIndex(2);
 
-        const usageTitle = this.getOrCreatePopupLabel(board, 'BagIllustrationUsageTitle', '\u7528\u9014\uff1a', 24, -78, 90, 104, 36, new Color(236, 218, 184, 255));
+        const equipmentAttrLines = this.getBagIllustrationEquipmentAttrLines(item);
+        const equipmentLevelNode = board.getChildByName('BagIllustrationEquipmentLevel');
+        const equipmentStatNode = board.getChildByName('BagIllustrationEquipmentStat');
+        if (equipmentAttrLines) {
+            const levelLayout = BAG_ILLUSTRATION_DETAIL_LAYOUT.equipmentLevel;
+            const levelLabel = this.getOrCreatePopupLabel(
+                board,
+                'BagIllustrationEquipmentLevel',
+                equipmentAttrLines[0],
+                24,
+                levelLayout.x,
+                levelLayout.y,
+                levelLayout.width,
+                levelLayout.height,
+                new Color(236, 218, 184, 255),
+                true,
+            );
+            levelLabel.horizontalAlign = HorizontalTextAlignment.LEFT;
+            levelLabel.fontSize = 24;
+            levelLabel.lineHeight = 30;
+            this.setLabelOutline(levelLabel, new Color(38, 24, 18, 255), 1);
+            levelLabel.node.setSiblingIndex(5);
+
+            const statLayout = BAG_ILLUSTRATION_DETAIL_LAYOUT.equipmentStat;
+            const statLabel = this.getOrCreatePopupLabel(
+                board,
+                'BagIllustrationEquipmentStat',
+                equipmentAttrLines[1],
+                24,
+                statLayout.x,
+                statLayout.y,
+                statLayout.width,
+                statLayout.height,
+                new Color(236, 218, 184, 255),
+                true,
+            );
+            statLabel.horizontalAlign = HorizontalTextAlignment.LEFT;
+            statLabel.fontSize = 24;
+            statLabel.lineHeight = 30;
+            this.setLabelOutline(statLabel, new Color(38, 24, 18, 255), 1);
+            statLabel.node.setSiblingIndex(5);
+        } else {
+            if (equipmentLevelNode?.isValid) equipmentLevelNode.active = false;
+            if (equipmentStatNode?.isValid) equipmentStatNode.active = false;
+        }
+
+        const usageTitleLayout = BAG_ILLUSTRATION_DETAIL_LAYOUT.usageTitle;
+        const usageY = equipmentAttrLines ? BAG_ILLUSTRATION_DETAIL_LAYOUT.equipmentUsageY : usageTitleLayout.y;
+        const usageTitle = this.getOrCreatePopupLabel(
+            board,
+            'BagIllustrationUsageTitle',
+            '\u7528\u9014\uff1a',
+            24,
+            usageTitleLayout.x,
+            usageY,
+            usageTitleLayout.width,
+            usageTitleLayout.height,
+            new Color(236, 218, 184, 255),
+            true,
+        );
         usageTitle.horizontalAlign = HorizontalTextAlignment.LEFT;
         usageTitle.fontSize = 24;
         usageTitle.lineHeight = 32;
         this.setLabelOutline(usageTitle, new Color(38, 24, 18, 255), 1);
         usageTitle.node.setSiblingIndex(5);
 
+        const usageValueLayout = BAG_ILLUSTRATION_DETAIL_LAYOUT.usageValue;
         const usageValue = this.getOrCreatePopupLabel(
             board,
             'BagIllustrationUsageValue',
             this.getBagIllustrationUsage(item, type),
             24,
-            140,
-            90,
-            420,
-            36,
+            usageValueLayout.x,
+            usageY,
+            usageValueLayout.width,
+            usageValueLayout.height,
             new Color(236, 218, 184, 255),
+            true,
         );
         usageValue.horizontalAlign = HorizontalTextAlignment.LEFT;
         usageValue.overflow = Overflow.SHRINK;
@@ -296,23 +403,38 @@ export abstract class HomeFeatureItemDetail extends HomeFeatureItemDetailHost {
             obtainBg.active = false;
         }
 
-        const obtainTitle = this.getOrCreatePopupLabel(board, 'BagIllustrationObtainTitle', '\u83b7\u5f97\uff1a', 24, -78, 48, 104, 36, new Color(236, 218, 184, 255));
+        const obtainTitleLayout = BAG_ILLUSTRATION_DETAIL_LAYOUT.obtainTitle;
+        const obtainY = equipmentAttrLines ? BAG_ILLUSTRATION_DETAIL_LAYOUT.equipmentObtainY : obtainTitleLayout.y;
+        const obtainTitle = this.getOrCreatePopupLabel(
+            board,
+            'BagIllustrationObtainTitle',
+            '\u83b7\u5f97\uff1a',
+            24,
+            obtainTitleLayout.x,
+            obtainY,
+            obtainTitleLayout.width,
+            obtainTitleLayout.height,
+            new Color(236, 218, 184, 255),
+            true,
+        );
         obtainTitle.horizontalAlign = HorizontalTextAlignment.LEFT;
         obtainTitle.fontSize = 24;
         obtainTitle.lineHeight = 32;
         this.setLabelOutline(obtainTitle, new Color(38, 24, 18, 255), 1);
         obtainTitle.node.setSiblingIndex(6);
 
+        const obtainValueLayout = BAG_ILLUSTRATION_DETAIL_LAYOUT.obtainValue;
         const obtainValue = this.getOrCreatePopupLabel(
             board,
             'BagIllustrationObtainValue',
             this.getBagIllustrationObtainSource(item, type),
             24,
-            140,
-            48,
-            420,
-            36,
+            obtainValueLayout.x,
+            obtainY,
+            obtainValueLayout.width,
+            obtainValueLayout.height,
             new Color(236, 218, 184, 255),
+            true,
         );
         obtainValue.horizontalAlign = HorizontalTextAlignment.LEFT;
         obtainValue.overflow = Overflow.SHRINK;
@@ -320,6 +442,34 @@ export abstract class HomeFeatureItemDetail extends HomeFeatureItemDetailHost {
         obtainValue.lineHeight = 32;
         this.setLabelOutline(obtainValue, new Color(38, 24, 18, 255), 1);
         obtainValue.node.setSiblingIndex(6);
+    }
+    protected getBagIllustrationEquipmentAttrLines(item: BagIllustrationCatalogItem): [string, string] | null {
+        if (item.category !== 'equipment') return null;
+        const slotId = this.getBagEquipmentSlotId(item);
+        if (!slotId) return null;
+
+        const slotConfig = this.getRoleEquipmentSlotConfigs().find((config) => config.id === slotId);
+        if (!slotConfig) return null;
+
+        const level = Math.max(1, Math.floor(this.getEquipmentLevel(item) || 1));
+        const statRule = this.getRoleEquipmentStatRule(slotConfig);
+        const statLabel = statRule?.detailLabel || '\u5c5e\u6027';
+        const statValue = this.getEquipmentStatValueForLevel(slotConfig, level);
+        return [
+            `\u7b49\u7ea7\uff1alv.${level}`,
+            `${statLabel}\uff1a+${statValue}`,
+        ];
+    }
+    protected getBagIllustrationDetailTitleSkinWidth(title: string): number {
+        const weight = Array.from(title).reduce((sum, char) => {
+            return sum + (/^[\x00-\x7F]$/.test(char) ? 0.58 : 1);
+        }, 0);
+        const estimated = Math.ceil(weight * BAG_ILLUSTRATION_TITLE_FONT_SIZE + BAG_ILLUSTRATION_TITLE_HORIZONTAL_PADDING);
+        return this.clamp(
+            estimated,
+            BAG_ILLUSTRATION_DETAIL_LAYOUT.titleSkin.width,
+            BAG_ILLUSTRATION_TITLE_MAX_WIDTH,
+        );
     }
     protected getOrCreatePopupSkinnedNode(parent: Node, name: string, width: number, height: number, x: number, y: number, skinPath: string): Node {
         let node = parent.getChildByName(name);
@@ -333,15 +483,17 @@ export abstract class HomeFeatureItemDetail extends HomeFeatureItemDetailHost {
         }
         return node;
     }
-    protected getOrCreatePopupLabel(parent: Node, name: string, text: string, fontSize: number, x: number, y: number, width: number, height: number, color: Color): Label {
+    protected getOrCreatePopupLabel(parent: Node, name: string, text: string, fontSize: number, x: number, y: number, width: number, height: number, color: Color, preserveExistingTransform = false): Label {
         let node = parent.getChildByName(name);
         const existed = node?.isValid;
         if (!node?.isValid) {
             node = this.createNode(name, parent, width, height, x, y);
-        } else {
+        } else if (!preserveExistingTransform) {
             node.active = true;
             node.setPosition(x, y, 0);
             (node.getComponent(UITransform) || node.addComponent(UITransform)).setContentSize(width, height);
+        } else {
+            node.active = true;
         }
         const label = node.getComponent(Label) || node.addComponent(Label);
         label.string = text;
@@ -357,6 +509,13 @@ export abstract class HomeFeatureItemDetail extends HomeFeatureItemDetailHost {
     }
     protected getBagIllustrationUsage(item: BagIllustrationCatalogItem, type: string): string {
         const name = this.getCatalogDisplayName(item);
+        if (name.includes('\u6539\u540d\u5361')) return '\u4fee\u6539\u6635\u79f0';
+        if (name.includes('\u5408\u6210\u5361')) return '\u5408\u6210\u517d\u5361';
+        if (name.includes('\u9b54\u754c\u95e8\u7968')) return '\u9b54\u754c\u6d88\u8017';
+        if (name.includes('\u6311\u6218\u5361')) return '\u5f81\u6218\u6d88\u8017';
+        if (name.includes('\u4fdd\u62a4\u5361')) return '\u9b54\u754c\u9053\u5177';
+        if (name.includes('\u6316\u5b9d\u5238')) return '\u6316\u5b9d\u73a9\u6cd5';
+        if (name.includes('\u6218\u529b\u5361')) return '\u9b54\u754c\u9053\u5177';
         if (name.includes('\u7ecf\u9a8c')) return '\u89d2\u8272\u5347\u7ea7';
         if (name.includes('\u7a81\u7834')) return '\u89d2\u8272\u7a81\u7834';
         if (name.includes('\u7389\u77f3')) return '\u4ed9\u57df\u5347\u7ea7';
@@ -374,7 +533,10 @@ export abstract class HomeFeatureItemDetail extends HomeFeatureItemDetailHost {
         const name = this.getCatalogDisplayName(item);
         if (name.includes('\u9057\u73cd')) return '\u9b54\u754c';
         if (name.includes('\u7389\u77f3')) return '\u4ed9\u57df';
-        if (name.includes('\u5b9d\u77f3') || name.includes('\u517d\u5361')) return '\u517d\u5361';
+        if (name.includes('\u517d\u5361\u788e\u7247')) return '\u9b54\u754c\u4ea7\u51fa';
+        if (name.includes('\u517d\u5361')) return '\u788e\u7247\u5408\u6210';
+        if (name.includes('\u5b9d\u77f3')) return '\u517d\u5361';
+        if (type === '\u88c5\u5907' && (name.includes('\u91d1\u9e64') || name.includes('\u9752\u72ee') || name.includes('\u767d\u9e7f') || name.includes('\u8d64\u72d0'))) return '\u5143\u5b9d\u89e3\u9501';
         if (type === '\u9053\u5177') return '\u5546\u57ce';
         return '\u6218\u573a';
     }

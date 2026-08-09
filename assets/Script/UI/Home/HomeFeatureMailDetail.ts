@@ -8,6 +8,7 @@ import {
     Node,
     Overflow,
     UITransform,
+    UIOpacity,
     VerticalTextAlignment,
     instantiate,
 } from 'cc';
@@ -32,12 +33,7 @@ export abstract class HomeFeatureMailDetail extends HomeFeatureMailDetailHost {
         const mail = this.mailData.find((item) => item.id === mailId);
         if (!mail || !this.mailPanel) return;
     
-        if (mail.state === 0) {
-            mail.state = 1;
-            this.saveMails();
-            this.refreshMailPanel();
-            this.updateMailBadge();
-        }
+        this.markMailViewed(mail);
         if (mail.source === 'battle-host') {
             this.openBattleHostMailDetail(mail);
             return;
@@ -73,11 +69,19 @@ export abstract class HomeFeatureMailDetail extends HomeFeatureMailDetailHost {
         rewardLine.enableWrapText = true;
     
         const canClaim = mail.rewards.length > 0 && mail.state !== 2;
-        const canDelete = mail.state > 0 || mail.rewards.length <= 0;
+        const canDelete = mail.state === 2 || mail.rewards.length <= 0;
         const deleteButton = this.createMailButton(board, 'MailDetailDelete', '删除', -116, -232, HomeConfig.MAIL_BUTTON_WIDTH, HomeConfig.MAIL_BUTTON_HEIGHT, new Color(204, 238, 232, 0), () => this.deleteMail(mail.id), HomeConfig.UI_MAIL_BUTTON_BG);
         const claimButton = this.createMailButton(board, 'MailDetailClaim', '领取', 116, -232, HomeConfig.MAIL_BUTTON_WIDTH, HomeConfig.MAIL_BUTTON_HEIGHT, new Color(204, 238, 232, 0), () => this.claimMailReward(mail.id), HomeConfig.UI_MAIL_BUTTON_BG);
         claimButton.active = canClaim;
         deleteButton.active = canDelete;
+    }
+    protected markMailViewed(mail: MailData): void {
+        if (mail.state !== 0) return;
+
+        mail.state = 1;
+        this.saveMails();
+        this.refreshMailPanel();
+        this.updateMailBadge();
     }
     protected openBattleHostMailDetail(mail: MailData): void {
         if (!this.mailPanel) return;
@@ -182,11 +186,17 @@ export abstract class HomeFeatureMailDetail extends HomeFeatureMailDetailHost {
         title.node.setSiblingIndex(2);
     
         this.createMailRewardGrid(board, mail);
+        const claimed = mail.state === 2;
         this.createMailDetailActionButton(board, 'BattleHostMailCancelButton', '\u53d6\u6d88', -HomeConfig.BATTLE_TARGET_CHALLENGE_BUTTON_X, () => this.closeMailDetail());
-        this.createMailDetailActionButton(board, 'BattleHostMailClaimButton', '\u786e\u8ba4\u9886\u53d6', HomeConfig.BATTLE_TARGET_CHALLENGE_BUTTON_X, () => {
+        const claimButton = this.createMailDetailActionButton(board, 'BattleHostMailClaimButton', claimed ? '\u5df2\u9886\u53d6' : '\u786e\u8ba4\u9886\u53d6', HomeConfig.BATTLE_TARGET_CHALLENGE_BUTTON_X, () => {
+            if (claimed) {
+                this.showToast('\u5956\u52b1\u5df2\u9886\u53d6');
+                return;
+            }
             this.closeMailDetail();
             this.claimMailReward(mail.id, false);
         });
+        this.setMailDetailButtonDimmed(claimButton, claimed);
     }
     protected getOrCreateMailDetailChild(
         parent: Node,
@@ -381,9 +391,9 @@ export abstract class HomeFeatureMailDetail extends HomeFeatureMailDetailHost {
         }
         const labelSize = label.node.getComponent(UITransform)?.contentSize;
         label.string = text;
+        label.fontSize = text.length > 2 ? 26 : 31;
+        label.lineHeight = label.fontSize + 8;
         if (!labelExisted) {
-            label.fontSize = text.length > 2 ? 26 : 31;
-            label.lineHeight = label.fontSize + 8;
             label.color = new Color(255, 238, 218, 255);
             label.horizontalAlign = HorizontalTextAlignment.CENTER;
             label.verticalAlign = VerticalTextAlignment.CENTER;
@@ -396,6 +406,10 @@ export abstract class HomeFeatureMailDetail extends HomeFeatureMailDetailHost {
         this.bindScaledClick(button, () => onClick());
         button.setSiblingIndex(parent.children.length - 1);
         return button;
+    }
+    protected setMailDetailButtonDimmed(button: Node, dimmed: boolean): void {
+        const opacity = button.getComponent(UIOpacity) || button.addComponent(UIOpacity);
+        opacity.opacity = dimmed ? 150 : 255;
     }
     protected closeMailDetail(): void {
         if (!this.mailDetailPanel) return;
@@ -480,12 +494,17 @@ export abstract class HomeFeatureMailDetail extends HomeFeatureMailDetailHost {
         this.showToast('\u90ae\u4ef6\u5df2\u5220\u9664');
     }
     protected deleteReadMails(): void {
-        this.mailData = this.mailData.filter((mail) => mail.state === 0);
+        const before = this.mailData.length;
+        this.mailData = this.mailData.filter((mail) => mail.state !== 2);
+        if (this.mailData.length === before) {
+            this.showToast('\u6682\u65e0\u5df2\u9886\u53d6\u90ae\u4ef6\u53ef\u5220\u9664');
+            return;
+        }
         this.saveMails();
         this.closeMailDetail();
         this.refreshMailPanel();
         this.updateMailBadge();
-        this.showToast('\u5df2\u5220\u9664\u5df2\u8bfb\u90ae\u4ef6');
+        this.showToast('\u5df2\u5220\u9664\u5df2\u9886\u53d6\u90ae\u4ef6');
     }
     protected updateMailBadge(): void {
         this.ensureMailData();
@@ -546,8 +565,7 @@ export abstract class HomeFeatureMailDetail extends HomeFeatureMailDetailHost {
     }
     protected getMailStateText(mail: MailData): string {
         if (mail.state === 2) return '\u5df2\u9886';
-        if (mail.state === 1) return '\u5df2\u8bfb';
-        return '\u672a\u8bfb';
+        return '\u672a\u9886\u53d6';
     }
     protected formatMailTime(seconds: number): string {
         const date = new Date(seconds * 1000);
