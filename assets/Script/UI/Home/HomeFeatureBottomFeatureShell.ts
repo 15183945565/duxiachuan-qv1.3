@@ -19,6 +19,7 @@ abstract class HomeFeatureBottomFeatureShellHost extends HomeViewBase {
     protected abstract clearBeastCardLegacyBottomInfo(): void;
     protected abstract ensureBeastCardBottomNameLabel(): void;
     protected abstract ensureBeastCardRewardArea(): void;
+    protected abstract ensureBeastCardActivationArea(): void;
     protected abstract ensureBeastCardRecordPopup(): void;
     protected abstract ensureBeastCardStrengthenButton(): void;
     protected abstract ensureBeastCardYuanbaoRatePanel(): void;
@@ -34,7 +35,6 @@ abstract class HomeFeatureBottomFeatureShellHost extends HomeViewBase {
 export abstract class HomeFeatureBottomFeatureShell extends HomeFeatureBottomFeatureShellHost {
     protected openBottomFeaturePanel(title: string, hint: string, backgroundPath = HomeConfig.UI_ROLE_PAGE_BG): void {
         this.closeMagicFloorPanel();
-        const hadPanel = !!this.bottomFeaturePanel;
         this.buildBottomFeaturePanel(backgroundPath);
         if (!this.bottomFeaturePanel) return;
     
@@ -42,9 +42,7 @@ export abstract class HomeFeatureBottomFeatureShell extends HomeFeatureBottomFea
         this.bottomFeaturePanel.active = true;
         this.ensureInputBlocker(this.bottomFeaturePanel);
         this.bottomFeaturePanel.setSiblingIndex((this.bottomFeaturePanel.parent?.children.length || 1) - 1);
-        if (hadPanel) {
-            this.refreshBottomFeatureBackground(backgroundPath);
-        }
+        this.refreshBottomFeatureBackground(backgroundPath);
         if (this.bottomFeatureTitleLabel) {
             this.bottomFeatureTitleLabel.node.active = true;
             this.bottomFeatureTitleLabel.string = title;
@@ -68,17 +66,14 @@ export abstract class HomeFeatureBottomFeatureShell extends HomeFeatureBottomFea
     protected openMagicPanel(): void {
         this.closeMagicFloorPanel();
         this.stopBeastCard();
-        const hadPanel = !!this.bottomFeaturePanel;
-        this.buildBottomFeaturePanel(HomeConfig.UI_MAGIC_SCENE_SCROLL_BG);
+        this.buildBottomFeaturePanel(HomeConfig.UI_BOTTOM_FEATURE_MAGIC_BG);
         if (!this.bottomFeaturePanel) return;
     
         this.closeOtherBottomEntryPages(this.bottomFeaturePanel);
         this.bottomFeaturePanel.active = true;
         this.ensureInputBlocker(this.bottomFeaturePanel);
         this.bottomFeaturePanel.setSiblingIndex((this.bottomFeaturePanel.parent?.children.length || 1) - 1);
-        if (hadPanel) {
-            this.refreshBottomFeatureBackground(HomeConfig.UI_MAGIC_SCENE_SCROLL_BG);
-        }
+        this.refreshBottomFeatureBackground(HomeConfig.UI_BOTTOM_FEATURE_MAGIC_BG);
         if (this.bottomFeatureTitleLabel) {
             this.bottomFeatureTitleLabel.node.active = false;
             this.bottomFeatureTitleLabel.string = '\u9b54\u754c';
@@ -107,7 +102,6 @@ export abstract class HomeFeatureBottomFeatureShell extends HomeFeatureBottomFea
     protected openBeastCardPanel(): void {
         this.closeMagicFloorPanel();
         this.stopMagicScene();
-        const hadPanel = !!this.bottomFeaturePanel;
         this.buildBottomFeaturePanel(HomeConfig.UI_ROLE_PAGE_BG);
         if (!this.bottomFeaturePanel) return;
     
@@ -115,9 +109,7 @@ export abstract class HomeFeatureBottomFeatureShell extends HomeFeatureBottomFea
         this.bottomFeaturePanel.active = true;
         this.ensureInputBlocker(this.bottomFeaturePanel);
         this.bottomFeaturePanel.setSiblingIndex((this.bottomFeaturePanel.parent?.children.length || 1) - 1);
-        if (hadPanel) {
-            this.refreshBottomFeatureBackground(HomeConfig.UI_ROLE_PAGE_BG);
-        }
+        this.refreshBottomFeatureBackground(HomeConfig.UI_ROLE_PAGE_BG);
         if (this.bottomFeatureTitleLabel) {
             this.bottomFeatureTitleLabel.node.active = true;
             this.bottomFeatureTitleLabel.string = '\u517d\u5361';
@@ -136,6 +128,7 @@ export abstract class HomeFeatureBottomFeatureShell extends HomeFeatureBottomFea
         this.clearBeastCardLegacyBottomInfo();
         this.ensureBeastCardBottomNameLabel();
         this.ensureBeastCardRewardArea();
+        this.ensureBeastCardActivationArea();
         this.ensureBeastCardStrengthenButton();
         this.ensureBeastCardYuanbaoRatePanel();
         this.ensureBeastCardRecordPopup();

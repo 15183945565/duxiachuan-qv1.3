@@ -15,6 +15,7 @@ import {
 } from 'cc';
 import { applySimKaiFont } from '../Common/UIFont';
 import * as HomeConfig from './HomeConfig';
+import { getEditorNodeSize } from './HomeEditorLayout';
 import { HomeViewBase } from './HomeViewBase';
 import { MagicMapMonsterRuntime } from './HomeTypes';
 
@@ -25,6 +26,7 @@ abstract class HomeFeatureMagicMapHost extends HomeViewBase {
     protected abstract openMagicDuelResult(monster: MagicMapMonsterRuntime): void;
     protected abstract setupMagicMapAssistCards(): void;
     protected abstract closeMagicMapAssistCardConfirmPopup(): void;
+    protected abstract resetMagicBattleAssistEffects(): void;
     protected abstract startMagicMonsterBattle(monster: MagicMapMonsterRuntime): Promise<void>;
 }
 
@@ -46,6 +48,10 @@ export abstract class HomeFeatureMagicMap extends HomeFeatureMagicMapHost {
         this.magicMapTitleLabel = this.findNode('MagicMapTitle', this.magicMapPanel)?.getComponent(Label) || null;
         this.magicMapTimerLabel = this.findNode('MagicMapTimer', this.magicMapPanel)?.getComponent(Label) || null;
         this.magicMapStatusLabel = this.findNode('MagicMapStatus', this.magicMapPanel)?.getComponent(Label) || null;
+        if (this.magicMapTimerLabel) {
+            const timerNode = this.magicMapTimerLabel.node;
+            timerNode.setPosition(HomeConfig.MAGIC_MAP_TIMER_X, timerNode.position.y, timerNode.position.z);
+        }
     
         if (this.magicMapViewport) {
             (this.magicMapViewport.getComponent(UITransform) || this.magicMapViewport.addComponent(UITransform))
@@ -54,16 +60,20 @@ export abstract class HomeFeatureMagicMap extends HomeFeatureMagicMapHost {
             viewportMask.type = Mask.Type.GRAPHICS_RECT;
             viewportMask.enabled = true;
         }
+        const background = this.findNode('MagicMapBackground', this.magicMapPanel);
+        const worldSize = getEditorNodeSize(
+            background || this.magicMapWorld,
+            HomeConfig.MAGIC_MAP_WORLD_WIDTH,
+            HomeConfig.MAGIC_MAP_WORLD_HEIGHT,
+        );
         if (this.magicMapWorld) {
             (this.magicMapWorld.getComponent(UITransform) || this.magicMapWorld.addComponent(UITransform))
-                .setContentSize(HomeConfig.MAGIC_MAP_WORLD_WIDTH, HomeConfig.MAGIC_MAP_WORLD_HEIGHT);
+                .setContentSize(worldSize.width, worldSize.height);
         }
-    
-        const background = this.findNode('MagicMapBackground', this.magicMapPanel);
         if (background) {
             (background.getComponent(UITransform) || background.addComponent(UITransform))
-                .setContentSize(HomeConfig.MAGIC_MAP_WORLD_WIDTH, HomeConfig.MAGIC_MAP_WORLD_HEIGHT);
-            this.applyUiSkin(background, HomeConfig.UI_MAGIC_FLOOR_MAP, HomeConfig.MAGIC_MAP_WORLD_WIDTH, HomeConfig.MAGIC_MAP_WORLD_HEIGHT);
+                .setContentSize(worldSize.width, worldSize.height);
+            this.applyUiSkin(background, HomeConfig.UI_MAGIC_FLOOR_MAP, worldSize.width, worldSize.height);
         }
     
         if (this.magicMapPlayerAnchor) {
@@ -81,7 +91,8 @@ export abstract class HomeFeatureMagicMap extends HomeFeatureMagicMapHost {
         for (let index = 0; index < HomeConfig.MAGIC_MAP_SMALL_MONSTER_COUNT; index += 1) {
             const anchor = this.ensureMagicMapMonsterAnchor(index);
             if (!anchor) continue;
-            const spawnPosition = this.clampMagicMapGroundPosition(anchor.position, true);
+            this.ensureMagicMapMonsterHitArea(anchor, false);
+            const spawnPosition = this.getMagicMapSmallMonsterSpawnPosition(index);
             anchor.setPosition(spawnPosition);
             const visual = this.ensureMagicSkeletonVisual(anchor, 'MonsterVisual', HomeConfig.MAGIC_MAP_SMALL_MONSTER_SCALE);
             const maxHp = HomeConfig.MAGIC_MAP_SMALL_MONSTER_MAX_HP;
@@ -103,7 +114,8 @@ export abstract class HomeFeatureMagicMap extends HomeFeatureMagicMapHost {
     
         const bossAnchor = this.findNode('MagicMapBossAnchor', this.magicMapPanel);
         if (bossAnchor) {
-            const bossSpawnPosition = this.clampMagicMapGroundPosition(bossAnchor.position, true);
+            this.ensureMagicMapMonsterHitArea(bossAnchor, true);
+            const bossSpawnPosition = this.getMagicMapBossSpawnPosition();
             bossAnchor.setPosition(bossSpawnPosition);
             const visual = this.ensureMagicSkeletonVisual(bossAnchor, 'MonsterVisual', HomeConfig.MAGIC_MAP_BOSS_MONSTER_SCALE);
             const maxHp = HomeConfig.MAGIC_MAP_BOSS_MONSTER_MAX_HP;
@@ -125,7 +137,7 @@ export abstract class HomeFeatureMagicMap extends HomeFeatureMagicMapHost {
     
         this.setupMagicMapInput();
         const mapBack = this.findNode('MagicMapBack', this.magicMapPanel);
-        if (mapBack) this.bindScaledClick(mapBack, () => this.returnToMagicScenePanel());
+        if (mapBack) this.bindScaledClick(mapBack, () => this.openMagicMapExitConfirm());
     
         const battleBack = this.findNode('MagicBattleBack', this.magicMonsterBattlePanel);
         if (battleBack) this.bindScaledClick(battleBack, () => this.returnToMagicScenePanel());
@@ -152,6 +164,11 @@ export abstract class HomeFeatureMagicMap extends HomeFeatureMagicMapHost {
             this.setSkeletonVisible(this.magicBattleBackgroundSkeleton, false);
         }
         if (battleRoleAnchor) {
+            battleRoleAnchor.setPosition(
+                HomeConfig.MAGIC_BATTLE_PLAYER_SLOT_X,
+                HomeConfig.MAGIC_BATTLE_PLAYER_SLOT_CENTER_Y,
+                0,
+            );
             this.magicBattleRoleSkeleton = this.ensureMagicSkeletonVisual(
                 battleRoleAnchor,
                 'MagicBattleRoleVisual',
@@ -159,7 +176,7 @@ export abstract class HomeFeatureMagicMap extends HomeFeatureMagicMapHost {
             ).skeleton;
         }
         if (battleMonsterAnchor) {
-            battleMonsterAnchor.setPosition(0, 30, 0);
+            battleMonsterAnchor.setPosition(HomeConfig.MAGIC_BATTLE_MONSTER_POSITION);
             this.magicBattleMonsterSkeleton = this.ensureMagicSkeletonVisual(
                 battleMonsterAnchor,
                 'MagicBattleMonsterVisual',
@@ -196,6 +213,20 @@ export abstract class HomeFeatureMagicMap extends HomeFeatureMagicMapHost {
         background.setSiblingIndex(0);
         return background;
     }
+    protected getMagicMapSmallMonsterSpawnPosition(index: number): Vec3 {
+        const base = HomeConfig.MAGIC_MAP_SMALL_MONSTER_SPAWN_POINTS[index % HomeConfig.MAGIC_MAP_SMALL_MONSTER_SPAWN_POINTS.length]
+            || { x: 0, y: -520 };
+        const randomX = (Math.random() * 2 - 1) * HomeConfig.MAGIC_MAP_SMALL_MONSTER_SPAWN_RANDOM_X;
+        const randomY = (Math.random() * 2 - 1) * HomeConfig.MAGIC_MAP_SMALL_MONSTER_SPAWN_RANDOM_Y;
+        return this.clampMagicMapGroundPosition(new Vec3(base.x + randomX, base.y + randomY, 0), true);
+    }
+    protected getMagicMapBossSpawnPosition(): Vec3 {
+        return this.clampMagicMapGroundPosition(new Vec3(
+            HomeConfig.MAGIC_MAP_BOSS_SPAWN_POINT.x,
+            HomeConfig.MAGIC_MAP_BOSS_SPAWN_POINT.y,
+            0,
+        ), true);
+    }
     protected ensureMagicMapMonsterAnchor(index: number): Node | null {
         const nodeName = `MagicMapMonsterAnchor_${index + 1}`;
         const existing = this.findNode(nodeName, this.magicMapPanel) || this.magicMapWorld?.getChildByName(nodeName);
@@ -203,7 +234,22 @@ export abstract class HomeFeatureMagicMap extends HomeFeatureMagicMapHost {
         if (!this.magicMapWorld?.isValid) return null;
 
         const fallback = HomeConfig.MAGIC_MAP_SMALL_MONSTER_SPAWN_POINTS[index] || { x: 0, y: 0 };
-        return this.createNode(nodeName, this.magicMapWorld, 300, 300, fallback.x, fallback.y);
+        return this.createNode(
+            nodeName,
+            this.magicMapWorld,
+            HomeConfig.MAGIC_MAP_SMALL_MONSTER_HIT_WIDTH,
+            HomeConfig.MAGIC_MAP_SMALL_MONSTER_HIT_HEIGHT,
+            fallback.x,
+            fallback.y,
+        );
+    }
+    protected ensureMagicMapMonsterHitArea(anchor: Node, boss: boolean): void {
+        const transform = anchor.getComponent(UITransform) || anchor.addComponent(UITransform);
+        if (transform.contentSize.width > 0 && transform.contentSize.height > 0) return;
+        transform.setContentSize(
+            boss ? HomeConfig.MAGIC_MAP_BOSS_MONSTER_HIT_WIDTH : HomeConfig.MAGIC_MAP_SMALL_MONSTER_HIT_WIDTH,
+            boss ? HomeConfig.MAGIC_MAP_BOSS_MONSTER_HIT_HEIGHT : HomeConfig.MAGIC_MAP_SMALL_MONSTER_HIT_HEIGHT,
+        );
     }
     protected setupMagicPlayerHealthInfo(): void {
         if (!this.magicMapPlayerAnchor?.isValid) return;
@@ -392,8 +438,9 @@ export abstract class HomeFeatureMagicMap extends HomeFeatureMagicMapHost {
             })
             .start();
     
-        const followX = this.clamp(-target.x, -HomeConfig.MAGIC_MAP_WORLD_X_LIMIT, HomeConfig.MAGIC_MAP_WORLD_X_LIMIT);
-        const followY = this.clamp(-target.y, -HomeConfig.MAGIC_MAP_WORLD_Y_LIMIT, HomeConfig.MAGIC_MAP_WORLD_Y_LIMIT);
+        const followLimit = this.getMagicMapWorldFollowLimit();
+        const followX = this.clamp(-target.x, -followLimit.x, followLimit.x);
+        const followY = this.clamp(-target.y, -followLimit.y, followLimit.y);
         tween(this.magicMapWorld)
             .to(moveDuration, { position: new Vec3(followX, followY, 0) }, { easing: 'linear' })
             .start();
@@ -402,15 +449,46 @@ export abstract class HomeFeatureMagicMap extends HomeFeatureMagicMapHost {
         visual.setScale(towardRight ? baseScale : -baseScale, baseScale, 1);
     }
     protected clampMagicMapGroundPosition(position: Vec3, monster: boolean): Vec3 {
-        const minX = monster ? HomeConfig.MAGIC_MAP_MONSTER_MIN_X : HomeConfig.MAGIC_MAP_PLAYER_MIN_X;
-        const maxX = monster ? HomeConfig.MAGIC_MAP_MONSTER_MAX_X : HomeConfig.MAGIC_MAP_PLAYER_MAX_X;
-        const minY = monster ? HomeConfig.MAGIC_MAP_MONSTER_MIN_Y : HomeConfig.MAGIC_MAP_PLAYER_MIN_Y;
-        const maxY = monster ? HomeConfig.MAGIC_MAP_MONSTER_MAX_Y : HomeConfig.MAGIC_MAP_PLAYER_MAX_Y;
+        const { minX, maxX, minY, maxY } = this.getMagicMapGroundBounds(monster);
+        const centerX = (minX + maxX) * 0.5;
+        const centerY = (minY + maxY) * 0.5;
+        const radiusX = Math.max((maxX - minX) * 0.5, 1);
+        const radiusY = Math.max((maxY - minY) * 0.5, 1);
+        const rawX = this.clamp(position.x, minX, maxX);
+        const rawY = this.clamp(position.y, minY, maxY);
+        const offsetX = rawX - centerX;
+        const offsetY = rawY - centerY;
+        const normalizedDistance = (offsetX * offsetX) / (radiusX * radiusX) + (offsetY * offsetY) / (radiusY * radiusY);
+        if (normalizedDistance <= 1) {
+            return new Vec3(rawX, rawY, 0);
+        }
+        const scale = 1 / Math.sqrt(normalizedDistance);
         return new Vec3(
-            this.clamp(position.x, minX, maxX),
-            this.clamp(position.y, minY, maxY),
+            centerX + offsetX * scale,
+            centerY + offsetY * scale,
             0,
         );
+    }
+    protected getMagicMapWorldSize(): { width: number; height: number } {
+        return getEditorNodeSize(this.magicMapWorld, HomeConfig.MAGIC_MAP_WORLD_WIDTH, HomeConfig.MAGIC_MAP_WORLD_HEIGHT);
+    }
+    protected getMagicMapWorldFollowLimit(): { x: number; y: number } {
+        const size = this.getMagicMapWorldSize();
+        return {
+            x: Math.max(0, (size.width - HomeConfig.MAGIC_MAP_VIEW_WIDTH) * 0.5),
+            y: Math.max(0, (size.height - HomeConfig.MAGIC_MAP_VIEW_HEIGHT) * 0.5),
+        };
+    }
+    protected getMagicMapGroundBounds(monster: boolean): { minX: number; maxX: number; minY: number; maxY: number } {
+        const size = this.getMagicMapWorldSize();
+        const scaleX = size.width / HomeConfig.MAGIC_MAP_WORLD_WIDTH;
+        const scaleY = size.height / HomeConfig.MAGIC_MAP_WORLD_HEIGHT;
+        return {
+            minX: (monster ? HomeConfig.MAGIC_MAP_MONSTER_MIN_X : HomeConfig.MAGIC_MAP_PLAYER_MIN_X) * scaleX,
+            maxX: (monster ? HomeConfig.MAGIC_MAP_MONSTER_MAX_X : HomeConfig.MAGIC_MAP_PLAYER_MAX_X) * scaleX,
+            minY: (monster ? HomeConfig.MAGIC_MAP_MONSTER_MIN_Y : HomeConfig.MAGIC_MAP_PLAYER_MIN_Y) * scaleY + HomeConfig.MAGIC_MAP_GROUND_OFFSET_Y,
+            maxY: (monster ? HomeConfig.MAGIC_MAP_MONSTER_MAX_Y : HomeConfig.MAGIC_MAP_PLAYER_MAX_Y) * scaleY + HomeConfig.MAGIC_MAP_GROUND_OFFSET_Y,
+        };
     }
     protected async openMagicMapPanel(realmIndex: number, floorIndex: number): Promise<void> {
         this.setupMagicMapPages();
@@ -422,13 +500,15 @@ export abstract class HomeFeatureMagicMap extends HomeFeatureMagicMapHost {
         this.magicMapActiveRealmIndex = realmIndex;
         this.magicMapActiveFloorIndex = floorIndex;
         this.magicMapRemainingSeconds = HomeConfig.MAGIC_MAP_DURATION_SECONDS;
+        this.resetMagicBattleAssistEffects();
         this.magicMapPanel.active = true;
         this.ensureInputBlocker(this.magicMapPanel);
         this.magicMapPanel.setSiblingIndex((this.magicMapPanel.parent?.children.length || 1) - 1);
         this.magicMapPlayerMoving = false;
+        const followLimit = this.getMagicMapWorldFollowLimit();
         this.magicMapWorld.setPosition(
-            this.clamp(-this.magicMapPlayerSpawnPosition.x, -HomeConfig.MAGIC_MAP_WORLD_X_LIMIT, HomeConfig.MAGIC_MAP_WORLD_X_LIMIT),
-            this.clamp(-this.magicMapPlayerSpawnPosition.y, -HomeConfig.MAGIC_MAP_WORLD_Y_LIMIT, HomeConfig.MAGIC_MAP_WORLD_Y_LIMIT),
+            this.clamp(-this.magicMapPlayerSpawnPosition.x, -followLimit.x, followLimit.x),
+            this.clamp(-this.magicMapPlayerSpawnPosition.y, -followLimit.y, followLimit.y),
             0,
         );
         this.magicMapPlayerAnchor.setPosition(this.clampMagicMapGroundPosition(this.magicMapPlayerSpawnPosition, false));
@@ -457,9 +537,11 @@ export abstract class HomeFeatureMagicMap extends HomeFeatureMagicMapHost {
         }
     }
     protected async loadMagicMapActors(loadVersion: number): Promise<void> {
+        const smallMonsterPath = HomeConfig.getMagicMapMonsterSkelPath(this.magicMapActiveRealmIndex, false);
+        const bossMonsterPath = HomeConfig.getMagicMapMonsterSkelPath(this.magicMapActiveRealmIndex, true);
         const [smallData, bossData] = await Promise.all([
-            this.loadSkeletonAsset(HomeConfig.MAGIC_MAP_SMALL_MONSTER_SKEL_PATH),
-            this.loadSkeletonAsset(HomeConfig.MAGIC_MAP_BOSS_MONSTER_SKEL_PATH),
+            this.loadSkeletonAsset(smallMonsterPath),
+            this.loadSkeletonAsset(bossMonsterPath),
         ]);
         if (loadVersion !== this.magicMapLoadVersion) return;
     
@@ -478,8 +560,10 @@ export abstract class HomeFeatureMagicMap extends HomeFeatureMagicMapHost {
     
         this.magicMapMonsters.forEach((monster) => {
             const data = monster.isBoss ? bossData : smallData;
+            const monsterScale = HomeConfig.getMagicMapMonsterScale(this.magicMapActiveRealmIndex, monster.isBoss);
             this.prepareSkeletonRenderer(monster.skeleton);
             monster.skeleton.skeletonData = data;
+            this.setMagicVisualFacing(monster.visualNode, monsterScale, monster.visualNode.scale.x >= 0);
             this.setSkeletonVisible(monster.skeleton, true);
             this.playSkeletonAnimation(monster.skeleton, HomeConfig.MAGIC_MAP_IDLE_ANIMATIONS, true);
         });
@@ -491,7 +575,7 @@ export abstract class HomeFeatureMagicMap extends HomeFeatureMagicMapHost {
     protected scheduleMagicMonsterWander(monster: MagicMapMonsterRuntime, delay = 0): void {
         if (!this.magicMapPanel?.active || this.magicBattleActive || !monster.node.isValid) return;
         const current = monster.node.position.clone();
-        const radius = monster.isBoss ? 180 : 260;
+        const radius = monster.isBoss ? HomeConfig.MAGIC_MAP_BOSS_MONSTER_WANDER_RADIUS : HomeConfig.MAGIC_MAP_SMALL_MONSTER_WANDER_RADIUS;
         const target = this.clampMagicMapGroundPosition(new Vec3(
             monster.spawnPosition.x + (Math.random() * 2 - 1) * radius,
             monster.spawnPosition.y + (Math.random() * 2 - 1) * radius,
@@ -501,7 +585,7 @@ export abstract class HomeFeatureMagicMap extends HomeFeatureMagicMapHost {
         const moveSpeed = monster.isBoss ? HomeConfig.MAGIC_MAP_BOSS_MONSTER_MOVE_SPEED : HomeConfig.MAGIC_MAP_SMALL_MONSTER_MOVE_SPEED;
         const duration = Math.max(distance / moveSpeed, 0.08);
         const pause = 0.7 + Math.random() * 1.8;
-        const baseScale = monster.isBoss ? HomeConfig.MAGIC_MAP_BOSS_MONSTER_SCALE : HomeConfig.MAGIC_MAP_SMALL_MONSTER_SCALE;
+        const baseScale = HomeConfig.getMagicMapMonsterScale(this.magicMapActiveRealmIndex, monster.isBoss);
     
         tween(monster.node)
             .delay(delay + pause)
@@ -561,6 +645,30 @@ export abstract class HomeFeatureMagicMap extends HomeFeatureMagicMapHost {
     protected exitMagicMapToFloor(): void {
         this.returnToMagicScenePanel();
     }
+    protected openMagicMapExitConfirm(): void {
+        if (!this.magicMapPanel?.active) return;
+
+        this.closeMagicMapAssistCardConfirmPopup();
+        this.openSharedFlowPopup('ConfirmPopup', {
+            title: '\u7cfb\u7edf\u63d0\u793a',
+            message: '\u662f\u5426\u9000\u51fa\u5f53\u524d\u9b54\u754c',
+            onConfirm: () => this.exitMagicMapToFloor(),
+        });
+        this.hideMagicMapExitConfirmCloseButton();
+    }
+    protected hideMagicMapExitConfirmCloseButton(): void {
+        const popup = this.popupRoot?.getChildByName('ConfirmPopup') || this.findNode('ConfirmPopup');
+        if (!popup?.isValid) return;
+
+        const close = this.findNode('ConfirmPopupClose', popup);
+        if (!close?.isValid) return;
+
+        close.off(Node.EventType.TOUCH_END);
+        close.active = false;
+        close.setScale(0, 0, 1);
+        close.setPosition(0, -2000, 0);
+        (close.getComponent(UITransform) || close.addComponent(UITransform)).setContentSize(0, 0);
+    }
     protected openMagicMonsterTarget(monster: MagicMapMonsterRuntime): void {
         if (this.magicMapStatusLabel) {
             this.magicMapStatusLabel.string = monster.occupiedBy
@@ -595,8 +703,8 @@ export abstract class HomeFeatureMagicMap extends HomeFeatureMagicMapHost {
             popup,
             popup,
             'ConfirmPopupBoard',
-            725,
-            505,
+            HomeConfig.SHARED_CONFIRM_BOARD_WIDTH,
+            HomeConfig.SHARED_CONFIRM_BOARD_HEIGHT,
             0,
             0,
             HomeConfig.UI_CONFIRM_POPUP_BG,
@@ -607,9 +715,9 @@ export abstract class HomeFeatureMagicMap extends HomeFeatureMagicMapHost {
         if (titleSkin?.isValid) {
             if (titleSkin.parent !== board) titleSkin.setParent(board);
             titleSkin.active = true;
-            titleSkin.setPosition(0, 178, 0);
-            (titleSkin.getComponent(UITransform) || titleSkin.addComponent(UITransform)).setContentSize(486, 84);
-            this.applyUiSkinKeepingEditorSize(titleSkin, HomeConfig.UI_CONFIRM_TITLE_BG, 486, 84);
+            titleSkin.setPosition(0, HomeConfig.SHARED_CONFIRM_TITLE_Y, 0);
+            (titleSkin.getComponent(UITransform) || titleSkin.addComponent(UITransform)).setContentSize(HomeConfig.SHARED_CONFIRM_TITLE_WIDTH, HomeConfig.SHARED_CONFIRM_TITLE_HEIGHT);
+            this.applyUiSkinKeepingEditorSize(titleSkin, HomeConfig.UI_CONFIRM_TITLE_BG, HomeConfig.SHARED_CONFIRM_TITLE_WIDTH, HomeConfig.SHARED_CONFIRM_TITLE_HEIGHT);
             titleSkin.setSiblingIndex(1);
         }
         const messageBg = this.findNode('ConfirmMessageBg', popup);
@@ -628,14 +736,14 @@ export abstract class HomeFeatureMagicMap extends HomeFeatureMagicMapHost {
             popup,
             'ConfirmPopupTitle',
             '\u7cfb\u7edf\u63d0\u793a',
-            31,
+            HomeConfig.SHARED_CONFIRM_TITLE_FONT_SIZE,
             0,
-            178,
-            260,
-            48,
+            HomeConfig.SHARED_CONFIRM_TITLE_Y,
+            HomeConfig.SHARED_CONFIRM_TITLE_LABEL_WIDTH,
+            HomeConfig.SHARED_CONFIRM_TITLE_LABEL_HEIGHT,
             new Color(126, 74, 36, 255),
         );
-        title.lineHeight = 38;
+        title.lineHeight = HomeConfig.SHARED_CONFIRM_TITLE_LINE_HEIGHT;
         title.overflow = Overflow.SHRINK;
         this.setLabelOutline(title, new Color(255, 245, 215, 255), 2);
         title.node.setSiblingIndex(2);
@@ -706,9 +814,9 @@ export abstract class HomeFeatureMagicMap extends HomeFeatureMagicMapHost {
             'MagicMonsterRoomCount',
             `\u5f53\u524d\u623f\u95f4\u4eba\u6570\uff1a${roomCount}`,
             25,
-            -88,
+            -162,
             -30,
-            380,
+            260,
             38,
             new Color(111, 70, 42, 255),
         );
@@ -741,9 +849,9 @@ export abstract class HomeFeatureMagicMap extends HomeFeatureMagicMapHost {
         const board = this.findNode('ConfirmPopupBoard', popup);
         if (board?.isValid && button.parent !== board) button.setParent(board);
         button.active = true;
-        button.setPosition(0, -128, 0);
-        (button.getComponent(UITransform) || button.addComponent(UITransform)).setContentSize(162, 62);
-        this.applyUiSkinKeepingEditorSize(button, HomeConfig.UI_CONFIRM_MAGIC_BUTTON, 162, 62);
+        button.setPosition(HomeConfig.SHARED_CONFIRM_SINGLE_BUTTON_X, HomeConfig.SHARED_CONFIRM_BUTTON_Y, 0);
+        (button.getComponent(UITransform) || button.addComponent(UITransform)).setContentSize(HomeConfig.SHARED_CONFIRM_BUTTON_WIDTH, HomeConfig.SHARED_CONFIRM_BUTTON_HEIGHT);
+        this.applyUiSkinKeepingEditorSize(button, HomeConfig.UI_CONFIRM_MAGIC_BUTTON, HomeConfig.SHARED_CONFIRM_BUTTON_WIDTH, HomeConfig.SHARED_CONFIRM_BUTTON_HEIGHT);
         button.setSiblingIndex(8);
 
         const labelNode = this.findNode('ConfirmAcceptButtonLabel', button) || this.findNode('ConfirmAcceptButtonLabel', popup);
@@ -751,11 +859,11 @@ export abstract class HomeFeatureMagicMap extends HomeFeatureMagicMapHost {
         if (!labelNode?.isValid || !label) return;
         labelNode.active = true;
         if (labelNode.parent !== button) labelNode.setParent(button);
-        labelNode.setPosition(0, 1, 0);
-        (labelNode.getComponent(UITransform) || labelNode.addComponent(UITransform)).setContentSize(134, 42);
+        labelNode.setPosition(0, HomeConfig.SHARED_CONFIRM_BUTTON_LABEL_Y, 0);
+        (labelNode.getComponent(UITransform) || labelNode.addComponent(UITransform)).setContentSize(HomeConfig.SHARED_CONFIRM_BUTTON_LABEL_WIDTH, HomeConfig.SHARED_CONFIRM_BUTTON_LABEL_HEIGHT);
         label.string = text;
-        label.fontSize = 27;
-        label.lineHeight = 36;
+        label.fontSize = HomeConfig.SHARED_CONFIRM_BUTTON_FONT_SIZE;
+        label.lineHeight = HomeConfig.SHARED_CONFIRM_BUTTON_LINE_HEIGHT;
         label.color = new Color(42, 22, 8, 255);
         label.horizontalAlign = HorizontalTextAlignment.CENTER;
         label.verticalAlign = VerticalTextAlignment.CENTER;

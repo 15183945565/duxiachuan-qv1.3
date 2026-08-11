@@ -293,6 +293,13 @@ export abstract class HomeFeatureRoleEquipment extends HomeFeatureRoleEquipmentH
             const framePath = display.item?.framePath || HomeConfig.UI_ROLE_EQUIP_FRAME_LV1;
             const slot = this.getOrCreateRolePageSkinnedNode(frame, `${name}_Slot_${index + 1}`, 110, 110, 0, slotY, HomeConfig.UI_ROLE_EQUIP_FRAME_LV1).node;
             this.applyUiSkin(slot, framePath, 110, 110);
+            this.syncEquipmentFrameEffectForItem(
+                slot,
+                `${name}_FrameEffect_${index + 1}`,
+                display.item,
+                110,
+                110,
+            )?.setSiblingIndex(3);
             const selectedFrame = this.getOrCreateRolePageNode(
                 slot,
                 'RoleEquipSelectedFrame',
@@ -302,9 +309,9 @@ export abstract class HomeFeatureRoleEquipment extends HomeFeatureRoleEquipmentH
                 0,
             ).node;
             selectedFrame.active = this.rolePageActiveTab === 'forge' && this.roleStrengthenSelectedSlot?.id === config.id;
-            selectedFrame.setSiblingIndex(4);
+            selectedFrame.setSiblingIndex(5);
             const icon = this.getOrCreateRolePageSkinnedNode(slot, `${name}_Icon_${index + 1}`, 82, 82, 0, 0, iconPath).node;
-            icon.setSiblingIndex(1);
+            icon.setSiblingIndex(2);
             this.applyUiSkin(icon, iconPath, 82, 82);
             const displayLevel = display.equipped ? this.getEquipmentLevelBySlot(config) : 1;
             const level = this.getOrCreateRolePageLabel(slot, `${name}_Level_${index + 1}`, `lv.${displayLevel}`, 18, 26, -34, 54, 24, Color.WHITE).label;
@@ -312,7 +319,7 @@ export abstract class HomeFeatureRoleEquipment extends HomeFeatureRoleEquipmentH
             level.verticalAlign = VerticalTextAlignment.CENTER;
             this.setLabelOutline(level, Color.BLACK, 2);
             level.node.active = display.equipped;
-            level.node.setSiblingIndex(2);
+            level.node.setSiblingIndex(4);
             this.applyRoleEquipmentSlotVisualState(slot, icon, level.node, !display.equipped);
             this.bindScaledClick(slot, () => {
                 if (this.rolePageActiveTab === 'forge') {
@@ -706,15 +713,16 @@ export abstract class HomeFeatureRoleEquipment extends HomeFeatureRoleEquipmentH
 
         const iconFrame = this.getOrCreateRoleEquipSkin(board, 'RoleEquipDetailIconFrame', 116, 116, -210, 56, displayItem?.framePath || HomeConfig.UI_ROLE_EQUIP_FRAME_LV1, true);
         iconFrame.setSiblingIndex(3);
+        this.syncEquipmentFrameEffectForItem(iconFrame, 'RoleEquipDetailFrameEffect', displayItem, 116, 116)?.setSiblingIndex(3);
         const icon = this.getOrCreateRoleEquipSkin(iconFrame, 'RoleEquipDetailIcon', 84, 84, 0, 3, displayItem?.iconPath || config.iconPath, true);
-        icon.setSiblingIndex(1);
+        icon.setSiblingIndex(2);
         const displayLevel = mode === 'detail'
             ? (currentItem ? this.getEquipmentLevelBySlot(config) : 1)
             : this.getEquipmentLevel(item);
         const levelLabel = this.getOrCreateRoleEquipLabel(iconFrame, 'RoleEquipDetailLevel', `lv.${displayLevel}`, 18, 28, -38, 58, 24, Color.WHITE, true);
         levelLabel.horizontalAlign = HorizontalTextAlignment.RIGHT;
         this.setLabelOutline(levelLabel, Color.BLACK, 2);
-        levelLabel.node.setSiblingIndex(2);
+        levelLabel.node.setSiblingIndex(4);
         this.setRoleEquipDetailIconVisible(iconFrame, mode === 'detail');
 
         const nameLabel = this.getOrCreateRoleEquipLabel(board, 'RoleEquipDetailName', this.getCatalogDisplayName(displayItem) || config.displayName, 28, 86, 104, 360, 42, new Color(92, 55, 28, 255), true);
@@ -879,13 +887,14 @@ export abstract class HomeFeatureRoleEquipment extends HomeFeatureRoleEquipmentH
         const cell = this.createNode(`RoleEquipReplaceItem_${index + 1}`, parent, 128, 138, x, y);
         const frame = this.createSkinnedNode('RoleEquipReplaceItemFrame', cell, 112, 112, 0, 12, item.framePath);
         frame.setSiblingIndex(0);
-        this.createSkinnedNode('RoleEquipReplaceItemIcon', frame, 88, 88, 0, 2, item.iconPath).setSiblingIndex(1);
+        this.syncEquipmentFrameEffectForItem(frame, 'RoleEquipReplaceItemFrameEffect', item, 112, 112)?.setSiblingIndex(3);
+        this.createSkinnedNode('RoleEquipReplaceItemIcon', frame, 88, 88, 0, 2, item.iconPath).setSiblingIndex(2);
         const level = this.createLabel(frame, 'RoleEquipReplaceItemLevel', `lv.${this.getEquipmentLevel(item)}`, 20, 26, -42, 62, 26, Color.WHITE);
         level.horizontalAlign = HorizontalTextAlignment.RIGHT;
         this.setLabelOutline(level, Color.BLACK, 2);
-        level.node.setSiblingIndex(2);
+        level.node.setSiblingIndex(4);
         if (this.isRoleEquipmentItemCurrentlyEquipped(config, item)) {
-            this.createSkinnedNode('RoleEquipReplaceItemEquippedBadge', frame, 60, 60, -26, 26, HomeConfig.UI_ROLE_EQUIPPED_BADGE).setSiblingIndex(4);
+            this.createSkinnedNode('RoleEquipReplaceItemEquippedBadge', frame, 60, 60, -26, 26, HomeConfig.UI_ROLE_EQUIPPED_BADGE).setSiblingIndex(6);
         }
         const name = this.createLabel(cell, 'RoleEquipReplaceItemName', this.getCatalogDisplayName(item), 18, 0, -60, 126, 30, new Color(255, 238, 198, 255));
         name.overflow = Overflow.SHRINK;
@@ -920,12 +929,23 @@ export abstract class HomeFeatureRoleEquipment extends HomeFeatureRoleEquipmentH
         const slot = frame?.getChildByName(`${config.frameName}_Slot_${config.slotIndex}`);
         if (!slot?.isValid || !item) return;
         this.applyUiSkin(slot, item.framePath, 110, 110);
+        this.syncEquipmentFrameEffectForItem(
+            slot,
+            `${config.frameName}_FrameEffect_${config.slotIndex}`,
+            item,
+            110,
+            110,
+        )?.setSiblingIndex(3);
         const icon = slot.getChildByName(`${config.frameName}_Icon_${config.slotIndex}`);
-        if (icon?.isValid) this.applyUiSkin(icon, item.iconPath, 82, 82);
+        if (icon?.isValid) {
+            this.applyUiSkin(icon, item.iconPath, 82, 82);
+            icon.setSiblingIndex(2);
+        }
         const levelLabel = slot.getChildByName(`${config.frameName}_Level_${config.slotIndex}`)?.getComponent(Label);
         if (levelLabel) {
             levelLabel.string = `lv.${display.equipped ? this.getEquipmentLevelBySlot(config) : 1}`;
             levelLabel.node.active = display.equipped;
+            levelLabel.node.setSiblingIndex(4);
         }
         this.applyRoleEquipmentSlotVisualState(slot, icon, levelLabel?.node, !display.equipped);
     }

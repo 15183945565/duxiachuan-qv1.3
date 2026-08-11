@@ -4,8 +4,11 @@ import {
     Label,
     Node,
     Overflow,
+    Sprite,
     UITransform,
+    UIOpacity,
     VerticalTextAlignment,
+    sys,
 } from 'cc';
 import { applySimKaiFont } from '../Common/UIFont';
 import * as HomeConfig from './HomeConfig';
@@ -279,6 +282,282 @@ export abstract class HomeFeatureBeastCardPresentation extends HomeFeatureBeastC
         this.refreshBeastCardOutputInfo();
     }
 
+    protected ensureBeastCardActivationArea(): void {
+        if (!this.beastCardRoot?.isValid || !this.beastCardRewardRoot?.isValid) return;
+
+        const button = this.getOrCreateBeastCardChildSkinnedNode(
+            this.beastCardRewardRoot,
+            'BeastCardActivationButton',
+            HomeConfig.BEAST_CARD_ACTIVATE_BUTTON_WIDTH,
+            HomeConfig.BEAST_CARD_ACTIVATE_BUTTON_HEIGHT,
+            0,
+            HomeConfig.BEAST_CARD_ACTIVATE_BUTTON_Y,
+            HomeConfig.UI_BEAST_CARD_ACTIVATE_BUTTON_BG,
+        );
+        this.beastCardActivationButton = button;
+        button.setSiblingIndex(4);
+        this.bindScaledClick(button, () => this.openBeastCardActivationConfirm());
+
+        const buttonLabel = this.getOrCreateBeastCardChildLabel(
+            button,
+            'BeastCardActivationButtonLabel',
+            '\u6fc0\u6d3b',
+            28,
+            0,
+            1,
+            130,
+            42,
+            new Color(86, 42, 12, 255),
+            HorizontalTextAlignment.CENTER,
+        );
+        buttonLabel.enableWrapText = false;
+        this.setMagicFloorTextEdge(buttonLabel, false);
+
+        const statusActive = this.isCurrentBeastCardActivated();
+        const existingStatusRoot = this.beastCardRoot.getChildByName('BeastCardActivationStatusRoot');
+        const statusRootExisted = !!existingStatusRoot?.isValid;
+        const statusRoot = statusRootExisted
+            ? existingStatusRoot!
+            : this.createNode(
+                'BeastCardActivationStatusRoot',
+                this.beastCardRoot,
+                HomeConfig.BEAST_CARD_ACTIVE_STATUS_WIDTH,
+                HomeConfig.BEAST_CARD_ACTIVE_STATUS_HEIGHT,
+                0,
+                HomeConfig.BEAST_CARD_ACTIVE_STATUS_Y,
+            );
+        const statusTransform = statusRoot.getComponent(UITransform) || statusRoot.addComponent(UITransform);
+        if (statusTransform.contentSize.width <= 0 || statusTransform.contentSize.height <= 0) {
+            statusTransform.setContentSize(HomeConfig.BEAST_CARD_ACTIVE_STATUS_WIDTH, HomeConfig.BEAST_CARD_ACTIVE_STATUS_HEIGHT);
+        }
+        if (!statusRootExisted) {
+            statusRoot.setPosition(0, HomeConfig.BEAST_CARD_ACTIVE_STATUS_Y, 0);
+        }
+        statusRoot.active = statusActive;
+        if (statusActive && !statusRoot.getComponent(Sprite)?.spriteFrame) {
+            this.applyUiSkinKeepingEditorSize(
+                statusRoot,
+                HomeConfig.UI_BEAST_CARD_ACTIVE_STATUS_BG,
+                HomeConfig.BEAST_CARD_ACTIVE_STATUS_WIDTH,
+                HomeConfig.BEAST_CARD_ACTIVE_STATUS_HEIGHT,
+            );
+        }
+        statusRoot.setSiblingIndex(9);
+        this.beastCardActivationStatusRoot = statusRoot;
+
+        this.beastCardActivationStatusTitleLabel = this.getOrCreateBeastCardChildLabel(
+            statusRoot,
+            'BeastCardActivationStatusTitle',
+            '',
+            22,
+            0,
+            HomeConfig.BEAST_CARD_ACTIVE_STATUS_TITLE_Y,
+            230,
+            28,
+            new Color(61, 238, 48, 255),
+            HorizontalTextAlignment.CENTER,
+        );
+        this.beastCardActivationStatusTimeLabel = this.getOrCreateBeastCardChildLabel(
+            statusRoot,
+            'BeastCardActivationStatusTime',
+            '',
+            20,
+            0,
+            HomeConfig.BEAST_CARD_ACTIVE_STATUS_TIME_Y,
+            240,
+            26,
+            new Color(61, 238, 48, 255),
+            HorizontalTextAlignment.CENTER,
+        );
+        [this.beastCardActivationStatusTitleLabel, this.beastCardActivationStatusTimeLabel].forEach((label) => {
+            if (!label?.node?.isValid) return;
+            label.enableWrapText = false;
+            this.applyBattleEntryTextStyle(label, 2);
+        });
+
+        this.refreshBeastCardActivationArea();
+    }
+
+    protected setBeastCardActivationStatusVisible(active: boolean): void {
+        if (!this.beastCardRoot?.isValid) return;
+
+        this.beastCardRoot.children
+            .filter((child) => child?.isValid && child.name === 'BeastCardActivationStatusRoot')
+            .forEach((root) => {
+                const visible = active && root === this.beastCardActivationStatusRoot;
+                if (!visible) {
+                    this.skinApplyVersions.set(root, ++this.skinApplyVersion);
+                }
+
+                const opacity = root.getComponent(UIOpacity) || root.addComponent(UIOpacity);
+                opacity.opacity = visible ? 255 : 0;
+                const sprite = root.getComponent(Sprite);
+                if (sprite) sprite.enabled = visible;
+                root.children.forEach((child) => {
+                    child.active = visible;
+                });
+                root.active = visible;
+            });
+
+        if (!active || !this.beastCardActivationStatusRoot?.isValid) return;
+
+        const statusRoot = this.beastCardActivationStatusRoot;
+        const sprite = statusRoot.getComponent(Sprite);
+        if (sprite?.spriteFrame) {
+            sprite.enabled = true;
+            return;
+        }
+        this.applyUiSkinKeepingEditorSize(
+            statusRoot,
+            HomeConfig.UI_BEAST_CARD_ACTIVE_STATUS_BG,
+            HomeConfig.BEAST_CARD_ACTIVE_STATUS_WIDTH,
+            HomeConfig.BEAST_CARD_ACTIVE_STATUS_HEIGHT,
+        );
+    }
+
+    protected ensureBeastCardActivationState(): void {
+        if (this.beastCardActivationStateLoaded) return;
+
+        this.beastCardActivationStateLoaded = true;
+        this.beastCardActiveUntilByKey.clear();
+        const raw = sys.localStorage.getItem(HomeConfig.BEAST_CARD_ACTIVATION_STORAGE_KEY);
+        if (!raw) return;
+
+        try {
+            const parsed = JSON.parse(raw) as Record<string, number>;
+            Object.keys(parsed).forEach((key) => {
+                const until = parsed[key];
+                if (typeof until === 'number' && Number.isFinite(until) && until > 0) {
+                    this.beastCardActiveUntilByKey.set(key, until);
+                }
+            });
+        } catch (err) {
+            console.warn('[MainHomeView] beast card activation state parse failed', err);
+        }
+    }
+
+    protected saveBeastCardActivationState(): void {
+        this.ensureBeastCardActivationState();
+        const now = Date.now();
+        const data: Record<string, number> = {};
+        this.beastCardActiveUntilByKey.forEach((until, key) => {
+            if (until > now) data[key] = until;
+        });
+        sys.localStorage.setItem(HomeConfig.BEAST_CARD_ACTIVATION_STORAGE_KEY, JSON.stringify(data));
+    }
+
+    protected getBeastCardActivationConfig(index = this.beastCardIndex): typeof HomeConfig.BEAST_CARD_ACTIVATION_CONFIGS[number] {
+        return HomeConfig.BEAST_CARD_ACTIVATION_CONFIGS[index] || HomeConfig.BEAST_CARD_ACTIVATION_CONFIGS[0];
+    }
+
+    protected isBeastCardActivated(index = this.beastCardIndex): boolean {
+        const remainingMs = this.getBeastCardActivationRemainingMs(index);
+        return remainingMs > 0;
+    }
+
+    protected isCurrentBeastCardActivated(): boolean {
+        return this.isBeastCardActivated(this.beastCardIndex);
+    }
+
+    protected getBeastCardActivationRemainingMs(index = this.beastCardIndex): number {
+        this.ensureBeastCardActivationState();
+        const config = this.getBeastCardActivationConfig(index);
+        const until = this.beastCardActiveUntilByKey.get(config.key) || 0;
+        return Math.max(0, until - Date.now());
+    }
+
+    protected formatBeastCardActivationRemainingTime(ms: number): string {
+        const totalMinutes = Math.max(0, Math.ceil(ms / 60000));
+        const days = Math.floor(totalMinutes / (24 * 60));
+        const hours = Math.floor((totalMinutes % (24 * 60)) / 60);
+        const minutes = totalMinutes % 60;
+        return days > 0
+            ? `${days}\u65e5${hours}\u5c0f\u65f6${minutes}\u5206`
+            : `${hours}\u5c0f\u65f6${minutes}\u5206`;
+    }
+
+    protected openBeastCardActivationConfirm(): void {
+        const config = this.getBeastCardActivationConfig();
+        if (this.isCurrentBeastCardActivated()) {
+            this.showToast(`${config.cardLabel}\u6b63\u5728\u751f\u6548\u4e2d`);
+            return;
+        }
+        if (this.getRoleInventoryCount(config.itemId) < 1) {
+            this.showToast(`${config.beastCardLabel}\u4e0d\u8db3`);
+            return;
+        }
+
+        this.openSharedFlowPopup('ConfirmPopup', {
+            title: '\u7cfb\u7edf\u63d0\u793a',
+            message: `\u662f\u5426\u6d88\u80171\u5f20${config.cardLabel}\u6fc0\u6d3b${config.beastName}\u517d\u8109`,
+            variant: 'beastStrengthenConfirm',
+            onConfirm: () => {
+                if (!this.consumeRoleInventory(config.itemId, 1)) {
+                    this.showToast(`${config.beastCardLabel}\u4e0d\u8db3`);
+                    return;
+                }
+                this.ensureBeastCardActivationState();
+                this.beastCardActiveUntilByKey.set(
+                    config.key,
+                    Date.now() + HomeConfig.BEAST_CARD_ACTIVATION_DURATION_SECONDS * 1000,
+                );
+                this.saveBeastCardActivationState();
+                this.refreshRoleInventoryViews(false);
+                this.showToast(`${config.cardLabel}\u5df2\u6fc0\u6d3b`);
+                this.refreshBeastCard();
+            },
+        });
+    }
+
+    protected showCurrentBeastCardActivationRequiredToast(): void {
+        const config = this.getBeastCardActivationConfig();
+        this.showToast(`\u8bf7\u5148\u6fc0\u6d3b${config.beastCardLabel}`);
+    }
+
+    protected getBeastCardActivationButtonLabel(): Label | null {
+        const labelNode = this.beastCardActivationButton?.getChildByName('BeastCardActivationButtonLabel');
+        return labelNode?.getComponent(Label) || null;
+    }
+
+    protected applyBeastCardSkeletonActivationVisual(active: boolean): void {
+        if (!this.beastCardSkeleton?.isValid) return;
+
+        const skeletonNode = this.beastCardSkeleton.node;
+        const opacity = skeletonNode.getComponent(UIOpacity);
+        if (opacity) opacity.opacity = 255;
+        this.beastCardSkeleton.color = active ? Color.WHITE : new Color(80, 80, 80, 255);
+        this.beastCardSkeleton.timeScale = active ? 1 : 0;
+        this.beastCardSkeleton.markForUpdateRenderData(true);
+    }
+
+    protected refreshBeastCardActivationArea(): void {
+        const active = this.isCurrentBeastCardActivated();
+        const config = this.getBeastCardActivationConfig();
+        const remainingMs = this.getBeastCardActivationRemainingMs();
+
+        if (this.beastCardActivationButton?.isValid) {
+            this.beastCardActivationButton.active = true;
+            const opacity = this.beastCardActivationButton.getComponent(UIOpacity)
+                || this.beastCardActivationButton.addComponent(UIOpacity);
+            opacity.opacity = active ? 150 : 255;
+        }
+        const buttonLabel = this.getBeastCardActivationButtonLabel();
+        if (buttonLabel?.isValid) {
+            buttonLabel.string = active ? '\u5df2\u6fc0\u6d3b' : '\u6fc0\u6d3b';
+            buttonLabel.color = active ? new Color(104, 82, 58, 255) : new Color(86, 42, 12, 255);
+        }
+        this.setBeastCardActivationStatusVisible(active);
+        if (this.beastCardActivationStatusTitleLabel?.isValid) {
+            this.beastCardActivationStatusTitleLabel.string = active ? `${config.cardLabel}\u751f\u6548\u4e2d` : '';
+        }
+        if (this.beastCardActivationStatusTimeLabel?.isValid) {
+            this.beastCardActivationStatusTimeLabel.string = active
+                ? `\u5269\u4f59\u65f6\u95f4\uff1a${this.formatBeastCardActivationRemainingTime(remainingMs)}`
+                : '';
+        }
+        this.applyBeastCardSkeletonActivationVisual(active);
+    }
+
     protected refreshBeastCardOutputInfo(): void {
         if (this.beastCardOutputRateTitleLabel) {
             this.beastCardOutputRateTitleLabel.string = '\u5f53\u524d\u4ea7\u51fa\u901f\u7387:';
@@ -298,6 +577,7 @@ export abstract class HomeFeatureBeastCardPresentation extends HomeFeatureBeastC
         if (this.beastCardYuanbaoRateValueLabel) {
             this.beastCardYuanbaoRateValueLabel.string = this.getBeastCardYuanbaoRateText();
         }
+        this.refreshBeastCardActivationArea();
         this.updateBeastCardCountdown(0.25);
     }
 
@@ -306,6 +586,7 @@ export abstract class HomeFeatureBeastCardPresentation extends HomeFeatureBeastC
         if (nextIndex === this.beastCardIndex) return;
 
         this.beastCardIndex = nextIndex;
+        this.refreshBeastCardActivationArea();
         this.refreshBeastCard();
     }
 
@@ -319,6 +600,7 @@ export abstract class HomeFeatureBeastCardPresentation extends HomeFeatureBeastC
         if (this.beastCardBottomNameLabel) {
             this.beastCardBottomNameLabel.string = HomeConfig.BEAST_CARD_BOTTOM_NAME_LABELS[this.beastCardIndex] || card.name;
         }
+        this.ensureBeastCardActivationArea();
         this.refreshBeastCardOutputInfo();
         if (this.beastCardDescriptionLabel) {
             this.beastCardDescriptionLabel.string = card.description;
@@ -352,6 +634,7 @@ export abstract class HomeFeatureBeastCardPresentation extends HomeFeatureBeastC
                 this.beastCardSkeleton.node.setScale(scale, scale, 1);
                 this.setSkeletonVisible(this.beastCardSkeleton, true);
                 this.playSkeletonAnimation(this.beastCardSkeleton, HomeConfig.BEAST_CARD_ANIMATIONS, true);
+                this.applyBeastCardSkeletonActivationVisual(this.isCurrentBeastCardActivated());
                 this.beastCardSkeleton.updateAnimation(0);
                 this.beastCardSkeleton.markForUpdateRenderData(true);
             })
@@ -371,6 +654,7 @@ export abstract class HomeFeatureBeastCardPresentation extends HomeFeatureBeastC
         }
         if (this.beastCardSkeleton?.isValid) {
             this.setSkeletonVisible(this.beastCardSkeleton, false);
+            this.applyBeastCardSkeletonActivationVisual(true);
         }
     }
 
@@ -386,5 +670,6 @@ export abstract class HomeFeatureBeastCardPresentation extends HomeFeatureBeastC
         const seconds = remainingSeconds % 60;
         const twoDigits = (value: number): string => value < 10 ? `0${value}` : `${value}`;
         this.beastCardCountdownLabel.string = `${hours}\u5c0f\u65f6${twoDigits(minutes)}\u5206${twoDigits(seconds)}\u79d2`;
+        this.refreshBeastCardActivationArea();
     }
 }

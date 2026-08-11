@@ -38,6 +38,7 @@ abstract class HomeFeatureMagicBattleDamageHost extends HomeViewBase {
 
     protected abstract setLabelOutline(label: Label, color: Color, width: number): void;
     protected abstract openMagicBattleDuelPopup(targetId: MagicBattleParticipantId): Promise<void>;
+    protected abstract raiseMagicBattleOverlayLayers(): void;
 }
 
 /**
@@ -61,7 +62,6 @@ export abstract class HomeFeatureMagicBattleDamage extends HomeFeatureMagicBattl
             root.setPosition(HomeConfig.MAGIC_BATTLE_DAMAGE_PANEL_X, HomeConfig.MAGIC_BATTLE_DAMAGE_PANEL_Y, 0);
         }
         this.magicBattleDamageExpandedPosition = root.position.clone();
-        root.setSiblingIndex(28);
         this.magicBattleDamageHudRoot = root;
 
         const toggle = this.getOrCreateBattleSkinnedNode(
@@ -171,6 +171,7 @@ export abstract class HomeFeatureMagicBattleDamage extends HomeFeatureMagicBattl
         this.setLabelOutline(ruleLabel, new Color(54, 28, 14, 255), 1);
 
         this.applyMagicBattleDamagePanelVisibility();
+        this.raiseMagicBattleOverlayLayers();
     }
     protected resetMagicBattleDamageState(): void {
         const playerName = this.profile.name || '\u6211';
@@ -233,6 +234,7 @@ export abstract class HomeFeatureMagicBattleDamage extends HomeFeatureMagicBattl
 
         this.magicBattleDamageHudRoot.active = !!this.magicMonsterBattlePanel?.active;
         this.applyMagicBattleDamagePanelVisibility();
+        this.raiseMagicBattleOverlayLayers();
 
         const ranked = this.getMagicBattleDamageRanking();
         ranked.forEach((participant, index) => {

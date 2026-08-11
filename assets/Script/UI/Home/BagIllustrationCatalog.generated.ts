@@ -121,7 +121,7 @@ export const BAG_ILLUSTRATION_CATALOG: BagIllustrationCatalogItem[] = [
     { id: 'item_108', category: 'item' as BagIllustrationCategory, name: '青狮兽卡碎片', iconPath: 'Texture/UI/Bag/IllustrationItems/bag_item_108', framePath: 'Texture/UI/Bag/ItemFrames/item_frame_lv7' },
     { id: 'item_109', category: 'item' as BagIllustrationCategory, name: '改名卡', iconPath: 'Texture/UI/Bag/IllustrationItems/bag_item_109', framePath: 'Texture/UI/Bag/ItemFrames/item_frame_lv7' },
     { id: 'item_110', category: 'item' as BagIllustrationCategory, name: '合成卡图标', iconPath: 'Texture/UI/Bag/IllustrationItems/bag_item_110', framePath: 'Texture/UI/Bag/ItemFrames/item_frame_lv7' },
-    { id: 'item_111', category: 'item' as BagIllustrationCategory, name: '魔界门票图标', iconPath: 'Texture/UI/Bag/IllustrationItems/bag_item_111', framePath: 'Texture/UI/Bag/ItemFrames/item_frame_lv7' },
+    { id: 'item_111', category: 'item' as BagIllustrationCategory, name: '魔界门票', iconPath: 'Texture/UI/Bag/IllustrationItems/bag_item_111', framePath: 'Texture/UI/Bag/ItemFrames/item_frame_lv7' },
     { id: 'item_112', category: 'item' as BagIllustrationCategory, name: '挑战卡', iconPath: 'Texture/UI/Bag/IllustrationItems/bag_item_112', framePath: 'Texture/UI/Bag/ItemFrames/item_frame_lv7' },
     { id: 'item_172', category: 'item' as BagIllustrationCategory, name: '保护卡', iconPath: 'Texture/UI/Bag/IllustrationItems/bag_item_172', framePath: 'Texture/UI/Bag/ItemFrames/item_frame_lv7' },
     { id: 'item_173', category: 'item' as BagIllustrationCategory, name: '挖宝券', iconPath: 'Texture/UI/Bag/IllustrationItems/bag_item_173', framePath: 'Texture/UI/Bag/ItemFrames/item_frame_lv7' },

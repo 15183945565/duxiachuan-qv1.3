@@ -1,0 +1,216 @@
+
+C520_S01L.png
+size: 1993,588
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+Front_Arm_Core_L
+  rotate: false
+  xy: 416, 5
+  size: 85, 85
+  orig: 85, 85
+  offset: 0, 0
+  index: -1
+Front_Arm_Core_R
+  rotate: false
+  xy: 1749, 21
+  size: 99, 99
+  orig: 99, 99
+  offset: 0, 0
+  index: -1
+Front_Arm_L_01
+  rotate: true
+  xy: 1857, 126
+  size: 103, 118
+  orig: 103, 118
+  offset: 0, 0
+  index: -1
+Front_Arm_L_02
+  rotate: false
+  xy: 1578, 338
+  size: 128, 248
+  orig: 128, 248
+  offset: 0, 0
+  index: -1
+Front_Arm_R_01
+  rotate: true
+  xy: 1185, 7
+  size: 113, 134
+  orig: 113, 135
+  offset: 0, 0
+  index: -1
+Front_Arm_R_02
+  rotate: true
+  xy: 1385, 23
+  size: 125, 267
+  orig: 125, 269
+  offset: 0, 1
+  index: -1
+Front_Body_01
+  rotate: true
+  xy: 1654, 122
+  size: 214, 201
+  orig: 214, 201
+  offset: 0, 0
+  index: -1
+Front_Core
+  rotate: true
+  xy: 1857, 13
+  size: 111, 110
+  orig: 111, 110
+  offset: 0, 0
+  index: -1
+Front_Face_01
+  rotate: false
+  xy: 1654, 13
+  size: 93, 107
+  orig: 93, 107
+  offset: 0, 0
+  index: -1
+Front_Face_02
+  rotate: false
+  xy: 1321, 25
+  size: 60, 95
+  orig: 60, 95
+  offset: 0, 0
+  index: -1
+Front_Face_Eye
+  rotate: true
+  xy: 1364, 5
+  size: 18, 19
+  orig: 20, 21
+  offset: 1, 1
+  index: -1
+Front_Leg_L_01
+  rotate: true
+  xy: 329, 3
+  size: 87, 85
+  orig: 87, 85
+  offset: 0, 0
+  index: -1
+Front_Leg_L_02
+  rotate: true
+  xy: 1829, 357
+  size: 96, 145
+  orig: 97, 145
+  offset: 0, 0
+  index: -1
+Front_Leg_L_Core
+  rotate: false
+  xy: 1578, 155
+  size: 62, 62
+  orig: 62, 62
+  offset: 0, 0
+  index: -1
+Front_Leg_R_01
+  rotate: false
+  xy: 1708, 420
+  size: 119, 166
+  orig: 119, 167
+  offset: 0, 0
+  index: -1
+Front_Leg_R_02
+  rotate: true
+  xy: 833, 11
+  size: 88, 99
+  orig: 88, 100
+  offset: 0, 0
+  index: -1
+Front_Pelvis_01
+  rotate: false
+  xy: 1829, 455
+  size: 160, 131
+  orig: 160, 131
+  offset: 0, 0
+  index: -1
+Front_Pelvis_02
+  rotate: true
+  xy: 1321, 5
+  size: 18, 41
+  orig: 18, 41
+  offset: 0, 0
+  index: -1
+Front_Pelvis_03
+  rotate: false
+  xy: 1708, 350
+  size: 118, 68
+  orig: 119, 68
+  offset: 0, 0
+  index: -1
+Front_Pelvis_04
+  rotate: true
+  xy: 1578, 219
+  size: 117, 63
+  orig: 117, 63
+  offset: 0, 0
+  index: -1
+Front_Sholder_L_01
+  rotate: true
+  xy: 699, 2
+  size: 97, 132
+  orig: 97, 132
+  offset: 0, 0
+  index: -1
+Front_Sholder_L_02
+  rotate: true
+  xy: 503, 34
+  size: 56, 47
+  orig: 72, 83
+  offset: 8, 18
+  index: -1
+Front_Sholder_R_01
+  rotate: false
+  xy: 1857, 231
+  size: 130, 124
+  orig: 131, 124
+  offset: 1, 0
+  index: -1
+Front_shield_01
+  rotate: false
+  xy: 2, 23
+  size: 325, 563
+  orig: 325, 563
+  offset: 0, 0
+  index: -1
+Front_shield_02
+  rotate: true
+  xy: 329, 92
+  size: 494, 368
+  orig: 494, 368
+  offset: 0, 0
+  index: -1
+Front_shield_03
+  rotate: false
+  xy: 936, 122
+  size: 447, 464
+  orig: 447, 464
+  offset: 0, 0
+  index: -1
+Front_shield_L
+  rotate: false
+  xy: 1385, 150
+  size: 191, 436
+  orig: 191, 436
+  offset: 0, 0
+  index: -1
+Front_shield_R
+  rotate: false
+  xy: 699, 101
+  size: 235, 485
+  orig: 235, 485
+  offset: 0, 0
+  index: -1
+Front_shield_Runes
+  rotate: false
+  xy: 936, 13
+  size: 247, 107
+  orig: 249, 110
+  offset: 1, 2
+  index: -1
+shadow
+  rotate: true
+  xy: 1969, 13
+  size: 111, 22
+  orig: 113, 24
+  offset: 1, 1
+  index: -1

@@ -1,0 +1,139 @@
+
+302140_skill_hit.png
+size: 1990,503
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+1hit1/bg_00
+  rotate: false
+  xy: 1392, 257
+  size: 244, 244
+  orig: 1200, 640
+  offset: 585, 198
+  index: -1
+2hit2/hit_zc_00
+  rotate: true
+  xy: 535, 2
+  size: 236, 218
+  orig: 1200, 640
+  offset: 601, 203
+  index: -1
+2hit2/hit_zc_02
+  rotate: false
+  xy: 844, 244
+  size: 272, 257
+  orig: 1200, 640
+  offset: 578, 182
+  index: -1
+2hit2/hit_zc_04
+  rotate: false
+  xy: 568, 240
+  size: 274, 261
+  orig: 1200, 640
+  offset: 578, 179
+  index: -1
+2hit2/hit_zc_06
+  rotate: false
+  xy: 288, 260
+  size: 278, 241
+  orig: 1200, 640
+  offset: 589, 196
+  index: -1
+2hit2/hit_zc_08
+  rotate: true
+  xy: 288, 2
+  size: 256, 245
+  orig: 1200, 640
+  offset: 585, 194
+  index: -1
+2hit2/hit_zc_10
+  rotate: false
+  xy: 2, 13
+  size: 230, 202
+  orig: 1200, 640
+  offset: 585, 211
+  index: -1
+3hit3/hit_xjbg_03
+  rotate: false
+  xy: 2, 217
+  size: 284, 284
+  orig: 1200, 640
+  offset: 565, 178
+  index: -1
+3hit3/hit_xjbgshang_00
+  rotate: false
+  xy: 1118, 233
+  size: 272, 268
+  orig: 1200, 640
+  offset: 572, 186
+  index: -1
+4hit4/hit_xj_00
+  rotate: true
+  xy: 1821, 124
+  size: 167, 166
+  orig: 1200, 640
+  offset: 625, 228
+  index: -1
+4hit4/hit_xj_02
+  rotate: false
+  xy: 1638, 293
+  size: 212, 208
+  orig: 1200, 640
+  offset: 610, 212
+  index: -1
+4hit4/hit_xj_04
+  rotate: false
+  xy: 844, 2
+  size: 248, 240
+  orig: 1200, 640
+  offset: 595, 198
+  index: -1
+4hit4/hit_xj_06
+  rotate: false
+  xy: 1288, 27
+  size: 191, 204
+  orig: 1200, 640
+  offset: 645, 213
+  index: -1
+4hit4/hit_xj_08
+  rotate: false
+  xy: 1094, 25
+  size: 192, 206
+  orig: 1200, 640
+  offset: 650, 207
+  index: -1
+4hit4/hit_xj_10
+  rotate: true
+  xy: 1481, 72
+  size: 183, 163
+  orig: 1200, 640
+  offset: 660, 205
+  index: -1
+4hit4/hit_xj_12
+  rotate: true
+  xy: 1852, 322
+  size: 179, 136
+  orig: 1200, 640
+  offset: 664, 205
+  index: -1
+4hit4/hit_xj_14
+  rotate: false
+  xy: 1646, 156
+  size: 173, 135
+  orig: 1200, 640
+  offset: 669, 206
+  index: -1
+4hit4/hit_xj_16
+  rotate: false
+  xy: 1646, 19
+  size: 173, 135
+  orig: 1200, 640
+  offset: 669, 206
+  index: -1
+4hit4/hit_xj_18
+  rotate: true
+  xy: 755, 147
+  size: 91, 72
+  orig: 1200, 640
+  offset: 751, 208
+  index: -1

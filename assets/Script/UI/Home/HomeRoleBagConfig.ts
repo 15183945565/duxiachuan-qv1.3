@@ -54,6 +54,46 @@ export const UI_BAG_TAB_DECOMPOSE_ACTIVE = `${BAG_UI_ROOT}/bag_tab_decompose_act
 export const UI_BAG_TAB_BEAST_SYNTH = `${BAG_UI_ROOT}/bag_tab_beast_synth`;
 export const UI_BAG_TAB_SYNTH_ACTIVE = `${BAG_UI_ROOT}/bag_tab_synth_active`;
 export const UI_BAG_ITEM_FRAME_LV1 = `${BAG_UI_ROOT}/ItemFrames/item_frame_lv1`;
+export const BAG_EQUIPMENT_FRAME_EFFECT_FPS = 12;
+export const UI_BAG_EQUIPMENT_FRAME_EFFECT_21_30 = [
+    `${BAG_UI_ROOT}/EquipmentFrameEffects/lv21_30/equipment_frame_effect_21_30_00`,
+    `${BAG_UI_ROOT}/EquipmentFrameEffects/lv21_30/equipment_frame_effect_21_30_01`,
+    `${BAG_UI_ROOT}/EquipmentFrameEffects/lv21_30/equipment_frame_effect_21_30_02`,
+    `${BAG_UI_ROOT}/EquipmentFrameEffects/lv21_30/equipment_frame_effect_21_30_03`,
+    `${BAG_UI_ROOT}/EquipmentFrameEffects/lv21_30/equipment_frame_effect_21_30_04`,
+    `${BAG_UI_ROOT}/EquipmentFrameEffects/lv21_30/equipment_frame_effect_21_30_05`,
+    `${BAG_UI_ROOT}/EquipmentFrameEffects/lv21_30/equipment_frame_effect_21_30_06`,
+    `${BAG_UI_ROOT}/EquipmentFrameEffects/lv21_30/equipment_frame_effect_21_30_07`,
+    `${BAG_UI_ROOT}/EquipmentFrameEffects/lv21_30/equipment_frame_effect_21_30_08`,
+    `${BAG_UI_ROOT}/EquipmentFrameEffects/lv21_30/equipment_frame_effect_21_30_09`,
+    `${BAG_UI_ROOT}/EquipmentFrameEffects/lv21_30/equipment_frame_effect_21_30_10`,
+    `${BAG_UI_ROOT}/EquipmentFrameEffects/lv21_30/equipment_frame_effect_21_30_11`,
+] as const;
+export const UI_BAG_EQUIPMENT_FRAME_EFFECT_31_40 = [
+    `${BAG_UI_ROOT}/EquipmentFrameEffects/lv31_40/equipment_frame_effect_31_40_00`,
+    `${BAG_UI_ROOT}/EquipmentFrameEffects/lv31_40/equipment_frame_effect_31_40_01`,
+    `${BAG_UI_ROOT}/EquipmentFrameEffects/lv31_40/equipment_frame_effect_31_40_02`,
+    `${BAG_UI_ROOT}/EquipmentFrameEffects/lv31_40/equipment_frame_effect_31_40_03`,
+    `${BAG_UI_ROOT}/EquipmentFrameEffects/lv31_40/equipment_frame_effect_31_40_04`,
+    `${BAG_UI_ROOT}/EquipmentFrameEffects/lv31_40/equipment_frame_effect_31_40_05`,
+    `${BAG_UI_ROOT}/EquipmentFrameEffects/lv31_40/equipment_frame_effect_31_40_06`,
+    `${BAG_UI_ROOT}/EquipmentFrameEffects/lv31_40/equipment_frame_effect_31_40_07`,
+] as const;
+export const UI_BAG_EQUIPMENT_FRAME_EFFECT_41_50 = [
+    `${BAG_UI_ROOT}/EquipmentFrameEffects/lv41_50/equipment_frame_effect_41_50_00`,
+    `${BAG_UI_ROOT}/EquipmentFrameEffects/lv41_50/equipment_frame_effect_41_50_01`,
+    `${BAG_UI_ROOT}/EquipmentFrameEffects/lv41_50/equipment_frame_effect_41_50_02`,
+    `${BAG_UI_ROOT}/EquipmentFrameEffects/lv41_50/equipment_frame_effect_41_50_03`,
+    `${BAG_UI_ROOT}/EquipmentFrameEffects/lv41_50/equipment_frame_effect_41_50_04`,
+    `${BAG_UI_ROOT}/EquipmentFrameEffects/lv41_50/equipment_frame_effect_41_50_05`,
+    `${BAG_UI_ROOT}/EquipmentFrameEffects/lv41_50/equipment_frame_effect_41_50_06`,
+    `${BAG_UI_ROOT}/EquipmentFrameEffects/lv41_50/equipment_frame_effect_41_50_07`,
+] as const;
+export const BAG_EQUIPMENT_FRAME_EFFECT_GROUPS = [
+    { minLevel: 21, maxLevel: 30, framePaths: UI_BAG_EQUIPMENT_FRAME_EFFECT_21_30, scaleX: 1.57, scaleY: 1.54, offsetX: 1, offsetY: 0 },
+    { minLevel: 31, maxLevel: 40, framePaths: UI_BAG_EQUIPMENT_FRAME_EFFECT_31_40, scaleX: 1.64, scaleY: 1.66, offsetX: -1, offsetY: -1 },
+    { minLevel: 41, maxLevel: 50, framePaths: UI_BAG_EQUIPMENT_FRAME_EFFECT_41_50, scaleX: 1.16, scaleY: 1.2, offsetX: -3.9, offsetY: 0 },
+] as const;
 export const UI_BAG_ONE_KEY_LOCK = `${BAG_UI_ROOT}/bag_one_key_lock`;
 export const UI_BAG_ACTION_BUTTON_BG = `${BAG_UI_ROOT}/bag_action_button_bg`;
 export const UI_BAG_MODE_ROOT = `${BAG_UI_ROOT}/Mode`;
@@ -469,11 +509,18 @@ export const ROLE_INITIAL_BAG_GEMS = BAG_ILLUSTRATION_CATALOG
     .filter((item) => item.category === 'gem')
     .map((item) => ({ itemId: item.id, count: 12 }));
 export const ROLE_INITIAL_BAG_SYNTH_ITEMS = [
+    { itemId: 'item_101', count: 10 },
+    { itemId: 'item_103', count: 10 },
+    { itemId: 'item_105', count: 10 },
+    { itemId: 'item_107', count: 10 },
     { itemId: 'item_102', count: 300 },
     { itemId: 'item_104', count: 300 },
     { itemId: 'item_106', count: 300 },
     { itemId: 'item_108', count: 300 },
     { itemId: 'item_110', count: 10 },
+    { itemId: 'item_111', count: 1000 },
+    { itemId: 'item_172', count: 1000 },
+    { itemId: 'item_174', count: 1000 },
 ] as const;
 export const ROLE_INITIAL_BAG_ITEMS = [
     ...ROLE_INITIAL_BAG_MATERIALS,

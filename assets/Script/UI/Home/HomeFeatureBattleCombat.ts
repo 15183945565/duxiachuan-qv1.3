@@ -15,6 +15,8 @@ import { HomeViewBase } from './HomeViewBase';
  * Owns Battle combat scene setup, waves, attacks and floating damage numbers.
  */
 export abstract class HomeFeatureBattleCombat extends HomeViewBase {
+    private battleMonsterHurtSequenceId = 0;
+
     protected resetBattlePanelToEntry(): void {
         this.closeBattleUpgradePopup();
         this.closeBattleTargetChallengePopup();
@@ -33,6 +35,7 @@ export abstract class HomeFeatureBattleCombat extends HomeViewBase {
     }
     protected async startBattleChallenge(): Promise<void> {
         if (!this.battlePanel?.active) return;
+        if (!this.canEnterBattleChallenge(true)) return;
     
         this.buildBattleCombatLayer();
         if (!this.battleCombatLayer) return;
@@ -96,6 +99,14 @@ export abstract class HomeFeatureBattleCombat extends HomeViewBase {
             this.battleMonsterNodes.push(monsterNode);
             this.battleMonsterSkeletons.push(skeleton);
         });
+
+        const hitEffectNode = this.createNode('BattleMonsterHitEffect', this.battleCombatLayer, 640, 420, 0, 0);
+        hitEffectNode.active = false;
+        hitEffectNode.setScale(HomeConfig.BATTLE_MONSTER_HIT_EFFECT_SCALE, HomeConfig.BATTLE_MONSTER_HIT_EFFECT_SCALE, 1);
+        hitEffectNode.setSiblingIndex(3 + HomeConfig.BATTLE_MONSTER_START_POSITIONS.length);
+        this.battleMonsterHitEffectSkeleton = hitEffectNode.addComponent(sp.Skeleton);
+        this.prepareSkeletonRenderer(this.battleMonsterHitEffectSkeleton);
+        this.setSkeletonVisible(this.battleMonsterHitEffectSkeleton, false);
     
         this.battleWaveLabel = this.createLabel(
             this.battleCombatLayer,
@@ -145,9 +156,15 @@ export abstract class HomeFeatureBattleCombat extends HomeViewBase {
     }
     protected async loadBattleCombatAssets(): Promise<void> {
         const monsterData = await this.loadSkeletonAsset(HomeConfig.BATTLE_MONSTER_SKEL_PATH);
-    
         this.battleMonsterSkeletonData = monsterData;
-    
+
+        try {
+            this.battleMonsterHitEffectSkeletonData = await this.loadSkeletonAsset(HomeConfig.BATTLE_MONSTER_HIT_EFFECT_SKEL_PATH);
+        } catch (error) {
+            console.warn('[MainHomeView] battle monster hit effect asset is not ready.', error);
+            this.battleMonsterHitEffectSkeletonData = null;
+        }
+
         await this.ensureRoleSkeletonData(this.profile.gender);
     }
     protected playBattleCombatSequence(): void {
@@ -158,6 +175,7 @@ export abstract class HomeFeatureBattleCombat extends HomeViewBase {
         this.battleAttackCount = 0;
         this.battleTotalAttackCount = 0;
         this.battleCurrentWave = 0;
+        this.battleWaveStartTimeMs = 0;
         this.battleWaveEnding = false;
     
         const roleData = this.getRoleSkeletonData(this.profile.gender);
@@ -172,6 +190,8 @@ export abstract class HomeFeatureBattleCombat extends HomeViewBase {
             this.playSkeletonAnimation(this.battleCombatRoleSkeleton, HomeConfig.IDLE_ANIMATIONS, true);
             this.raiseBattleCombatRoleLayer();
         }
+
+        this.hideBattleMonsterHitEffect();
     
         this.startBattleWave(1);
     }
@@ -184,12 +204,15 @@ export abstract class HomeFeatureBattleCombat extends HomeViewBase {
         this.unschedule(this.startNextBattleWave);
         this.unschedule(this.finishBattleChallenge);
         this.unschedule(this.playBattleMonsterHurt);
+        this.battleMonsterHurtSequenceId += 1;
         this.battleCurrentWave = Math.min(Math.max(1, wave), HomeConfig.BATTLE_WAVE_TOTAL);
+        this.battleWaveStartTimeMs = Date.now();
         this.battleWaveEnding = false;
         this.battleAttackCount = 0;
         this.battleAttackTimer = 0;
         this.battleCombatAttacking = false;
         this.clearBattleDamageNumbers();
+        this.hideBattleMonsterHitEffect();
         this.updateBattleWaveLabel();
     
         if (this.battleCombatRoleSkeleton?.isValid && this.battleCombatRoleSkeleton.skeletonData) {
@@ -259,6 +282,8 @@ export abstract class HomeFeatureBattleCombat extends HomeViewBase {
         this.battleAttackTimer = 0;
         this.unschedule(this.startBattleRoleAttack);
         this.unschedule(this.playBattleMonsterHurt);
+        this.battleMonsterHurtSequenceId += 1;
+        this.hideBattleMonsterHitEffect();
         this.stopBattleTweens();
     
         if (this.battleCombatRoleSkeleton?.isValid && this.battleCombatRoleSkeleton.skeletonData) {
@@ -287,6 +312,7 @@ export abstract class HomeFeatureBattleCombat extends HomeViewBase {
         this.startBattleWave(this.battleCurrentWave + 1);
     }
     protected hideBattleMonsterWave(): void {
+        this.hideBattleMonsterHitEffect();
         this.battleMonsterSkeletons.forEach((skeleton, index) => {
             this.setSkeletonVisible(skeleton, false);
             const node = this.battleMonsterNodes[index];
@@ -353,10 +379,30 @@ export abstract class HomeFeatureBattleCombat extends HomeViewBase {
         this.battleCombatRoleSkeleton.timeScale = HomeConfig.BATTLE_ROLE_ATTACK_TIME_SCALE;
         this.raiseBattleCombatRoleLayer();
         this.battleAttackCount += 1;
-        this.battleTotalAttackCount += 1;
         const duration = this.playBattleRoleAttackAnimation(false, false);
-        this.playBattleMonsterHurt(false);
+        this.scheduleBattleRoleAttackHits(false, this.battleCurrentWave, this.battleAttackCount);
         return duration / HomeConfig.BATTLE_ROLE_ATTACK_TIME_SCALE + HomeConfig.BATTLE_ROLE_ATTACK_GAP;
+    }
+    protected scheduleBattleRoleAttackHits(isSkill: boolean, wave: number, attackIndex: number): void {
+        const hitTimes = HomeConfig.BATTLE_ROLE_NORMAL_ATTACK_HIT_TIMES[this.profile.gender];
+        hitTimes.forEach((hitTime) => {
+            const delay = Math.max(0, hitTime / HomeConfig.BATTLE_ROLE_ATTACK_TIME_SCALE);
+            const playHit = (): void => {
+                if (wave !== this.battleCurrentWave || attackIndex !== this.battleAttackCount) return;
+                this.playBattleMonsterAttackHit(isSkill);
+            };
+            if (delay <= 0) {
+                playHit();
+                return;
+            }
+            this.scheduleOnce(playHit, delay);
+        });
+    }
+    protected playBattleMonsterAttackHit(isSkill: boolean): void {
+        if (!this.battleCombatLayer?.active || this.battleWaveEnding) return;
+        this.battleTotalAttackCount += 1;
+        if (!isSkill) this.playBattleAttackSound();
+        this.playBattleMonsterHurt(isSkill);
     }
     protected raiseBattleCombatRoleLayer(): void {
         const roleNode = this.battleCombatRoleSkeleton?.node;
@@ -435,19 +481,66 @@ export abstract class HomeFeatureBattleCombat extends HomeViewBase {
         if (!this.battleCombatLayer?.active || this.battleWaveEnding) return;
     
         const wave = this.battleCurrentWave;
+        const hurtSequenceId = ++this.battleMonsterHurtSequenceId;
+        const activeTargets: Array<{ skeleton: sp.Skeleton; node: Node; index: number }> = [];
     
         this.battleMonsterSkeletons.forEach((skeleton, index) => {
             const monsterNode = this.battleMonsterNodes[index];
             if (!skeleton?.isValid || !skeleton.skeletonData || !monsterNode?.isValid || !monsterNode.active) return;
+            activeTargets.push({ skeleton, node: monsterNode, index });
+        });
+
+        if (activeTargets.length > 0) {
+            this.playBattleMonsterHitEffect();
+        }
+
+        activeTargets.forEach(({ skeleton, node: monsterNode, index }) => {
     
             this.playBattleMonsterAnimation(skeleton, HomeConfig.BATTLE_MONSTER_HURT_ANIMATIONS, false, isSkill ? 0.52 : 0.36);
             this.spawnBattleDamageNumber(monsterNode, index);
             this.scheduleOnce(() => {
+                if (hurtSequenceId !== this.battleMonsterHurtSequenceId) return;
                 if (!this.battleCombatLayer?.active || wave !== this.battleCurrentWave || this.battleWaveEnding) return;
                 if (!skeleton.isValid || !skeleton.skeletonData || !monsterNode.isValid || !monsterNode.active) return;
                 this.playSkeletonAnimation(skeleton, HomeConfig.BATTLE_MONSTER_IDLE_ANIMATIONS, true);
             }, (isSkill ? 0.52 : 0.36) + index * 0.025);
         });
+    }
+    protected playBattleMonsterHitEffect(): void {
+        const skeleton = this.battleMonsterHitEffectSkeleton;
+        const data = this.battleMonsterHitEffectSkeletonData;
+        const effectNode = skeleton?.node;
+        if (!this.battleCombatLayer?.isValid || !skeleton?.isValid || !effectNode?.isValid || !data) return;
+
+        this.unschedule(this.hideBattleMonsterHitEffect);
+        effectNode.active = true;
+        effectNode.setPosition(HomeConfig.BATTLE_MONSTER_HIT_EFFECT_POSITION);
+        effectNode.setScale(HomeConfig.BATTLE_MONSTER_HIT_EFFECT_SCALE, HomeConfig.BATTLE_MONSTER_HIT_EFFECT_SCALE, 1);
+        const damageRootIndex = this.battleDamageNumberRoot?.parent === this.battleCombatLayer
+            ? this.battleCombatLayer.children.indexOf(this.battleDamageNumberRoot)
+            : -1;
+        effectNode.setSiblingIndex(damageRootIndex >= 0 ? Math.max(0, damageRootIndex) : this.battleCombatLayer.children.length - 1);
+
+        this.prepareSkeletonRenderer(skeleton);
+        skeleton.skeletonData = data;
+        skeleton.timeScale = 1;
+        this.setSkeletonVisible(skeleton, true);
+        const duration = this.playBattleMonsterAnimation(
+            skeleton,
+            HomeConfig.BATTLE_MONSTER_HIT_EFFECT_ANIMATIONS,
+            false,
+            HomeConfig.BATTLE_MONSTER_HIT_EFFECT_FALLBACK_DURATION,
+        );
+        this.scheduleOnce(this.hideBattleMonsterHitEffect, duration);
+    }
+    protected hideBattleMonsterHitEffect(): void {
+        this.unschedule(this.hideBattleMonsterHitEffect);
+        if (!this.battleMonsterHitEffectSkeleton?.isValid) return;
+
+        this.setSkeletonVisible(this.battleMonsterHitEffectSkeleton, false);
+        if (this.battleMonsterHitEffectSkeleton.node?.isValid) {
+            this.battleMonsterHitEffectSkeleton.node.active = false;
+        }
     }
     protected spawnBattleDamageNumber(monsterNode: Node, monsterIndex: number): void {
         if (!this.battleDamageNumberRoot?.isValid) return;

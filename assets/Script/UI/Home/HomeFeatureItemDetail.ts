@@ -300,6 +300,13 @@ export abstract class HomeFeatureItemDetail extends HomeFeatureItemDetailHost {
         (iconFrame.getComponent(UITransform) || iconFrame.addComponent(UITransform)).setContentSize(iconFrameLayout.width, iconFrameLayout.height);
         this.applyUiSkin(iconFrame, item.framePath, iconFrameLayout.width, iconFrameLayout.height);
         iconFrame.setSiblingIndex(3);
+        this.syncEquipmentFrameEffectForItem(
+            iconFrame,
+            'BagIllustrationDetailFrameEffect',
+            item,
+            iconFrameLayout.width,
+            iconFrameLayout.height,
+        )?.setSiblingIndex(3);
 
         const iconLayout = BAG_ILLUSTRATION_DETAIL_LAYOUT.icon;
         const existingDetailIcon = this.findNode('BagIllustrationDetailIcon', popup);

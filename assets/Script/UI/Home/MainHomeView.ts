@@ -425,8 +425,11 @@ export class MainHomeView extends HomeViewWithShop {
     private duelJianghuDuckCount = 0;
     private duelLuanshiMusicSource: AudioSource | null = null;
     private duelLuanshiSkillEffectSource: AudioSource | null = null;
+    private battleEffectSource: AudioSource | null = null;
     private duelLuanshiMusicClip: AudioClip | null = null;
+    private battleAttackClip: AudioClip | null = null;
     private duelLuanshiMusicPromise: Promise<AudioClip> | null = null;
+    private battleAttackClipPromise: Promise<AudioClip> | null = null;
     private duelLuanshiMusicActive = false;
     private readonly duelLuanshiSkillEffectClipPromises = new Map<string, Promise<AudioClip>>();
     private readonly homeUiResourceScope: ResourceScope = ResourceManager.instance.createScope('MainHomeView/ui-home');
@@ -640,6 +643,7 @@ export class MainHomeView extends HomeViewWithShop {
         this.duelLuanshiMusicActive = false;
         this.duelLuanshiMusicSource?.stop();
         this.duelLuanshiSkillEffectSource?.stop();
+        this.battleEffectSource?.stop();
         this.duelLuanshiSkillEffectClipPromises.clear();
         this.stopMainHomeMusic();
         this.homeUiMountPromises.clear();
@@ -654,6 +658,7 @@ export class MainHomeView extends HomeViewWithShop {
         if (!this.homeInitialized) return;
         this.updateRoleMovement(deltaTime);
         this.updateBattleAttackLoop(deltaTime);
+        this.updateBattleAutoHostIndicator(deltaTime);
         this.updateBeastCardCountdown(deltaTime);
         this.updateMagicMapCountdown(deltaTime);
         this.updateMagicMonsterBattle(deltaTime);
@@ -832,6 +837,22 @@ export class MainHomeView extends HomeViewWithShop {
         this.playDuelLuanshiEffectSound(HomeConfig.DUEL_LUANSHI_NORMAL_ATTACK_AUDIO_PATH, 'normal attack audio missing');
     }
 
+    protected playBattleAttackSound(): void {
+        const source = this.getOrCreateBattleEffectSource();
+        if (!source) return;
+
+        void this.getBattleAttackClipPromise()
+            .then((clip) => {
+                if (!source.isValid) return;
+                const effectVolume = this.getHomeEffectVolume();
+                if (effectVolume <= 0) return;
+                source.playOneShot(clip, effectVolume);
+            })
+            .catch((err) => {
+                console.warn('[MainHomeView] battle attack audio missing', err);
+            });
+    }
+
     protected playDuelLuanshiResultSound(success: boolean): void {
         this.playDuelLuanshiEffectSound(
             success ? HomeConfig.DUEL_LUANSHI_SUCCESS_AUDIO_PATH : HomeConfig.DUEL_LUANSHI_FAILURE_AUDIO_PATH,
@@ -914,6 +935,18 @@ export class MainHomeView extends HomeViewWithShop {
         this.duelLuanshiSkillEffectSource.loop = false;
         this.duelLuanshiSkillEffectSource.volume = 1;
         return this.duelLuanshiSkillEffectSource;
+    }
+
+    private getOrCreateBattleEffectSource(): AudioSource | null {
+        if (this.battleEffectSource?.isValid) return this.battleEffectSource;
+
+        const audioNode = this.getOrCreateDuelAudioNode('BattleEffectAudio');
+        if (!audioNode) return null;
+        this.battleEffectSource = audioNode.getComponent(AudioSource) || audioNode.addComponent(AudioSource);
+        this.battleEffectSource.playOnAwake = false;
+        this.battleEffectSource.loop = false;
+        this.battleEffectSource.volume = 1;
+        return this.battleEffectSource;
     }
 
     private getOrCreateDuelAudioNode(name: string): Node | null {
@@ -1024,6 +1057,18 @@ export class MainHomeView extends HomeViewWithShop {
         return promise;
     }
 
+    private getBattleAttackClipPromise(): Promise<AudioClip> {
+        this.battleAttackClipPromise = this.battleAttackClipPromise
+            || this.loadHomeAudioClip(HomeConfig.BATTLE_ATTACK_AUDIO_PATH)
+                .then((clip) => {
+                    this.battleAttackClip = clip;
+                    return clip;
+                });
+        return this.battleAttackClip
+            ? Promise.resolve(this.battleAttackClip)
+            : this.battleAttackClipPromise;
+    }
+
     private duckDuelJianghuMusic(durationSeconds: number): void {
         this.duelJianghuDuckCount += 1;
         this.refreshDuelJianghuMusicVolume();
@@ -1045,6 +1090,10 @@ export class MainHomeView extends HomeViewWithShop {
     }
 
     private getDuelJianghuEffectVolume(): number {
+        return this.profileSettingsMuted ? 0 : this.profileSettingsEffectVolume;
+    }
+
+    private getHomeEffectVolume(): number {
         return this.profileSettingsMuted ? 0 : this.profileSettingsEffectVolume;
     }
 

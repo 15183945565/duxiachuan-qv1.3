@@ -68,6 +68,7 @@ abstract class HomeFeatureBeastCardShellHost extends HomeViewBase {
     protected abstract clearBeastCardLegacyBottomInfo(): void;
     protected abstract ensureBeastCardBottomNameLabel(): void;
     protected abstract ensureBeastCardRewardArea(): void;
+    protected abstract ensureBeastCardActivationArea(): void;
     protected abstract ensureBeastCardRecordPopup(): void;
     protected abstract ensureBeastStrengthenPage(): void;
     protected abstract openBeastStrengthenPage(): void;
@@ -145,6 +146,7 @@ export abstract class HomeFeatureBeastCardShell extends HomeFeatureBeastCardShel
 
         this.ensureBeastCardBottomNameLabel();
         this.ensureBeastCardRewardArea();
+        this.ensureBeastCardActivationArea();
         this.ensureBeastCardStrengthenButton();
         this.ensureBeastCardYuanbaoRatePanel();
         this.ensureBeastCardRecordPopup();

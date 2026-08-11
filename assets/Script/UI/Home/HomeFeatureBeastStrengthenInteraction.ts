@@ -4,7 +4,6 @@ import {
     Label,
     Node,
     Overflow,
-    Sprite,
     UITransform,
 } from 'cc';
 import {
@@ -33,12 +32,16 @@ abstract class HomeFeatureBeastStrengthenInteractionHost extends HomeViewBase {
     protected abstract beastStrengthenEquipmentSelectionVisible: boolean;
     protected abstract beastStrengthenAction: BeastStrengthenAction;
     protected abstract setLabelOutline(label: Label, color: Color, width: number): void;
+    protected abstract showBeastStrengthenGemSelectDrawer(popup: Node, board: Node): void;
 }
 
 /**
  * Owns Beast Strengthen refresh, selection, unlock and gem-placement interactions.
  */
 export abstract class HomeFeatureBeastStrengthenInteraction extends HomeFeatureBeastStrengthenInteractionHost {
+    protected beastStrengthenActionButtonEditorPosition: { x: number; y: number } | null = null;
+    protected beastStrengthenRemoveGemButtonEditorPosition: { x: number; y: number } | null = null;
+
     protected refreshBeastStrengthenPage(): void {
         if (!this.beastStrengthenPage?.isValid) return;
         const state = this.ensureBeastStrengthenState();
@@ -78,6 +81,12 @@ export abstract class HomeFeatureBeastStrengthenInteraction extends HomeFeatureB
         if (config.iconPath) {
             icon.active = true;
             this.applyUiSkinKeepingEditorSize(icon, config.iconPath, HomeConfig.BEAST_STRENGTHEN_EQUIP_ICON_SIZE, HomeConfig.BEAST_STRENGTHEN_EQUIP_ICON_SIZE);
+            this.alignBeastStrengthenEquipmentIcon(
+                icon,
+                config.itemId,
+                HomeConfig.BEAST_STRENGTHEN_EQUIP_ICON_SIZE,
+                HomeConfig.BEAST_STRENGTHEN_EQUIP_ICON_SIZE,
+            );
             this.setNodeOpacity(icon, unlocked ? 255 : 145);
         } else {
             icon.active = false;
@@ -97,28 +106,16 @@ export abstract class HomeFeatureBeastStrengthenInteraction extends HomeFeatureB
 
     protected applyBeastStrengthenEquipSelectedFrameSkin(node: Node): void {
         const transform = node.getComponent(UITransform) || node.addComponent(UITransform);
-        if (transform.contentSize.width <= 0 || transform.contentSize.height <= 0) {
-            transform.setContentSize(106, 106);
-        }
-        const existingSprite = node.getComponent(Sprite);
-        if (existingSprite?.spriteFrame) return;
-        if (existingSprite) existingSprite.enabled = false;
-
-        const { width, height } = transform.contentSize;
-        this.loadSpriteFrameAsset(HomeConfig.UI_ROLE_EQUIP_SELECTED_FRAME)
-            .then((spriteFrame) => {
-                if (!node.isValid) return;
-                const currentTransform = node.getComponent(UITransform) || node.addComponent(UITransform);
-                currentTransform.setContentSize(width, height);
-                const sprite = node.getComponent(Sprite) || node.addComponent(Sprite);
-                sprite.type = Sprite.Type.SIMPLE;
-                sprite.sizeMode = Sprite.SizeMode.CUSTOM;
-                sprite.spriteFrame = spriteFrame;
-                sprite.enabled = true;
-            })
-            .catch((err) => {
-                console.warn('[MainHomeView] beast strengthen equip selected frame load failed', err);
-            });
+        transform.setContentSize(
+            HomeConfig.BEAST_STRENGTHEN_EQUIP_SELECTED_FRAME_SIZE,
+            HomeConfig.BEAST_STRENGTHEN_EQUIP_SELECTED_FRAME_SIZE,
+        );
+        this.applyUiSkinKeepingEditorSize(
+            node,
+            HomeConfig.UI_BEAST_STRENGTHEN_SELECTED_FRAME,
+            HomeConfig.BEAST_STRENGTHEN_EQUIP_SELECTED_FRAME_SIZE,
+            HomeConfig.BEAST_STRENGTHEN_EQUIP_SELECTED_FRAME_SIZE,
+        );
     }
 
     protected refreshBeastStrengthenCenterEquipment(config: BeastStrengthenEquipmentConfig): void {
@@ -131,12 +128,27 @@ export abstract class HomeFeatureBeastStrengthenInteraction extends HomeFeatureB
         if (icon?.isValid && config.iconPath) {
             icon.active = true;
             this.applyUiSkinKeepingEditorSize(icon, config.iconPath, 82, 82);
+            this.alignBeastStrengthenEquipmentIcon(icon, config.itemId, 82, 82);
             this.setNodeOpacity(icon, unlocked ? 255 : 150);
         }
         const lock = centerFrame.getChildByName('BeastStrengthenCenterEquipLock');
         if (lock?.isValid) lock.active = !unlocked;
         const nameLabel = this.findNode('BeastStrengthenSelectedEquipName', this.beastStrengthenPage)?.getComponent(Label);
         if (nameLabel) nameLabel.string = config.displayName;
+    }
+
+    protected alignBeastStrengthenEquipmentIcon(icon: Node, itemId: string, targetWidth: number, targetHeight: number): void {
+        const offset = HomeConfig.BEAST_STRENGTHEN_EQUIP_ICON_SOURCE_OFFSETS[itemId];
+        if (!offset) {
+            icon.setPosition(0, 0, 0);
+            return;
+        }
+
+        icon.setPosition(
+            offset.x * targetWidth / HomeConfig.BEAST_STRENGTHEN_EQUIP_ICON_SOURCE_WIDTH,
+            offset.y * targetHeight / HomeConfig.BEAST_STRENGTHEN_EQUIP_ICON_SOURCE_HEIGHT,
+            0,
+        );
     }
 
     protected refreshBeastStrengthenGemSlots(config: BeastStrengthenEquipmentConfig): void {
@@ -152,6 +164,16 @@ export abstract class HomeFeatureBeastStrengthenInteraction extends HomeFeatureB
             const plus = slot.getChildByName('BeastGemSlotPlus');
             const lock = slot.getChildByName('BeastGemSlotLock');
             const gemIcon = slot.getChildByName('BeastGemSlotIcon');
+            const selectedFrame = slot.getChildByName('BeastGemSlotSelectedFrame')
+                || this.getOrCreateBottomFeatureSkinnedNode(
+                    slot,
+                    'BeastGemSlotSelectedFrame',
+                    HomeConfig.BEAST_STRENGTHEN_EQUIP_SELECTED_FRAME_SIZE,
+                    HomeConfig.BEAST_STRENGTHEN_EQUIP_SELECTED_FRAME_SIZE,
+                    0,
+                    0,
+                    HomeConfig.UI_BEAST_STRENGTHEN_SELECTED_FRAME,
+                ).node;
             if (plus?.isValid) plus.active = slotUnlocked && !gemId;
             if (lock?.isValid) lock.active = !slotUnlocked;
             if (gemIcon?.isValid) {
@@ -160,6 +182,13 @@ export abstract class HomeFeatureBeastStrengthenInteraction extends HomeFeatureB
                 if (gemItem) {
                     this.applyUiSkinKeepingEditorSize(gemIcon, gemItem.iconPath, HomeConfig.BEAST_STRENGTHEN_GEM_ICON_SIZE, HomeConfig.BEAST_STRENGTHEN_GEM_ICON_SIZE);
                     this.setNodeOpacity(gemIcon, equipmentUnlocked ? 255 : 150);
+                }
+            }
+            if (selectedFrame?.isValid) {
+                selectedFrame.active = this.beastStrengthenSelectedGemSlotIndex === index;
+                if (selectedFrame.active) {
+                    this.applyBeastStrengthenEquipSelectedFrameSkin(selectedFrame);
+                    selectedFrame.setSiblingIndex((slot.children.length || 1) - 1);
                 }
             }
             this.bindScaledClick(slot, () => this.handleBeastStrengthenGemSlotClick(index));
@@ -173,11 +202,19 @@ export abstract class HomeFeatureBeastStrengthenInteraction extends HomeFeatureB
 
     protected refreshBeastStrengthenActionButton(): void {
         if (!this.beastStrengthenActionButton?.isValid) return;
+        this.captureBeastStrengthenActionButtonEditorLayout();
         const text = this.getBeastStrengthenActionText(this.beastStrengthenAction);
         const showRemoveGem = this.shouldShowBeastStrengthenRemoveGemButton();
         this.beastStrengthenActionButton.active = !!text;
         if (text) {
-            this.beastStrengthenActionButton.setPosition(showRemoveGem ? -108 : 0, HomeConfig.BEAST_STRENGTHEN_ACTION_Y, 0);
+            const actionPosition = this.beastStrengthenActionButtonEditorPosition || { x: 0, y: HomeConfig.BEAST_STRENGTHEN_ACTION_Y };
+            const removePosition = this.beastStrengthenRemoveGemButtonEditorPosition || { x: 108, y: actionPosition.y };
+            const pairedOffsetX = Math.abs(removePosition.x || 108);
+            this.beastStrengthenActionButton.setPosition(
+                showRemoveGem ? (actionPosition.x || -pairedOffsetX) : actionPosition.x,
+                actionPosition.y,
+                0,
+            );
         }
         if (this.beastStrengthenActionLabel?.isValid) {
             this.layoutBeastStrengthenButtonLabel(this.beastStrengthenActionLabel, text);
@@ -185,10 +222,27 @@ export abstract class HomeFeatureBeastStrengthenInteraction extends HomeFeatureB
 
         if (this.beastStrengthenRemoveGemButton?.isValid) {
             this.beastStrengthenRemoveGemButton.active = showRemoveGem;
-            this.beastStrengthenRemoveGemButton.setPosition(108, HomeConfig.BEAST_STRENGTHEN_ACTION_Y, 0);
+            const actionPosition = this.beastStrengthenActionButtonEditorPosition || { x: 0, y: HomeConfig.BEAST_STRENGTHEN_ACTION_Y };
+            const removePosition = this.beastStrengthenRemoveGemButtonEditorPosition || { x: 108, y: actionPosition.y };
+            this.beastStrengthenRemoveGemButton.setPosition(
+                Math.abs(removePosition.x || 108),
+                actionPosition.y,
+                0,
+            );
         }
         if (this.beastStrengthenRemoveGemLabel?.isValid) {
             this.layoutBeastStrengthenButtonLabel(this.beastStrengthenRemoveGemLabel, '\u5378\u4e0b\u5b9d\u77f3');
+        }
+    }
+
+    protected captureBeastStrengthenActionButtonEditorLayout(): void {
+        if (!this.beastStrengthenActionButtonEditorPosition && this.beastStrengthenActionButton?.isValid) {
+            const position = this.beastStrengthenActionButton.position;
+            this.beastStrengthenActionButtonEditorPosition = { x: position.x, y: position.y };
+        }
+        if (!this.beastStrengthenRemoveGemButtonEditorPosition && this.beastStrengthenRemoveGemButton?.isValid) {
+            const position = this.beastStrengthenRemoveGemButton.position;
+            this.beastStrengthenRemoveGemButtonEditorPosition = { x: position.x, y: position.y };
         }
     }
 
@@ -325,47 +379,45 @@ export abstract class HomeFeatureBeastStrengthenInteraction extends HomeFeatureB
         grid.removeAllChildren();
 
         const gems = this.getBeastStrengthenGemItems(config.beastKey);
-        const viewportHeight = 610;
+        const viewportHeight = HomeConfig.ROLE_EQUIP_REPLACE_DRAWER_VIEWPORT_HEIGHT;
         if (gems.length === 0) {
             const empty = this.getOrCreateBeastStrengthenLabel(grid, 'BeastGemSelectEmpty', '\u6682\u65e0\u53ef\u7528\u5b9d\u77f3', 28, 0, 80, 420, 60, new Color(255, 236, 188, 255));
             this.setLabelOutline(empty, new Color(61, 31, 16, 255), 2);
-            popup.active = true;
-            popup.setSiblingIndex((popup.parent?.children.length || 1) - 1);
+            this.showBeastStrengthenGemSelectDrawer(popup, board);
             return;
         }
 
-        const rowCount = Math.ceil(gems.length / HomeConfig.ROLE_EQUIP_REPLACE_GRID_COLS);
-        const contentHeight = Math.max(viewportHeight, rowCount * HomeConfig.ROLE_EQUIP_REPLACE_GRID_GAP_Y + 110);
-        (grid.getComponent(UITransform) || grid.addComponent(UITransform)).setContentSize(480, contentHeight);
+        const rowCount = Math.ceil(gems.length / HomeConfig.ROLE_EQUIP_REPLACE_DRAWER_GRID_COLS);
+        const contentHeight = Math.max(viewportHeight, rowCount * HomeConfig.ROLE_EQUIP_REPLACE_DRAWER_GRID_GAP_Y + 110);
+        (grid.getComponent(UITransform) || grid.addComponent(UITransform)).setContentSize(HomeConfig.ROLE_EQUIP_REPLACE_DRAWER_VIEWPORT_WIDTH, contentHeight);
         grid.setPosition(0, 0, 0);
-        const startY = viewportHeight / 2 - 68;
+        const startY = viewportHeight / 2 - 78;
         gems.forEach((item, index) => {
-            const col = index % HomeConfig.ROLE_EQUIP_REPLACE_GRID_COLS;
-            const row = Math.floor(index / HomeConfig.ROLE_EQUIP_REPLACE_GRID_COLS);
-            const x = HomeConfig.ROLE_EQUIP_REPLACE_GRID_START_X + col * HomeConfig.ROLE_EQUIP_REPLACE_GRID_GAP_X;
-            const y = startY - row * HomeConfig.ROLE_EQUIP_REPLACE_GRID_GAP_Y;
+            const col = index % HomeConfig.ROLE_EQUIP_REPLACE_DRAWER_GRID_COLS;
+            const row = Math.floor(index / HomeConfig.ROLE_EQUIP_REPLACE_DRAWER_GRID_COLS);
+            const x = HomeConfig.ROLE_EQUIP_REPLACE_DRAWER_GRID_START_X + col * HomeConfig.ROLE_EQUIP_REPLACE_DRAWER_GRID_GAP_X;
+            const y = startY - row * HomeConfig.ROLE_EQUIP_REPLACE_DRAWER_GRID_GAP_Y;
             this.createBeastGemSelectCell(grid, item, config, index, x, y);
         });
         const maxScrollY = Math.max(0, contentHeight - viewportHeight);
         this.bindBagGridScroll(viewport, grid, maxScrollY);
         this.bindBagGridScroll(grid, grid, maxScrollY);
 
-        popup.active = true;
-        popup.setSiblingIndex((popup.parent?.children.length || 1) - 1);
+        this.showBeastStrengthenGemSelectDrawer(popup, board);
     }
 
     protected createBeastGemSelectCell(parent: Node, item: BagIllustrationCatalogItem, config: BeastStrengthenEquipmentConfig, index: number, x: number, y: number): void {
-        const cell = this.createNode(`BeastGemSelectItem_${index + 1}`, parent, 104, 112, x, y);
-        const frame = this.createSkinnedNode('BeastGemSelectItemFrame', cell, 96, 96, 0, 8, item.framePath);
+        const cell = this.createNode(`BeastGemSelectItem_${index + 1}`, parent, 128, 138, x, y);
+        const frame = this.createSkinnedNode('BeastGemSelectItemFrame', cell, 112, 112, 0, 12, item.framePath);
         frame.setSiblingIndex(0);
-        this.createSkinnedNode('BeastGemSelectItemIcon', frame, 72, 72, 0, 2, item.iconPath).setSiblingIndex(1);
+        this.createSkinnedNode('BeastGemSelectItemIcon', frame, 88, 88, 0, 2, item.iconPath).setSiblingIndex(1);
 
-        const countLabel = this.createLabel(frame, 'BeastGemSelectItemCount', `x${this.getRoleInventoryCount(item.id)}`, 18, 22, -34, 58, 24, Color.WHITE);
+        const countLabel = this.createLabel(frame, 'BeastGemSelectItemCount', `x${this.getRoleInventoryCount(item.id)}`, 20, 26, -42, 62, 26, Color.WHITE);
         countLabel.horizontalAlign = HorizontalTextAlignment.RIGHT;
         this.setLabelOutline(countLabel, Color.BLACK, 2);
         countLabel.node.setSiblingIndex(2);
 
-        const nameLabel = this.createLabel(cell, 'BeastGemSelectItemName', item.name.replace(config.beastName, ''), 17, 0, -50, 112, 28, new Color(255, 238, 198, 255));
+        const nameLabel = this.createLabel(cell, 'BeastGemSelectItemName', item.name.replace(config.beastName, ''), 18, 0, -60, 126, 30, new Color(255, 238, 198, 255));
         nameLabel.overflow = Overflow.SHRINK;
         this.setLabelOutline(nameLabel, new Color(43, 25, 15, 255), 2);
         nameLabel.node.setSiblingIndex(2);

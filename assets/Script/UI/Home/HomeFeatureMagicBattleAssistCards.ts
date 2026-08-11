@@ -24,6 +24,7 @@ interface MagicMapAssistCardConfig {
 
 const MAGIC_MAP_ASSIST_ROOT_NAME = 'MagicMapAssistCardRoot';
 const MAGIC_MAP_ASSIST_POPUP_NAME = 'MagicMapAssistCardConfirmPopup';
+const MAGIC_MAP_ASSIST_POWER_BONUS_PERCENT = 20;
 
 const MAGIC_MAP_ASSIST_CARDS: readonly MagicMapAssistCardConfig[] = [
     {
@@ -43,6 +44,13 @@ const MAGIC_MAP_ASSIST_CARDS: readonly MagicMapAssistCardConfig[] = [
 ] as const;
 
 export abstract class HomeFeatureMagicBattleAssistCards extends HomeViewBase {
+    protected magicBattleAssistProtected = false;
+    protected magicBattleAssistPowerBonusPercent = 0;
+    protected magicMapAssistProtectStatusLabel: Label | null = null;
+    protected magicMapAssistPowerStatusLabel: Label | null = null;
+    protected magicBattleAssistProtectStatusLabel: Label | null = null;
+    protected magicBattleAssistPowerStatusLabel: Label | null = null;
+
     protected setupMagicMapAssistCards(): void {
         const root = this.ensureMagicMapAssistCardRoot();
         if (!root?.isValid) return;
@@ -51,6 +59,7 @@ export abstract class HomeFeatureMagicBattleAssistCards extends HomeViewBase {
         root.setSiblingIndex((root.parent?.children.length || 1) - 1);
         MAGIC_MAP_ASSIST_CARDS.forEach((config) => this.setupMagicMapAssistCardSlot(root, config));
         this.ensureMagicMapAssistCardConfirmPopup();
+        this.refreshMagicBattleAssistEffectLabels();
         this.hideLegacyMagicBattleAssistCards();
     }
 
@@ -64,6 +73,16 @@ export abstract class HomeFeatureMagicBattleAssistCards extends HomeViewBase {
 
         const legacyPopup = this.findNode('MagicBattleAssistCardConfirmPopup', this.magicMonsterBattlePanel || undefined);
         if (legacyPopup?.isValid) legacyPopup.active = false;
+    }
+
+    protected resetMagicBattleAssistEffects(): void {
+        this.magicBattleAssistProtected = false;
+        this.magicBattleAssistPowerBonusPercent = 0;
+        this.refreshMagicBattleAssistEffectLabels();
+    }
+
+    protected getMagicBattlePowerMultiplier(): number {
+        return 1 + Math.max(0, this.magicBattleAssistPowerBonusPercent) / 100;
     }
 
     protected ensureMagicMapAssistCardRoot(): Node | null {
@@ -84,15 +103,10 @@ export abstract class HomeFeatureMagicBattleAssistCards extends HomeViewBase {
             );
         } else {
             root.active = true;
-            root.setPosition(
-                HomeConfig.MAGIC_BATTLE_ASSIST_CARD_ROOT_X,
-                HomeConfig.MAGIC_BATTLE_ASSIST_CARD_ROOT_Y,
-                0,
-            );
-            (root.getComponent(UITransform) || root.addComponent(UITransform)).setContentSize(
-                HomeConfig.MAGIC_BATTLE_ASSIST_CARD_SLOT_WIDTH,
-                rootHeight,
-            );
+            const transform = root.getComponent(UITransform) || root.addComponent(UITransform);
+            if (transform.contentSize.width <= 0 || transform.contentSize.height <= 0) {
+                transform.setContentSize(HomeConfig.MAGIC_BATTLE_ASSIST_CARD_SLOT_WIDTH, rootHeight);
+            }
         }
 
         return root;
@@ -111,11 +125,13 @@ export abstract class HomeFeatureMagicBattleAssistCards extends HomeViewBase {
             );
         } else {
             slot.active = true;
-            slot.setPosition(0, config.y, 0);
-            (slot.getComponent(UITransform) || slot.addComponent(UITransform)).setContentSize(
-                HomeConfig.MAGIC_BATTLE_ASSIST_CARD_SLOT_WIDTH,
-                HomeConfig.MAGIC_BATTLE_ASSIST_CARD_SLOT_HEIGHT,
-            );
+            const transform = slot.getComponent(UITransform) || slot.addComponent(UITransform);
+            if (transform.contentSize.width <= 0 || transform.contentSize.height <= 0) {
+                transform.setContentSize(
+                    HomeConfig.MAGIC_BATTLE_ASSIST_CARD_SLOT_WIDTH,
+                    HomeConfig.MAGIC_BATTLE_ASSIST_CARD_SLOT_HEIGHT,
+                );
+            }
         }
 
         this.getOrCreateMagicMapAssistSkin(
@@ -149,7 +165,8 @@ export abstract class HomeFeatureMagicBattleAssistCards extends HomeViewBase {
             28,
             new Color(255, 241, 184, 255),
         );
-        this.applyMagicMapAssistLabelStyle(useLabel, new Color(54, 26, 10, 255), 2);
+        this.applyMagicMapAssistLabelStyle(useLabel, new Color(54, 26, 10, 255), 0);
+        this.cleanupMagicMapAssistSlotLabels(slot, useLabel);
 
         this.bindScaledClick(slot, () => this.handleMagicMapAssistCardClick(config.id));
     }
@@ -160,10 +177,6 @@ export abstract class HomeFeatureMagicBattleAssistCards extends HomeViewBase {
         if (!config || !this.shopStore) return;
 
         const count = this.shopStore.inventory[cardId] || 0;
-        if (count <= 0) {
-            this.showToast(`${config.name}\u4e0d\u8db3`);
-            return;
-        }
         this.openMagicMapAssistCardConfirm(config, count);
     }
 
@@ -189,7 +202,7 @@ export abstract class HomeFeatureMagicBattleAssistCards extends HomeViewBase {
         }
 
         const currentLabel = this.findNode('MagicMapAssistCardConfirmCurrentLabel', popup)?.getComponent(Label);
-        if (currentLabel) currentLabel.string = `\u5f53\u524d\u62e5\u6709\uff1a${count}`;
+        if (currentLabel) currentLabel.node.active = false;
 
         const icon = this.findNode('MagicMapAssistCardConfirmIcon', popup);
         if (icon) {
@@ -200,9 +213,18 @@ export abstract class HomeFeatureMagicBattleAssistCards extends HomeViewBase {
                 HomeConfig.MAGIC_BATTLE_ASSIST_CONFIRM_ICON_SIZE,
             );
         }
+        this.hideMagicMapAssistConfirmIcons(popup);
+        this.hideMagicMapAssistConfirmIcons(this.magicMapPanel);
+        this.hideMagicMapAssistConfirmIcons(this.magicMonsterBattlePanel);
 
         const questionLabel = this.findNode('MagicMapAssistCardConfirmQuestionLabel', popup)?.getComponent(Label);
-        if (questionLabel) questionLabel.string = `\u662f\u5426\u6d88\u8017\u4e00\u5f20${config.name}`;
+        if (questionLabel) {
+            questionLabel.string = `\u662f\u5426\u82b1\u8d391\u5f20${config.name}\uff08\u62e5\u6709${count}\u5f20\uff09`;
+            questionLabel.node.setPosition(0, 8, 0);
+            (questionLabel.node.getComponent(UITransform) || questionLabel.node.addComponent(UITransform)).setContentSize(540, 58);
+            questionLabel.fontSize = 26;
+            questionLabel.lineHeight = 34;
+        }
 
         const cancel = this.findNode('MagicMapAssistCardConfirmCancelButton', popup);
         if (cancel) {
@@ -247,12 +269,12 @@ export abstract class HomeFeatureMagicBattleAssistCards extends HomeViewBase {
         const title = this.getOrCreateMagicMapAssistLabel(
             board,
             'MagicMapAssistCardConfirmTitle',
-            '\u4f7f\u7528\u9053\u5177',
-            30,
+            '\u7cfb\u7edf\u63d0\u793a',
+            HomeConfig.SHARED_CONFIRM_TITLE_FONT_SIZE,
             0,
-            HomeConfig.MAGIC_BATTLE_ASSIST_CONFIRM_TITLE_Y + 4,
-            220,
-            44,
+            HomeConfig.MAGIC_BATTLE_ASSIST_CONFIRM_TITLE_Y,
+            HomeConfig.SHARED_CONFIRM_TITLE_LABEL_WIDTH,
+            HomeConfig.SHARED_CONFIRM_TITLE_LABEL_HEIGHT,
             new Color(255, 239, 187, 255),
         );
         this.applyMagicMapAssistLabelStyle(title, new Color(70, 32, 12, 255), 3);
@@ -268,35 +290,57 @@ export abstract class HomeFeatureMagicBattleAssistCards extends HomeViewBase {
             44,
             new Color(88, 50, 26, 255),
         );
+        current.node.active = false;
         this.applyMagicMapAssistLabelStyle(current, new Color(255, 245, 220, 255), 1);
 
-        this.getOrCreateMagicMapAssistSkin(
+        const icon = this.getOrCreateMagicMapAssistSkin(
             board,
             'MagicMapAssistCardConfirmIcon',
             HomeConfig.MAGIC_BATTLE_ASSIST_CONFIRM_ICON_SIZE,
             HomeConfig.MAGIC_BATTLE_ASSIST_CONFIRM_ICON_SIZE,
-            126,
-            76,
+            -238,
+            8,
             HomeConfig.UI_SHOP_PROTECT_CARD,
         );
+        icon.active = false;
+        icon.setScale(0, 0, 1);
+        (icon.getComponent(UITransform) || icon.addComponent(UITransform)).setContentSize(0, 0);
 
         const question = this.getOrCreateMagicMapAssistLabel(
             board,
             'MagicMapAssistCardConfirmQuestionLabel',
-            '\u662f\u5426\u6d88\u8017\u4e00\u5f20\u4fdd\u62a4\u5361',
-            28,
+            '\u662f\u5426\u82b1\u8d391\u5f20\u4fdd\u62a4\u5361\uff08\u62e5\u67090\u5f20\uff09',
+            26,
             0,
-            6,
-            420,
-            48,
+            8,
+            540,
+            58,
             new Color(82, 45, 24, 255),
         );
         this.applyMagicMapAssistLabelStyle(question, new Color(255, 247, 224, 255), 1);
 
-        this.setupMagicMapAssistConfirmButton(board, 'MagicMapAssistCardConfirmCancelButton', -HomeConfig.MAGIC_BATTLE_ASSIST_CONFIRM_BUTTON_X, '\u53d6\u6d88');
-        this.setupMagicMapAssistConfirmButton(board, 'MagicMapAssistCardConfirmOkButton', HomeConfig.MAGIC_BATTLE_ASSIST_CONFIRM_BUTTON_X, '\u786e\u5b9a');
+        this.setupMagicMapAssistConfirmButton(board, 'MagicMapAssistCardConfirmCancelButton', HomeConfig.MAGIC_BATTLE_ASSIST_CONFIRM_CANCEL_BUTTON_X, '\u53d6\u6d88');
+        this.setupMagicMapAssistConfirmButton(board, 'MagicMapAssistCardConfirmOkButton', HomeConfig.MAGIC_BATTLE_ASSIST_CONFIRM_OK_BUTTON_X, '\u786e\u5b9a');
+        this.hideMagicMapAssistConfirmIcons(popup);
 
         return popup;
+    }
+
+    protected hideMagicMapAssistConfirmIcons(root: Node | null): void {
+        if (!root?.isValid) return;
+
+        const stack = [root];
+        while (stack.length > 0) {
+            const node = stack.pop();
+            if (!node?.isValid) continue;
+
+            if (node.name.includes('AssistCardConfirmIcon')) {
+                node.active = false;
+                node.setScale(0, 0, 1);
+                (node.getComponent(UITransform) || node.addComponent(UITransform)).setContentSize(0, 0);
+            }
+            node.children.forEach((child) => stack.push(child));
+        }
     }
 
     protected setupMagicMapAssistConfirmButton(parent: Node, name: string, x: number, text: string): void {
@@ -313,14 +357,102 @@ export abstract class HomeFeatureMagicBattleAssistCards extends HomeViewBase {
             button,
             `${name}Label`,
             text,
-            27,
+            HomeConfig.SHARED_CONFIRM_BUTTON_FONT_SIZE,
             0,
-            2,
-            HomeConfig.MAGIC_BATTLE_ASSIST_CONFIRM_BUTTON_WIDTH - 18,
-            HomeConfig.MAGIC_BATTLE_ASSIST_CONFIRM_BUTTON_HEIGHT - 12,
+            HomeConfig.SHARED_CONFIRM_BUTTON_LABEL_Y,
+            HomeConfig.SHARED_CONFIRM_BUTTON_LABEL_WIDTH,
+            HomeConfig.SHARED_CONFIRM_BUTTON_LABEL_HEIGHT,
             new Color(97, 48, 20, 255),
         );
         this.applyMagicMapAssistLabelStyle(label, new Color(255, 246, 214, 255), 1);
+    }
+
+    protected refreshMagicBattleAssistEffectLabels(): void {
+        this.ensureMagicMapAssistEffectLabels();
+        this.ensureMagicBattleAssistEffectLabels();
+
+        const protectText = this.magicBattleAssistProtected
+            ? '\u5f53\u524d\u5df2\u53d7\u4fdd\u62a4\uff0c\u4e0d\u4f1a\u88ab\u5176\u4ed6\u73a9\u5bb6\u51b3\u6597'
+            : '\u5f53\u524d\u672a\u53d7\u4fdd\u62a4\uff0c\u53c2\u4e0e\u51b3\u6597';
+        const powerText = `\u5f53\u524d\u6218\u529b\u52a0\u6210\uff1a${this.magicBattleAssistPowerBonusPercent > 0 ? `${this.magicBattleAssistPowerBonusPercent}%` : '0'}`;
+        const protectColor = this.magicBattleAssistProtected
+            ? new Color(74, 255, 92, 255)
+            : new Color(255, 226, 170, 255);
+        const powerColor = this.magicBattleAssistPowerBonusPercent > 0
+            ? new Color(74, 255, 92, 255)
+            : new Color(255, 226, 170, 255);
+
+        [this.magicMapAssistProtectStatusLabel, this.magicBattleAssistProtectStatusLabel].forEach((label) => {
+            if (!label?.isValid) return;
+            label.node.active = true;
+            label.string = protectText;
+            label.color = protectColor;
+            this.applyMagicMapAssistLabelStyle(label, new Color(20, 18, 14, 255), 2);
+        });
+        [this.magicMapAssistPowerStatusLabel, this.magicBattleAssistPowerStatusLabel].forEach((label) => {
+            if (!label?.isValid) return;
+            label.node.active = true;
+            label.string = powerText;
+            label.color = powerColor;
+            this.applyMagicMapAssistLabelStyle(label, new Color(20, 18, 14, 255), 2);
+        });
+    }
+
+    protected ensureMagicMapAssistEffectLabels(): void {
+        if (!this.magicMapPanel?.isValid) return;
+        const parent = this.findNode('MagicMapHud', this.magicMapPanel) || this.magicMapPanel;
+        this.magicMapAssistProtectStatusLabel = this.getOrCreateMagicMapAssistLabel(
+            parent,
+            'MagicMapAssistProtectStatus',
+            '',
+            22,
+            0,
+            606,
+            620,
+            34,
+            new Color(255, 226, 170, 255),
+        );
+        this.magicMapAssistPowerStatusLabel = this.getOrCreateMagicMapAssistLabel(
+            parent,
+            'MagicMapAssistPowerStatus',
+            '',
+            22,
+            0,
+            574,
+            620,
+            34,
+            new Color(255, 226, 170, 255),
+        );
+        this.magicMapAssistProtectStatusLabel.node.setSiblingIndex((parent.children.length || 1) - 1);
+        this.magicMapAssistPowerStatusLabel.node.setSiblingIndex((parent.children.length || 1) - 1);
+    }
+
+    protected ensureMagicBattleAssistEffectLabels(): void {
+        if (!this.magicMonsterBattlePanel?.isValid) return;
+        this.magicBattleAssistProtectStatusLabel = this.getOrCreateMagicMapAssistLabel(
+            this.magicMonsterBattlePanel,
+            'MagicBattleAssistProtectStatus',
+            '',
+            22,
+            0,
+            650,
+            620,
+            34,
+            new Color(255, 226, 170, 255),
+        );
+        this.magicBattleAssistPowerStatusLabel = this.getOrCreateMagicMapAssistLabel(
+            this.magicMonsterBattlePanel,
+            'MagicBattleAssistPowerStatus',
+            '',
+            22,
+            0,
+            618,
+            620,
+            34,
+            new Color(255, 226, 170, 255),
+        );
+        this.magicBattleAssistProtectStatusLabel.node.setSiblingIndex((this.magicMonsterBattlePanel.children.length || 1) - 1);
+        this.magicBattleAssistPowerStatusLabel.node.setSiblingIndex((this.magicMonsterBattlePanel.children.length || 1) - 1);
     }
 
     protected getOrCreateMagicMapAssistSkin(
@@ -337,8 +469,10 @@ export abstract class HomeFeatureMagicBattleAssistCards extends HomeViewBase {
             node = this.createNode(name, parent, width, height, x, y);
         } else {
             node.active = true;
-            node.setPosition(x, y, 0);
-            (node.getComponent(UITransform) || node.addComponent(UITransform)).setContentSize(width, height);
+            const transform = node.getComponent(UITransform) || node.addComponent(UITransform);
+            if (transform.contentSize.width <= 0 || transform.contentSize.height <= 0) {
+                transform.setContentSize(width, height);
+            }
         }
         this.applyUiSkinKeepingEditorSize(node, skinPath, width, height);
         return node;
@@ -361,8 +495,10 @@ export abstract class HomeFeatureMagicBattleAssistCards extends HomeViewBase {
         }
 
         node.active = true;
-        node.setPosition(x, y, 0);
-        (node.getComponent(UITransform) || node.addComponent(UITransform)).setContentSize(width, height);
+        const transform = node.getComponent(UITransform) || node.addComponent(UITransform);
+        if (transform.contentSize.width <= 0 || transform.contentSize.height <= 0) {
+            transform.setContentSize(width, height);
+        }
         const label = node.getComponent(Label) || node.addComponent(Label);
         applySimKaiFont(label);
         label.string = text;
@@ -380,6 +516,22 @@ export abstract class HomeFeatureMagicBattleAssistCards extends HomeViewBase {
         label.enableOutline = outlineWidth > 0;
         label.outlineColor = outlineColor;
         label.outlineWidth = outlineWidth;
+        const labelWithShadow = label as Label & { enableShadow?: boolean; shadowBlur?: number };
+        labelWithShadow.enableShadow = false;
+        labelWithShadow.shadowBlur = 0;
+    }
+
+    protected cleanupMagicMapAssistSlotLabels(slot: Node, activeLabel: Label): void {
+        const labels = slot.getComponentsInChildren(Label);
+        labels.forEach((label) => {
+            if (label === activeLabel) return;
+
+            const nodeName = label.node.name;
+            const isAssistText = nodeName.includes('UseLabel')
+                || nodeName.includes('CardName')
+                || label.string === '\u7acb\u5373\u4f7f\u7528';
+            if (isAssistText) label.node.active = false;
+        });
     }
 
     protected confirmMagicMapAssistCardUse(cardId: MagicMapAssistCardId): void {
@@ -395,16 +547,36 @@ export abstract class HomeFeatureMagicBattleAssistCards extends HomeViewBase {
         }
 
         this.shopStore.inventory[cardId] = count - 1;
+        this.setRoleInventoryCount(
+            cardId === 'protect_card'
+                ? HomeConfig.MAGIC_BATTLE_ASSIST_PROTECT_BAG_ITEM_ID
+                : HomeConfig.MAGIC_BATTLE_ASSIST_POWER_BAG_ITEM_ID,
+            this.shopStore.inventory[cardId] || 0,
+        );
         this.saveShopStore();
+        this.refreshRoleInventoryViews(false);
+        this.refreshShopPanel();
+        if (cardId === 'protect_card') {
+            this.magicBattleAssistProtected = true;
+        } else {
+            this.magicBattleAssistPowerBonusPercent = MAGIC_MAP_ASSIST_POWER_BONUS_PERCENT;
+        }
+        this.refreshMagicBattleAssistEffectLabels();
         this.closeMagicMapAssistCardConfirmPopup();
         this.showToast(`${config.name}\u5df2\u4f7f\u7528`);
     }
 
     protected closeMagicMapAssistCardConfirmPopup(): void {
-        const popup = this.findNode(MAGIC_MAP_ASSIST_POPUP_NAME, this.magicMapPanel || undefined);
-        if (popup?.isValid) {
-            popup.active = false;
-        }
+        const popups = [
+            this.findNode(MAGIC_MAP_ASSIST_POPUP_NAME, this.magicMapPanel || undefined),
+            this.findNode('MagicBattleAssistCardConfirmPopup', this.magicMonsterBattlePanel || undefined),
+        ];
+        popups.forEach((popup) => {
+            if (popup?.isValid) {
+                this.hideMagicMapAssistConfirmIcons(popup);
+                popup.active = false;
+            }
+        });
     }
 
     protected closeMagicBattleAssistCardConfirmPopup(): void {

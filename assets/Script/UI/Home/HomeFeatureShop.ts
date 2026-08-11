@@ -472,6 +472,13 @@ export abstract class HomeFeatureShop extends HomeViewBase {
         if (!this.shopStore) return;
     
         this.shopStore.inventory[item.id] = (this.shopStore.inventory[item.id] || 0) + item.amount * quantity;
+        if (item.id === HomeConfig.MAGIC_FLOOR_TICKET_SHOP_ITEM_ID) {
+            this.setRoleInventoryCount(
+                HomeConfig.MAGIC_FLOOR_TICKET_BAG_ITEM_ID,
+                this.shopStore.inventory[item.id] || 0,
+            );
+            this.refreshRoleInventoryViews(false);
+        }
         this.saveShopStore();
         this.refreshShopPanel();
         this.openBattleRewardPopup([
@@ -493,7 +500,10 @@ export abstract class HomeFeatureShop extends HomeViewBase {
         return icon;
     }
     protected ensureShopStore(): void {
-        if (this.shopStore) return;
+        if (this.shopStore) {
+            this.applyInitialMagicTicketGrant();
+            return;
+        }
     
         const fallbackInventory: Record<string, number> = {};
         this.getAllShopItems().forEach((item) => {
@@ -503,6 +513,7 @@ export abstract class HomeFeatureShop extends HomeViewBase {
         const raw = sys.localStorage.getItem(HomeConfig.SHOP_STORE_KEY);
         if (!raw) {
             this.shopStore = { currency: HomeConfig.DEFAULT_SHOP_CURRENCY, inventory: fallbackInventory };
+            this.applyInitialMagicTicketGrant();
             return;
         }
     
@@ -517,9 +528,59 @@ export abstract class HomeFeatureShop extends HomeViewBase {
                 ? Math.max(0, Math.floor(parsed.currency))
                 : HomeConfig.DEFAULT_SHOP_CURRENCY;
             this.shopStore = { currency, inventory };
+            this.applyInitialMagicTicketGrant();
         } catch (err) {
             console.warn('[MainHomeView] invalid shop store', err);
             this.shopStore = { currency: HomeConfig.DEFAULT_SHOP_CURRENCY, inventory: fallbackInventory };
+            this.applyInitialMagicTicketGrant();
+        }
+    }
+    protected applyInitialMagicTicketGrant(): void {
+        if (!this.shopStore) return;
+
+        const grantKey = HomeConfig.MAGIC_FLOOR_TICKET_GRANT_STORAGE_KEY;
+        const itemId = HomeConfig.MAGIC_FLOOR_TICKET_SHOP_ITEM_ID;
+        if (sys.localStorage.getItem(grantKey) !== '1') {
+            this.shopStore.inventory[itemId] = Math.max(
+                this.shopStore.inventory[itemId] || 0,
+                HomeConfig.MAGIC_FLOOR_INITIAL_TICKET_COUNT,
+            );
+            sys.localStorage.setItem(grantKey, '1');
+            this.saveShopStore();
+        }
+        this.setRoleInventoryCount(
+            HomeConfig.MAGIC_FLOOR_TICKET_BAG_ITEM_ID,
+            this.shopStore.inventory[itemId] || 0,
+        );
+        this.applyInitialMagicAssistCardGrant();
+    }
+    protected applyInitialMagicAssistCardGrant(): void {
+        if (!this.shopStore) return;
+
+        const grantKey = HomeConfig.MAGIC_BATTLE_ASSIST_CARD_GRANT_STORAGE_KEY;
+        const grants = [
+            {
+                shopItemId: HomeConfig.MAGIC_BATTLE_ASSIST_PROTECT_SHOP_ITEM_ID,
+                bagItemId: HomeConfig.MAGIC_BATTLE_ASSIST_PROTECT_BAG_ITEM_ID,
+            },
+            {
+                shopItemId: HomeConfig.MAGIC_BATTLE_ASSIST_POWER_SHOP_ITEM_ID,
+                bagItemId: HomeConfig.MAGIC_BATTLE_ASSIST_POWER_BAG_ITEM_ID,
+            },
+        ] as const;
+        const shouldGrant = sys.localStorage.getItem(grantKey) !== '1';
+
+        grants.forEach(({ shopItemId, bagItemId }) => {
+            if (shouldGrant) {
+                this.shopStore!.inventory[shopItemId] = (this.shopStore!.inventory[shopItemId] || 0)
+                    + HomeConfig.MAGIC_BATTLE_ASSIST_INITIAL_CARD_COUNT;
+            }
+            this.setRoleInventoryCount(bagItemId, this.shopStore!.inventory[shopItemId] || 0);
+        });
+
+        if (shouldGrant) {
+            sys.localStorage.setItem(grantKey, '1');
+            this.saveShopStore();
         }
     }
     protected saveShopStore(): void {

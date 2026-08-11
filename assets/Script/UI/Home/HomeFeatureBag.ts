@@ -898,7 +898,14 @@ export abstract class HomeFeatureBag extends HomeFeatureBagHost {
         this.createSkinnedNode('BagGridFrame', slot, HomeConfig.BAG_GRID_FRAME_SIZE, HomeConfig.BAG_GRID_FRAME_SIZE, 0, 0, framePath).setSiblingIndex(0);
     
         if (item) {
-            this.createSkinnedNode('BagGridIcon', slot, HomeConfig.BAG_GRID_ICON_SIZE, HomeConfig.BAG_GRID_ICON_SIZE, 0, HomeConfig.BAG_GRID_ICON_OFFSET_Y, item.iconPath).setSiblingIndex(1);
+            this.syncEquipmentFrameEffectForItem(
+                slot,
+                'BagGridEquipmentFrameEffect',
+                item,
+                HomeConfig.BAG_GRID_FRAME_SIZE,
+                HomeConfig.BAG_GRID_FRAME_SIZE,
+            )?.setSiblingIndex(3);
+            this.createSkinnedNode('BagGridIcon', slot, HomeConfig.BAG_GRID_ICON_SIZE, HomeConfig.BAG_GRID_ICON_SIZE, 0, HomeConfig.BAG_GRID_ICON_OFFSET_Y, item.iconPath).setSiblingIndex(2);
             const equipmentLevel = this.getBagEquipmentCatalogLevel(item);
             if (equipmentLevel > 0) {
                 this.createBagGridEquipmentLevelLabel(slot, equipmentLevel);
@@ -918,10 +925,10 @@ export abstract class HomeFeatureBag extends HomeFeatureBagHost {
                 );
                 countLabel.horizontalAlign = HorizontalTextAlignment.RIGHT;
                 this.setLabelOutline(countLabel, Color.BLACK, 2);
-                countLabel.node.setSiblingIndex(2);
+                countLabel.node.setSiblingIndex(4);
             }
             if (this.isBagItemEquipped(item)) {
-                this.createBagGridEquippedBadge(slot).setSiblingIndex(5);
+                this.createBagGridEquippedBadge(slot).setSiblingIndex(6);
             }
             this.bindGridItemTap(slot, () => {
                 if (this.bagPageActiveTab === 'decompose' && item.category === 'equipment') {
@@ -981,7 +988,7 @@ export abstract class HomeFeatureBag extends HomeFeatureBagHost {
         );
         levelLabel.horizontalAlign = HorizontalTextAlignment.RIGHT;
         this.setLabelOutline(levelLabel, Color.BLACK, 2);
-        levelLabel.node.setSiblingIndex(3);
+        levelLabel.node.setSiblingIndex(4);
     }
     protected bindGridItemTap(node: Node, onTap: () => void): void {
         let startX = 0;

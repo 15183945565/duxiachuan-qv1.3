@@ -1,0 +1,188 @@
+
+C522_S01L.png
+size: 1826,656
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+Fornt_Fist_R_01
+  rotate: true
+  xy: 1105, 302
+  size: 352, 300
+  orig: 353, 305
+  offset: 0, 5
+  index: -1
+Fornt_Hand_R_01
+  rotate: false
+  xy: 2, 235
+  size: 413, 419
+  orig: 419, 427
+  offset: 0, 6
+  index: -1
+Front_Arm_Acc_L_01
+  rotate: true
+  xy: 1105, 7
+  size: 293, 193
+  orig: 293, 194
+  offset: 0, 1
+  index: -1
+Front_Arm_L_01
+  rotate: false
+  xy: 1555, 54
+  size: 269, 269
+  orig: 269, 269
+  offset: 0, 0
+  index: -1
+Front_Arm_L_02
+  rotate: false
+  xy: 564, 8
+  size: 44, 84
+  orig: 48, 84
+  offset: 2, 0
+  index: -1
+Front_Arm_L_03
+  rotate: false
+  xy: 1742, 535
+  size: 81, 119
+  orig: 83, 120
+  offset: 1, 0
+  index: -1
+Front_Arm_L_04
+  rotate: true
+  xy: 1742, 334
+  size: 36, 62
+  orig: 36, 63
+  offset: 0, 0
+  index: -1
+Front_Arm_R_01
+  rotate: false
+  xy: 1407, 325
+  size: 333, 329
+  orig: 333, 329
+  offset: 0, 0
+  index: -1
+Front_Arm_R_02
+  rotate: true
+  xy: 624, 155
+  size: 92, 94
+  orig: 92, 96
+  offset: 0, 0
+  index: -1
+Front_Arm_R_03
+  rotate: true
+  xy: 1742, 372
+  size: 45, 67
+  orig: 47, 68
+  offset: 2, 1
+  index: -1
+Front_Arm_R_04
+  rotate: false
+  xy: 1742, 419
+  size: 82, 114
+  orig: 83, 115
+  offset: 0, 0
+  index: -1
+Front_Body_01
+  rotate: false
+  xy: 417, 249
+  size: 328, 405
+  orig: 343, 410
+  offset: 6, 5
+  index: -1
+Front_Body_02
+  rotate: false
+  xy: 499, 7
+  size: 63, 85
+  orig: 63, 86
+  offset: 0, 0
+  index: -1
+Front_Body_03
+  rotate: false
+  xy: 610, 37
+  size: 42, 55
+  orig: 44, 57
+  offset: 1, 1
+  index: -1
+Front_Body_04
+  rotate: false
+  xy: 1792, 6
+  size: 30, 46
+  orig: 31, 48
+  offset: 0, 1
+  index: -1
+Front_Eye_01
+  rotate: false
+  xy: 610, 6
+  size: 28, 29
+  orig: 28, 29
+  offset: 0, 0
+  index: -1
+Front_Eye_02
+  rotate: true
+  xy: 720, 223
+  size: 24, 25
+  orig: 24, 25
+  offset: 0, 0
+  index: -1
+Front_Hand_Acc_01
+  rotate: false
+  xy: 1300, 11
+  size: 253, 289
+  orig: 253, 289
+  offset: 0, 0
+  index: -1
+Front_Hand_Acc_02
+  rotate: false
+  xy: 747, 4
+  size: 356, 280
+  orig: 356, 280
+  offset: 0, 0
+  index: -1
+Front_Hand_L_01
+  rotate: false
+  xy: 747, 286
+  size: 356, 368
+  orig: 380, 375
+  offset: 0, 7
+  index: -1
+Front_Head_01
+  rotate: false
+  xy: 499, 94
+  size: 123, 153
+  orig: 196, 214
+  offset: 40, 1
+  index: -1
+Front_Head_02
+  rotate: true
+  xy: 1690, 8
+  size: 44, 100
+  orig: 48, 104
+  offset: 2, 2
+  index: -1
+Front_Head_Horn_L
+  rotate: false
+  xy: 242, 5
+  size: 114, 228
+  orig: 114, 228
+  offset: 0, 0
+  index: -1
+Front_Head_Horn_R
+  rotate: false
+  xy: 358, 5
+  size: 139, 228
+  orig: 139, 228
+  offset: 0, 0
+  index: -1
+Front_first_L_01
+  rotate: false
+  xy: 2, 2
+  size: 238, 231
+  orig: 238, 231
+  offset: 0, 0
+  index: -1
+shadow
+  rotate: false
+  xy: 1555, 25
+  size: 133, 27
+  orig: 135, 29
+  offset: 1, 1
+  index: -1

@@ -70,6 +70,10 @@ export abstract class HomeViewAdventure extends HomeViewRoleBag {
     protected beastStrengthenTitleLabel: Label | null = null;
     protected beastStrengthenYuanbaoLabel: Label | null = null;
     protected beastCardYuanbaoRateValueLabel: Label | null = null;
+    protected beastCardActivationButton: Node | null = null;
+    protected beastCardActivationStatusRoot: Node | null = null;
+    protected beastCardActivationStatusTitleLabel: Label | null = null;
+    protected beastCardActivationStatusTimeLabel: Label | null = null;
     protected beastCardRecordPopup: Node | null = null;
     protected beastCardRecordScrollView: ScrollView | null = null;
     protected beastCardRecordContent: Node | null = null;
@@ -84,6 +88,8 @@ export abstract class HomeViewAdventure extends HomeViewRoleBag {
     protected beastStrengthenSelectedGemSlotIndex = -1;
     protected beastStrengthenEquipmentSelectionVisible = false;
     protected beastStrengthenAction: BeastStrengthenAction = '';
+    protected beastCardActivationStateLoaded = false;
+    protected readonly beastCardActiveUntilByKey = new Map<string, number>();
 
     public static initializeFeatureState(target: HomeViewAdventure): void {
         Object.assign(target, {
@@ -116,6 +122,10 @@ export abstract class HomeViewAdventure extends HomeViewRoleBag {
             beastStrengthenTitleLabel: null,
             beastStrengthenYuanbaoLabel: null,
             beastCardYuanbaoRateValueLabel: null,
+            beastCardActivationButton: null,
+            beastCardActivationStatusRoot: null,
+            beastCardActivationStatusTitleLabel: null,
+            beastCardActivationStatusTimeLabel: null,
             beastCardRecordPopup: null,
             beastCardRecordScrollView: null,
             beastCardRecordContent: null,
@@ -130,6 +140,8 @@ export abstract class HomeViewAdventure extends HomeViewRoleBag {
             beastStrengthenSelectedGemSlotIndex: -1,
             beastStrengthenEquipmentSelectionVisible: false,
             beastStrengthenAction: '',
+            beastCardActivationStateLoaded: false,
+            beastCardActiveUntilByKey: new Map<string, number>(),
         });
     }
 
@@ -164,8 +176,8 @@ export abstract class HomeViewAdventure extends HomeViewRoleBag {
             if (board.parent !== popup) board.setParent(popup);
             board.active = true;
             board.setPosition(0, 0, 0);
-            (board.getComponent(UITransform) || board.addComponent(UITransform)).setContentSize(725, 505);
-            this.applyUiSkinKeepingEditorSize(board, HomeConfig.UI_CONFIRM_POPUP_BG, 725, 505);
+            (board.getComponent(UITransform) || board.addComponent(UITransform)).setContentSize(HomeConfig.SHARED_CONFIRM_BOARD_WIDTH, HomeConfig.SHARED_CONFIRM_BOARD_HEIGHT);
+            this.applyUiSkinKeepingEditorSize(board, HomeConfig.UI_CONFIRM_POPUP_BG, HomeConfig.SHARED_CONFIRM_BOARD_WIDTH, HomeConfig.SHARED_CONFIRM_BOARD_HEIGHT);
             board.setSiblingIndex(1);
         }
 
@@ -173,9 +185,9 @@ export abstract class HomeViewAdventure extends HomeViewRoleBag {
         if (titleSkin?.isValid) {
             if (board?.isValid && titleSkin.parent !== board) titleSkin.setParent(board);
             titleSkin.active = true;
-            titleSkin.setPosition(0, 169, 0);
-            (titleSkin.getComponent(UITransform) || titleSkin.addComponent(UITransform)).setContentSize(486, 84);
-            this.applyUiSkinKeepingEditorSize(titleSkin, HomeConfig.UI_CONFIRM_TITLE_BG, 486, 84);
+            titleSkin.setPosition(0, HomeConfig.SHARED_CONFIRM_TITLE_Y, 0);
+            (titleSkin.getComponent(UITransform) || titleSkin.addComponent(UITransform)).setContentSize(HomeConfig.SHARED_CONFIRM_TITLE_WIDTH, HomeConfig.SHARED_CONFIRM_TITLE_HEIGHT);
+            this.applyUiSkinKeepingEditorSize(titleSkin, HomeConfig.UI_CONFIRM_TITLE_BG, HomeConfig.SHARED_CONFIRM_TITLE_WIDTH, HomeConfig.SHARED_CONFIRM_TITLE_HEIGHT);
             titleSkin.setSiblingIndex(1);
         }
 
@@ -184,10 +196,10 @@ export abstract class HomeViewAdventure extends HomeViewRoleBag {
         if (titleNode?.isValid && titleLabel) {
             if (board?.isValid && titleNode.parent !== board) titleNode.setParent(board);
             titleNode.active = true;
-            titleNode.setPosition(0, 169, 0);
-            (titleNode.getComponent(UITransform) || titleNode.addComponent(UITransform)).setContentSize(280, 52);
-            titleLabel.fontSize = 30;
-            titleLabel.lineHeight = 38;
+            titleNode.setPosition(0, HomeConfig.SHARED_CONFIRM_TITLE_Y, 0);
+            (titleNode.getComponent(UITransform) || titleNode.addComponent(UITransform)).setContentSize(HomeConfig.SHARED_CONFIRM_TITLE_LABEL_WIDTH, HomeConfig.SHARED_CONFIRM_TITLE_LABEL_HEIGHT);
+            titleLabel.fontSize = HomeConfig.SHARED_CONFIRM_TITLE_FONT_SIZE;
+            titleLabel.lineHeight = HomeConfig.SHARED_CONFIRM_TITLE_LINE_HEIGHT;
             titleLabel.color = new Color(126, 74, 36, 255);
             titleLabel.horizontalAlign = HorizontalTextAlignment.CENTER;
             titleLabel.verticalAlign = VerticalTextAlignment.CENTER;
@@ -199,8 +211,8 @@ export abstract class HomeViewAdventure extends HomeViewRoleBag {
         const messageBg = this.findNode('ConfirmMessageBg', popup);
         if (messageBg?.isValid) {
             if (board?.isValid && messageBg.parent !== board) messageBg.setParent(board);
-            messageBg.setPosition(0, 66, 0);
-            (messageBg.getComponent(UITransform) || messageBg.addComponent(UITransform)).setContentSize(620, 116);
+            messageBg.setPosition(0, HomeConfig.SHARED_CONFIRM_MESSAGE_Y, 0);
+            (messageBg.getComponent(UITransform) || messageBg.addComponent(UITransform)).setContentSize(HomeConfig.SHARED_CONFIRM_MESSAGE_WIDTH, HomeConfig.SHARED_CONFIRM_MESSAGE_HEIGHT);
             this.hideCommerceConfirmMessageBg(messageBg);
             messageBg.setSiblingIndex(3);
         }
@@ -209,14 +221,14 @@ export abstract class HomeViewAdventure extends HomeViewRoleBag {
         if (messageNode?.isValid) {
             if (board?.isValid && messageNode.parent !== board) messageNode.setParent(board);
             messageNode.active = true;
-            messageNode.setPosition(0, 66, 0);
-            (messageNode.getComponent(UITransform) || messageNode.addComponent(UITransform)).setContentSize(560, 42.84);
+            messageNode.setPosition(0, HomeConfig.SHARED_CONFIRM_MESSAGE_Y, 0);
+            (messageNode.getComponent(UITransform) || messageNode.addComponent(UITransform)).setContentSize(HomeConfig.SHARED_CONFIRM_MESSAGE_WIDTH, HomeConfig.SHARED_CONFIRM_MESSAGE_HEIGHT);
             const richText = messageNode.getComponent(RichText);
             if (richText) {
                 richText.enabled = true;
-                richText.maxWidth = 560;
-                richText.fontSize = 24;
-                richText.lineHeight = 34;
+                richText.maxWidth = HomeConfig.SHARED_CONFIRM_MESSAGE_WIDTH;
+                richText.fontSize = 28;
+                richText.lineHeight = 40;
                 richText.horizontalAlign = HorizontalTextAlignment.CENTER;
             }
             const label = messageNode.getComponent(Label);
@@ -233,7 +245,7 @@ export abstract class HomeViewAdventure extends HomeViewRoleBag {
             'ConfirmCancelButtonLabel',
             HomeConfig.UI_CONFIRM_BUTTON_BG,
             '\u53d6\u6d88',
-            -113.38800000000003,
+            HomeConfig.SHARED_CONFIRM_CANCEL_BUTTON_X,
             new Color(94, 36, 35, 255),
             6,
         );
@@ -243,7 +255,7 @@ export abstract class HomeViewAdventure extends HomeViewRoleBag {
             'ConfirmAcceptButtonLabel',
             HomeConfig.UI_CONFIRM_BUTTON_BG,
             '\u786e\u5b9a',
-            121.71900000000005,
+            HomeConfig.SHARED_CONFIRM_ACCEPT_BUTTON_X,
             new Color(28, 85, 82, 255),
             7,
         );
@@ -266,10 +278,39 @@ export abstract class HomeViewAdventure extends HomeViewRoleBag {
             'MagicMonsterRoomHpFrame',
             'MagicMonsterRoomHpBar',
             'MagicMonsterRoomCount',
+            'MagicFloorTicketRoot',
+            'MagicFloorTicketCaption',
+            'MagicFloorTicketIcon',
+            'MagicFloorTicketCount',
+            'MagicFloorDailyRoot',
+            'MagicFloorDailyPrefix',
+            'MagicFloorDailyValue',
         ].forEach((nodeName) => {
             const node = this.findNode(nodeName, popup);
             this.hideConfirmNodeForMagicMonsterPrompt(node);
         });
+    }
+    protected getMagicFloorTicketCount(): number {
+        this.ensureShopStore();
+        const count = this.shopStore?.inventory[HomeConfig.MAGIC_FLOOR_TICKET_SHOP_ITEM_ID] || 0;
+        this.setRoleInventoryCount(HomeConfig.MAGIC_FLOOR_TICKET_BAG_ITEM_ID, count);
+        return count;
+    }
+    protected consumeMagicFloorTicket(): boolean {
+        this.ensureShopStore();
+        if (!this.shopStore) return false;
+
+        const itemId = HomeConfig.MAGIC_FLOOR_TICKET_SHOP_ITEM_ID;
+        const currentCount = this.shopStore.inventory[itemId] || 0;
+        if (currentCount < HomeConfig.MAGIC_FLOOR_TICKET_COST) return false;
+
+        const nextCount = currentCount - HomeConfig.MAGIC_FLOOR_TICKET_COST;
+        this.shopStore.inventory[itemId] = nextCount;
+        this.saveShopStore();
+        this.setRoleInventoryCount(HomeConfig.MAGIC_FLOOR_TICKET_BAG_ITEM_ID, nextCount);
+        this.refreshRoleInventoryViews(false);
+        this.refreshShopPanel();
+        return true;
     }
     protected resetSharedConfirmButtonStyle(
         popup: Node,
@@ -285,9 +326,9 @@ export abstract class HomeViewAdventure extends HomeViewRoleBag {
         if (!button?.isValid) return;
 
         button.active = true;
-        button.setPosition(x, -155, 0);
-        (button.getComponent(UITransform) || button.addComponent(UITransform)).setContentSize(162, 62);
-        this.applyUiSkinKeepingEditorSize(button, skinPath, 162, 62);
+        button.setPosition(x, HomeConfig.SHARED_CONFIRM_BUTTON_Y, 0);
+        (button.getComponent(UITransform) || button.addComponent(UITransform)).setContentSize(HomeConfig.SHARED_CONFIRM_BUTTON_WIDTH, HomeConfig.SHARED_CONFIRM_BUTTON_HEIGHT);
+        this.applyUiSkinKeepingEditorSize(button, skinPath, HomeConfig.SHARED_CONFIRM_BUTTON_WIDTH, HomeConfig.SHARED_CONFIRM_BUTTON_HEIGHT);
         button.setSiblingIndex(siblingIndex);
 
         const labelNode = this.findNode(labelName, button) || this.findNode(labelName, popup);
@@ -295,11 +336,11 @@ export abstract class HomeViewAdventure extends HomeViewRoleBag {
         if (!labelNode?.isValid || !label) return;
 
         labelNode.active = true;
-        labelNode.setPosition(0, 1, 0);
-        (labelNode.getComponent(UITransform) || labelNode.addComponent(UITransform)).setContentSize(132, 42);
+        labelNode.setPosition(0, HomeConfig.SHARED_CONFIRM_BUTTON_LABEL_Y, 0);
+        (labelNode.getComponent(UITransform) || labelNode.addComponent(UITransform)).setContentSize(HomeConfig.SHARED_CONFIRM_BUTTON_LABEL_WIDTH, HomeConfig.SHARED_CONFIRM_BUTTON_LABEL_HEIGHT);
         label.string = text;
-        label.fontSize = 31;
-        label.lineHeight = 38;
+        label.fontSize = HomeConfig.SHARED_CONFIRM_BUTTON_FONT_SIZE;
+        label.lineHeight = HomeConfig.SHARED_CONFIRM_BUTTON_LINE_HEIGHT;
         label.color = new Color(255, 238, 218, 255);
         label.horizontalAlign = HorizontalTextAlignment.CENTER;
         label.verticalAlign = VerticalTextAlignment.CENTER;
@@ -312,22 +353,59 @@ export abstract class HomeViewAdventure extends HomeViewRoleBag {
         const board = this.findNode('ConfirmPopupBoard', popup);
         if (!board?.isValid) return;
 
+        board.setPosition(0, 0, 0);
+        (board.getComponent(UITransform) || board.addComponent(UITransform)).setContentSize(HomeConfig.SHARED_CONFIRM_BOARD_WIDTH, HomeConfig.SHARED_CONFIRM_BOARD_HEIGHT);
+        this.applyUiSkinKeepingEditorSize(board, HomeConfig.UI_CONFIRM_POPUP_BG, HomeConfig.SHARED_CONFIRM_BOARD_WIDTH, HomeConfig.SHARED_CONFIRM_BOARD_HEIGHT);
+
+        const titleSkin = this.findNode('ConfirmPopupTitleSkin', popup);
+        if (titleSkin?.isValid) {
+            if (titleSkin.parent !== board) titleSkin.setParent(board);
+            titleSkin.active = true;
+            titleSkin.setPosition(0, HomeConfig.SHARED_CONFIRM_TITLE_Y, 0);
+            (titleSkin.getComponent(UITransform) || titleSkin.addComponent(UITransform)).setContentSize(HomeConfig.SHARED_CONFIRM_TITLE_WIDTH, HomeConfig.SHARED_CONFIRM_TITLE_HEIGHT);
+            this.applyUiSkinKeepingEditorSize(titleSkin, HomeConfig.UI_CONFIRM_TITLE_BG, HomeConfig.SHARED_CONFIRM_TITLE_WIDTH, HomeConfig.SHARED_CONFIRM_TITLE_HEIGHT);
+            titleSkin.setSiblingIndex(1);
+        }
+
+        const titleNode = this.findNode('ConfirmPopupTitle', popup);
+        const titleLabel = titleNode?.getComponent(Label);
+        if (titleNode?.isValid && titleLabel) {
+            if (titleNode.parent !== board) titleNode.setParent(board);
+            titleNode.active = true;
+            titleNode.setPosition(0, HomeConfig.SHARED_CONFIRM_TITLE_Y, 0);
+            (titleNode.getComponent(UITransform) || titleNode.addComponent(UITransform)).setContentSize(HomeConfig.SHARED_CONFIRM_TITLE_LABEL_WIDTH, HomeConfig.SHARED_CONFIRM_TITLE_LABEL_HEIGHT);
+            titleLabel.fontSize = HomeConfig.SHARED_CONFIRM_TITLE_FONT_SIZE;
+            titleLabel.lineHeight = HomeConfig.SHARED_CONFIRM_TITLE_LINE_HEIGHT;
+            titleLabel.color = new Color(126, 74, 36, 255);
+            titleLabel.horizontalAlign = HorizontalTextAlignment.CENTER;
+            titleLabel.verticalAlign = VerticalTextAlignment.CENTER;
+            titleLabel.overflow = Overflow.SHRINK;
+            this.setLabelOutline(titleLabel, new Color(255, 245, 215, 255), 2);
+            titleNode.setSiblingIndex(2);
+        }
+
         const messageBg = this.findNode('ConfirmMessageBg', popup);
         if (messageBg?.isValid) messageBg.active = false;
+
+        const ticketCount = this.getMagicFloorTicketCount();
+        const ticketEnough = ticketCount >= HomeConfig.MAGIC_FLOOR_TICKET_COST;
 
         const messageNode = this.findNode('ConfirmMessage', popup);
         if (messageNode?.isValid) {
             messageNode.active = true;
-            messageNode.setPosition(0, 36, 0);
-            (messageNode.getComponent(UITransform) || messageNode.addComponent(UITransform)).setContentSize(520, 72);
+            messageNode.setPosition(0, HomeConfig.MAGIC_FLOOR_CONFIRM_MESSAGE_Y, 0);
+            (messageNode.getComponent(UITransform) || messageNode.addComponent(UITransform)).setContentSize(
+                HomeConfig.MAGIC_FLOOR_CONFIRM_MESSAGE_WIDTH,
+                HomeConfig.MAGIC_FLOOR_CONFIRM_MESSAGE_HEIGHT,
+            );
             const richText = messageNode.getComponent(RichText);
             if (richText) richText.enabled = false;
             const messageLabel = messageNode.getComponent(Label) || messageNode.addComponent(Label);
             applySimKaiFont(messageLabel);
             messageLabel.enabled = true;
             messageLabel.string = messageText;
-            messageLabel.fontSize = 25;
-            messageLabel.lineHeight = 34;
+            messageLabel.fontSize = 27;
+            messageLabel.lineHeight = 36;
             messageLabel.color = new Color(104, 70, 43, 255);
             messageLabel.horizontalAlign = HorizontalTextAlignment.CENTER;
             messageLabel.verticalAlign = VerticalTextAlignment.CENTER;
@@ -338,31 +416,159 @@ export abstract class HomeViewAdventure extends HomeViewRoleBag {
         const quantityRoot = this.findNode('ConfirmQuantityRoot', popup);
         if (quantityRoot?.isValid) quantityRoot.active = false;
 
+        this.layoutMagicFloorTicketCostRow(popup, board, ticketCount, ticketEnough);
+        this.layoutMagicFloorDailyCountRow(popup, board);
+
         const close = this.findNode('ConfirmPopupClose', popup);
         if (close?.isValid) close.active = false;
 
-        this.layoutMagicFloorConfirmButton(popup, 'ConfirmCancelButton', 'ConfirmCancelButtonLabel', '\u53d6\u6d88', -108);
-        this.layoutMagicFloorConfirmButton(popup, 'ConfirmAcceptButton', 'ConfirmAcceptButtonLabel', '\u786e\u5b9a', 108);
+        this.layoutMagicFloorConfirmButton(popup, 'ConfirmCancelButton', 'ConfirmCancelButtonLabel', '\u53d6\u6d88', HomeConfig.SHARED_CONFIRM_CANCEL_BUTTON_X);
+        this.layoutMagicFloorConfirmButton(popup, 'ConfirmAcceptButton', 'ConfirmAcceptButtonLabel', '\u786e\u5b9a', HomeConfig.SHARED_CONFIRM_ACCEPT_BUTTON_X);
+    }
+    protected layoutMagicFloorTicketCostRow(popup: Node, board: Node, ticketCount: number, ticketEnough: boolean): void {
+        let root = this.findNode('MagicFloorTicketRoot', popup);
+        if (!root?.isValid) {
+            root = this.createNode(
+                'MagicFloorTicketRoot',
+                board,
+                HomeConfig.MAGIC_FLOOR_CONFIRM_TICKET_ROOT_WIDTH,
+                HomeConfig.MAGIC_FLOOR_CONFIRM_TICKET_ROOT_HEIGHT,
+                0,
+                HomeConfig.MAGIC_FLOOR_CONFIRM_TICKET_ROOT_Y,
+            );
+        }
+        if (root.parent !== board) root.setParent(board);
+        root.active = true;
+        root.setPosition(0, HomeConfig.MAGIC_FLOOR_CONFIRM_TICKET_ROOT_Y, 0);
+        (root.getComponent(UITransform) || root.addComponent(UITransform)).setContentSize(
+            HomeConfig.MAGIC_FLOOR_CONFIRM_TICKET_ROOT_WIDTH,
+            HomeConfig.MAGIC_FLOOR_CONFIRM_TICKET_ROOT_HEIGHT,
+        );
+        root.setSiblingIndex(5);
+
+        const caption = this.getOrCreateConfirmLabel(
+            root,
+            popup,
+            'MagicFloorTicketCaption',
+            '\u662f\u5426\u6d88\u8017',
+            HomeConfig.MAGIC_FLOOR_CONFIRM_TICKET_FONT_SIZE,
+            HomeConfig.MAGIC_FLOOR_CONFIRM_TICKET_CAPTION_X,
+            0,
+            HomeConfig.MAGIC_FLOOR_CONFIRM_TICKET_CAPTION_WIDTH,
+            HomeConfig.MAGIC_FLOOR_CONFIRM_TICKET_ROOT_HEIGHT,
+            new Color(104, 70, 43, 255),
+        );
+        caption.horizontalAlign = HorizontalTextAlignment.RIGHT;
+        caption.verticalAlign = VerticalTextAlignment.CENTER;
+        caption.overflow = Overflow.SHRINK;
+        this.setMagicFloorTextEdge(caption, false);
+
+        const icon = this.getOrCreateConfirmSkin(
+            root,
+            popup,
+            'MagicFloorTicketIcon',
+            HomeConfig.MAGIC_FLOOR_CONFIRM_TICKET_ICON_SIZE,
+            HomeConfig.MAGIC_FLOOR_CONFIRM_TICKET_ICON_SIZE,
+            HomeConfig.MAGIC_FLOOR_CONFIRM_TICKET_ICON_X,
+            0,
+            HomeConfig.UI_SHOP_MAGIC_TICKET,
+        );
+        icon.setSiblingIndex(2);
+
+        const count = this.getOrCreateConfirmLabel(
+            root,
+            popup,
+            'MagicFloorTicketCount',
+            `${ticketCount}/${HomeConfig.MAGIC_FLOOR_TICKET_COST}`,
+            HomeConfig.MAGIC_FLOOR_CONFIRM_TICKET_FONT_SIZE,
+            HomeConfig.MAGIC_FLOOR_CONFIRM_TICKET_COUNT_X,
+            0,
+            HomeConfig.MAGIC_FLOOR_CONFIRM_TICKET_COUNT_WIDTH,
+            HomeConfig.MAGIC_FLOOR_CONFIRM_TICKET_ROOT_HEIGHT,
+            ticketEnough ? new Color(40, 196, 58, 255) : new Color(214, 41, 32, 255),
+        );
+        count.horizontalAlign = HorizontalTextAlignment.LEFT;
+        count.verticalAlign = VerticalTextAlignment.CENTER;
+        count.overflow = Overflow.SHRINK;
+        count.lineHeight = HomeConfig.MAGIC_FLOOR_CONFIRM_TICKET_FONT_SIZE + 8;
+        this.setMagicFloorTextEdge(count, false);
+        count.node.setSiblingIndex(3);
+    }
+    protected layoutMagicFloorDailyCountRow(popup: Node, board: Node): void {
+        let root = this.findNode('MagicFloorDailyRoot', popup);
+        if (!root?.isValid) {
+            root = this.createNode(
+                'MagicFloorDailyRoot',
+                board,
+                HomeConfig.MAGIC_FLOOR_CONFIRM_DAILY_ROOT_WIDTH,
+                HomeConfig.MAGIC_FLOOR_CONFIRM_DAILY_ROOT_HEIGHT,
+                0,
+                HomeConfig.MAGIC_FLOOR_CONFIRM_DAILY_ROOT_Y,
+            );
+        }
+        if (root.parent !== board) root.setParent(board);
+        root.active = true;
+        root.setPosition(0, HomeConfig.MAGIC_FLOOR_CONFIRM_DAILY_ROOT_Y, 0);
+        (root.getComponent(UITransform) || root.addComponent(UITransform)).setContentSize(
+            HomeConfig.MAGIC_FLOOR_CONFIRM_DAILY_ROOT_WIDTH,
+            HomeConfig.MAGIC_FLOOR_CONFIRM_DAILY_ROOT_HEIGHT,
+        );
+        root.setSiblingIndex(6);
+
+        const prefix = this.getOrCreateConfirmLabel(
+            root,
+            popup,
+            'MagicFloorDailyPrefix',
+            '\u4eca\u65e5\u5269\u4f59\u6b21\u6570\uff1a',
+            HomeConfig.MAGIC_FLOOR_CONFIRM_DAILY_FONT_SIZE,
+            HomeConfig.MAGIC_FLOOR_CONFIRM_DAILY_PREFIX_X,
+            0,
+            HomeConfig.MAGIC_FLOOR_CONFIRM_DAILY_PREFIX_WIDTH,
+            HomeConfig.MAGIC_FLOOR_CONFIRM_DAILY_ROOT_HEIGHT,
+            new Color(104, 70, 43, 255),
+        );
+        prefix.horizontalAlign = HorizontalTextAlignment.RIGHT;
+        prefix.verticalAlign = VerticalTextAlignment.CENTER;
+        prefix.overflow = Overflow.SHRINK;
+        this.setMagicFloorTextEdge(prefix, false);
+
+        const value = this.getOrCreateConfirmLabel(
+            root,
+            popup,
+            'MagicFloorDailyValue',
+            HomeConfig.MAGIC_CHALLENGE_COUNT_VALUE_TEXT,
+            HomeConfig.MAGIC_FLOOR_CONFIRM_DAILY_FONT_SIZE,
+            HomeConfig.MAGIC_FLOOR_CONFIRM_DAILY_VALUE_X,
+            0,
+            HomeConfig.MAGIC_FLOOR_CONFIRM_DAILY_VALUE_WIDTH,
+            HomeConfig.MAGIC_FLOOR_CONFIRM_DAILY_ROOT_HEIGHT,
+            new Color(40, 196, 58, 255),
+        );
+        value.horizontalAlign = HorizontalTextAlignment.LEFT;
+        value.verticalAlign = VerticalTextAlignment.CENTER;
+        value.overflow = Overflow.SHRINK;
+        this.setMagicFloorTextEdge(value, false);
+        value.node.setSiblingIndex(2);
     }
     protected layoutMagicFloorConfirmButton(popup: Node, buttonName: string, labelName: string, text: string, x: number): void {
         const button = this.findNode(buttonName, popup);
         if (!button?.isValid) return;
 
         button.active = true;
-        button.setPosition(x, -188, 0);
-        (button.getComponent(UITransform) || button.addComponent(UITransform)).setContentSize(162, 62);
-        this.applyUiSkinKeepingEditorSize(button, HomeConfig.UI_CONFIRM_MAGIC_BUTTON, 162, 62);
+        button.setPosition(x, HomeConfig.SHARED_CONFIRM_BUTTON_Y, 0);
+        (button.getComponent(UITransform) || button.addComponent(UITransform)).setContentSize(HomeConfig.SHARED_CONFIRM_BUTTON_WIDTH, HomeConfig.SHARED_CONFIRM_BUTTON_HEIGHT);
+        this.applyUiSkinKeepingEditorSize(button, HomeConfig.UI_CONFIRM_MAGIC_BUTTON, HomeConfig.SHARED_CONFIRM_BUTTON_WIDTH, HomeConfig.SHARED_CONFIRM_BUTTON_HEIGHT);
 
         const labelNode = this.findNode(labelName, button) || this.findNode(labelName, popup);
         const label = labelNode?.getComponent(Label);
         if (!labelNode?.isValid || !label) return;
 
         labelNode.active = true;
-        labelNode.setPosition(0, 1, 0);
-        (labelNode.getComponent(UITransform) || labelNode.addComponent(UITransform)).setContentSize(128, 44);
+        labelNode.setPosition(0, HomeConfig.SHARED_CONFIRM_BUTTON_LABEL_Y, 0);
+        (labelNode.getComponent(UITransform) || labelNode.addComponent(UITransform)).setContentSize(HomeConfig.SHARED_CONFIRM_BUTTON_LABEL_WIDTH, HomeConfig.SHARED_CONFIRM_BUTTON_LABEL_HEIGHT);
         label.string = text;
-        label.fontSize = 27;
-        label.lineHeight = 35;
+        label.fontSize = HomeConfig.SHARED_CONFIRM_BUTTON_FONT_SIZE;
+        label.lineHeight = HomeConfig.SHARED_CONFIRM_BUTTON_LINE_HEIGHT;
         label.color = new Color(42, 22, 8, 255);
         label.horizontalAlign = HorizontalTextAlignment.CENTER;
         label.verticalAlign = VerticalTextAlignment.CENTER;
@@ -375,15 +581,15 @@ export abstract class HomeViewAdventure extends HomeViewRoleBag {
         if (!board?.isValid) return;
 
         board.setPosition(0, 0, 0);
-        (board.getComponent(UITransform) || board.addComponent(UITransform)).setContentSize(650, 360);
-        this.applyUiSkinKeepingEditorSize(board, HomeConfig.UI_BEAST_STRENGTHEN_POPUP_BG, 650, 360);
+        (board.getComponent(UITransform) || board.addComponent(UITransform)).setContentSize(HomeConfig.SHARED_CONFIRM_BOARD_WIDTH, HomeConfig.SHARED_CONFIRM_BOARD_HEIGHT);
+        this.applyUiSkinKeepingEditorSize(board, HomeConfig.UI_BEAST_STRENGTHEN_POPUP_BG, HomeConfig.SHARED_CONFIRM_BOARD_WIDTH, HomeConfig.SHARED_CONFIRM_BOARD_HEIGHT);
 
         const titleSkin = this.findNode('ConfirmPopupTitleSkin', popup);
         if (titleSkin?.isValid) {
             titleSkin.active = true;
-            titleSkin.setPosition(0, 134, 0);
-            (titleSkin.getComponent(UITransform) || titleSkin.addComponent(UITransform)).setContentSize(486, 84);
-            this.applyUiSkinKeepingEditorSize(titleSkin, HomeConfig.UI_CONFIRM_TITLE_BG, 486, 84);
+            titleSkin.setPosition(0, HomeConfig.SHARED_CONFIRM_TITLE_Y, 0);
+            (titleSkin.getComponent(UITransform) || titleSkin.addComponent(UITransform)).setContentSize(HomeConfig.SHARED_CONFIRM_TITLE_WIDTH, HomeConfig.SHARED_CONFIRM_TITLE_HEIGHT);
+            this.applyUiSkinKeepingEditorSize(titleSkin, HomeConfig.UI_CONFIRM_TITLE_BG, HomeConfig.SHARED_CONFIRM_TITLE_WIDTH, HomeConfig.SHARED_CONFIRM_TITLE_HEIGHT);
             titleSkin.setSiblingIndex(1);
         }
 
@@ -391,10 +597,10 @@ export abstract class HomeViewAdventure extends HomeViewRoleBag {
         const titleLabel = titleNode?.getComponent(Label);
         if (titleNode?.isValid && titleLabel) {
             titleNode.active = true;
-            titleNode.setPosition(0, 137, 0);
-            (titleNode.getComponent(UITransform) || titleNode.addComponent(UITransform)).setContentSize(280, 52);
-            titleLabel.fontSize = 30;
-            titleLabel.lineHeight = 38;
+            titleNode.setPosition(0, HomeConfig.SHARED_CONFIRM_TITLE_Y, 0);
+            (titleNode.getComponent(UITransform) || titleNode.addComponent(UITransform)).setContentSize(HomeConfig.SHARED_CONFIRM_TITLE_LABEL_WIDTH, HomeConfig.SHARED_CONFIRM_TITLE_LABEL_HEIGHT);
+            titleLabel.fontSize = HomeConfig.SHARED_CONFIRM_TITLE_FONT_SIZE;
+            titleLabel.lineHeight = HomeConfig.SHARED_CONFIRM_TITLE_LINE_HEIGHT;
             titleLabel.color = new Color(126, 74, 36, 255);
             titleLabel.horizontalAlign = HorizontalTextAlignment.CENTER;
             titleLabel.verticalAlign = VerticalTextAlignment.CENTER;
@@ -408,16 +614,16 @@ export abstract class HomeViewAdventure extends HomeViewRoleBag {
         const messageNode = this.findNode('ConfirmMessage', popup);
         if (messageNode?.isValid) {
             messageNode.active = true;
-            messageNode.setPosition(0, 36, 0);
-            (messageNode.getComponent(UITransform) || messageNode.addComponent(UITransform)).setContentSize(540, 86);
+            messageNode.setPosition(0, HomeConfig.SHARED_CONFIRM_MESSAGE_Y, 0);
+            (messageNode.getComponent(UITransform) || messageNode.addComponent(UITransform)).setContentSize(HomeConfig.SHARED_CONFIRM_MESSAGE_WIDTH, HomeConfig.SHARED_CONFIRM_MESSAGE_HEIGHT);
             const richText = messageNode.getComponent(RichText);
             if (richText) richText.enabled = false;
             const messageLabel = messageNode.getComponent(Label) || messageNode.addComponent(Label);
             applySimKaiFont(messageLabel);
             messageLabel.enabled = true;
             messageLabel.string = messageText;
-            messageLabel.fontSize = 24;
-            messageLabel.lineHeight = 34;
+            messageLabel.fontSize = 28;
+            messageLabel.lineHeight = 40;
             messageLabel.color = new Color(126, 80, 45, 255);
             messageLabel.horizontalAlign = HorizontalTextAlignment.CENTER;
             messageLabel.verticalAlign = VerticalTextAlignment.CENTER;
@@ -432,8 +638,8 @@ export abstract class HomeViewAdventure extends HomeViewRoleBag {
         const close = this.findNode('ConfirmPopupClose', popup);
         if (close?.isValid) close.active = false;
 
-        this.layoutBeastStrengthenConfirmButton(popup, 'ConfirmCancelButton', 'ConfirmCancelButtonLabel', '\u53d6\u6d88', -108);
-        this.layoutBeastStrengthenConfirmButton(popup, 'ConfirmAcceptButton', 'ConfirmAcceptButtonLabel', '\u786e\u5b9a', 108);
+        this.layoutBeastStrengthenConfirmButton(popup, 'ConfirmCancelButton', 'ConfirmCancelButtonLabel', '\u53d6\u6d88', HomeConfig.SHARED_CONFIRM_CANCEL_BUTTON_X);
+        this.layoutBeastStrengthenConfirmButton(popup, 'ConfirmAcceptButton', 'ConfirmAcceptButtonLabel', '\u786e\u5b9a', HomeConfig.SHARED_CONFIRM_ACCEPT_BUTTON_X);
         this.scheduleOnce(() => {
             if (popup?.isValid && popup.active) {
                 this.hideBeastStrengthenConfirmMessageBg(popup);
@@ -458,20 +664,20 @@ export abstract class HomeViewAdventure extends HomeViewRoleBag {
         if (!button?.isValid) return;
 
         button.active = true;
-        button.setPosition(x, -126, 0);
-        (button.getComponent(UITransform) || button.addComponent(UITransform)).setContentSize(162, 62);
-        this.applyUiSkinKeepingEditorSize(button, HomeConfig.UI_BEAST_STRENGTHEN_BUTTON_BG, 162, 62);
+        button.setPosition(x, HomeConfig.SHARED_CONFIRM_BUTTON_Y, 0);
+        (button.getComponent(UITransform) || button.addComponent(UITransform)).setContentSize(HomeConfig.SHARED_CONFIRM_BUTTON_WIDTH, HomeConfig.SHARED_CONFIRM_BUTTON_HEIGHT);
+        this.applyUiSkinKeepingEditorSize(button, HomeConfig.UI_BEAST_STRENGTHEN_BUTTON_BG, HomeConfig.SHARED_CONFIRM_BUTTON_WIDTH, HomeConfig.SHARED_CONFIRM_BUTTON_HEIGHT);
 
         const labelNode = this.findNode(labelName, button) || this.findNode(labelName, popup);
         const label = labelNode?.getComponent(Label);
         if (!labelNode?.isValid || !label) return;
 
         labelNode.active = true;
-        labelNode.setPosition(0, 1, 0);
-        (labelNode.getComponent(UITransform) || labelNode.addComponent(UITransform)).setContentSize(128, 44);
+        labelNode.setPosition(0, HomeConfig.SHARED_CONFIRM_BUTTON_LABEL_Y, 0);
+        (labelNode.getComponent(UITransform) || labelNode.addComponent(UITransform)).setContentSize(HomeConfig.SHARED_CONFIRM_BUTTON_LABEL_WIDTH, HomeConfig.SHARED_CONFIRM_BUTTON_LABEL_HEIGHT);
         label.string = text;
-        label.fontSize = 27;
-        label.lineHeight = 35;
+        label.fontSize = HomeConfig.SHARED_CONFIRM_BUTTON_FONT_SIZE;
+        label.lineHeight = HomeConfig.SHARED_CONFIRM_BUTTON_LINE_HEIGHT;
         label.color = new Color(42, 22, 8, 255);
         label.horizontalAlign = HorizontalTextAlignment.CENTER;
         label.verticalAlign = VerticalTextAlignment.CENTER;

@@ -22,7 +22,34 @@ export const UI_BATTLE_UPGRADE_OUTPUT_PANEL_BG = `${BATTLE_UI_ROOT}/battle_upgra
 export const UI_BATTLE_TARGET_CHECKBOX_UNCHECKED = `${BATTLE_UI_ROOT}/battle_target_checkbox_unchecked`;
 export const UI_BATTLE_TARGET_CHECKBOX_CHECKED = `${BATTLE_UI_ROOT}/battle_target_checkbox_checked`;
 export const UI_BATTLE_TARGET_OPTION_SELECTED_BG = `${BATTLE_UI_ROOT}/battle_target_option_selected_bg`;
+export const UI_BATTLE_AUTO_HOSTING_ICON_FRAMES = [
+    `${BATTLE_UI_ROOT}/AutoHosting/battle_auto_hosting_icon_01`,
+    `${BATTLE_UI_ROOT}/AutoHosting/battle_auto_hosting_icon_02`,
+    `${BATTLE_UI_ROOT}/AutoHosting/battle_auto_hosting_icon_03`,
+    `${BATTLE_UI_ROOT}/AutoHosting/battle_auto_hosting_icon_04`,
+    `${BATTLE_UI_ROOT}/AutoHosting/battle_auto_hosting_icon_05`,
+    `${BATTLE_UI_ROOT}/AutoHosting/battle_auto_hosting_icon_06`,
+    `${BATTLE_UI_ROOT}/AutoHosting/battle_auto_hosting_icon_07`,
+    `${BATTLE_UI_ROOT}/AutoHosting/battle_auto_hosting_icon_08`,
+    `${BATTLE_UI_ROOT}/AutoHosting/battle_auto_hosting_icon_09`,
+    `${BATTLE_UI_ROOT}/AutoHosting/battle_auto_hosting_icon_10`,
+] as const;
+export const UI_BATTLE_AUTO_HOSTING_ICON_FRAME_UUIDS = [
+    'ae293cc7-d4e5-4e9a-b246-e4818c7a333c@f9941',
+    '293c0dce-280b-4ef5-93fc-f7828a23eb52@f9941',
+    'e250930d-f876-401b-a38a-a928e9b69a10@f9941',
+    'b049119a-1c75-4afa-811c-2405159bf19e@f9941',
+    '67821381-27b2-47b3-82fa-7a497ec51891@f9941',
+    '7ef15612-8f29-49a8-aa37-5fe2faf71091@f9941',
+    'b815faa8-eea2-46e0-a55d-ebbe25355f4a@f9941',
+    'c3937275-dcf7-431a-b0f9-a4f679aaa2a1@f9941',
+    '47004cb2-4a7b-4bff-97a3-4756d0e51ee4@f9941',
+    'da732791-34ce-4704-bd9c-ff4d22e6bbc7@f9941',
+] as const;
 
+export const BATTLE_ATTACK_AUDIO_PATH = 'Audio/Battle/battle_attack';
+export const BATTLE_AUTO_HOST_STATE_KEY = 'duxiachuan_battle_auto_host_v1';
+export const BATTLE_AUTO_HOST_MAIL_BACKUP_KEY = 'duxiachuan_battle_auto_host_mail_backup_v1';
 export const BATTLE_BG_SKEL_PATH = 'Spine/Battle/\u4ed9\u57df\u80cc\u666fspine\u52a8\u753b/skeleton';
 export const BATTLE_BG_ANIMATIONS = ['idle', 'animation'];
 export const BATTLE_BG_SCALE = 1.20;
@@ -195,6 +222,12 @@ export const BATTLE_AUTO_HOST_BUTTON_SIZE = 86;
 export const BATTLE_AUTO_HOST_ICON_SIZE = 70;
 export const BATTLE_AUTO_HOST_BUTTON_X = 302;
 export const BATTLE_AUTO_HOST_BUTTON_Y = 704;
+export const BATTLE_AUTO_HOSTING_ICON_WIDTH = 214;
+export const BATTLE_AUTO_HOSTING_ICON_HEIGHT = 53;
+export const BATTLE_AUTO_HOSTING_ICON_X = 0;
+export const BATTLE_AUTO_HOSTING_ICON_Y = 330;
+export const BATTLE_AUTO_HOSTING_FRAME_INTERVAL = 0.1;
+export const BATTLE_AUTO_HOST_MIN_REMAIN_SECONDS = 10;
 export const BATTLE_TARGET_CHALLENGE_OPTIONS = [
     '\u6218\u573a\u6750\u6599',
     '\u7ecf\u9a8c\u73e0',
@@ -214,6 +247,11 @@ export const BATTLE_ROLE_NORMAL_ATTACK_ANIMATIONS: Record<RoleGender, readonly s
     male: ['skill0'],
     female: ['skill2'],
 };
+export const BATTLE_MONSTER_HIT_EFFECT_SKEL_PATH = 'Spine/Battle/BattleMonsterHitEffect/302140_skill_hit';
+export const BATTLE_MONSTER_HIT_EFFECT_ANIMATIONS = ['play', 'animation'];
+export const BATTLE_MONSTER_HIT_EFFECT_SCALE = 0.68;
+export const BATTLE_MONSTER_HIT_EFFECT_POSITION = new Vec3(50, 10, 0);
+export const BATTLE_MONSTER_HIT_EFFECT_FALLBACK_DURATION = 0.72;
 export const BATTLE_WAVE_TOTAL = 6;
 export const BATTLE_WAVE_LABEL_Y = 610;
 export const BATTLE_WAVE_LABEL_WIDTH = 260;
@@ -259,6 +297,8 @@ export const MAIL_ROW_WIDTH = 609;
 export const MAIL_ROW_HEIGHT = 113;
 export const MAIL_ROW_START_Y = 300;
 export const MAIL_ROW_GAP = 150;
+export const MAIL_LIST_TOP_PADDING = 6;
+export const MAIL_LIST_BOTTOM_PADDING = 36;
 export const MAIL_ROW_CLAIM_BUTTON_WIDTH = MAIL_BUTTON_WIDTH;
 export const MAIL_ROW_CLAIM_BUTTON_HEIGHT = MAIL_BUTTON_HEIGHT;
 export const MAIL_ROW_CLAIM_BUTTON_X = 214;
@@ -266,26 +306,33 @@ export const MAIL_ROW_UNREAD_DOT_X = 252;
 export const MAIL_ROW_UNREAD_DOT_Y = 46;
 export const BATTLE_ROLE_SCALE = 4.5;
 export const BATTLE_MONSTER_SCALE = 4.2;
-export const BATTLE_ROLE_ATTACK_TIME_SCALE = 2;
+export const BATTLE_ROLE_ATTACK_TIME_SCALE = 1;
+export const BATTLE_ROLE_ATTACK_FRAME_RATE = 30;
+export const BATTLE_ROLE_NORMAL_ATTACK_HIT_TIMES: Record<RoleGender, readonly number[]> = {
+    male: [16 / BATTLE_ROLE_ATTACK_FRAME_RATE, 22 / BATTLE_ROLE_ATTACK_FRAME_RATE],
+    female: [5 / BATTLE_ROLE_ATTACK_FRAME_RATE, 16 / BATTLE_ROLE_ATTACK_FRAME_RATE],
+};
 export const BATTLE_ROLE_ATTACK_GAP = 0.06;
 export const BATTLE_ROLE_ATTACK_FALLBACK_DURATIONS: Record<RoleGender, { normal: number; skill: number }> = {
     male: { normal: 2.867, skill: 3.8 },
     female: { normal: 1.5, skill: 1.833 },
 };
-export const BATTLE_ROLE_POSITION = new Vec3(-155, -15, 0);
+export const BATTLE_COMBAT_ACTOR_Y_OFFSET = -55;
+export const BATTLE_COMBAT_MONSTER_Y_OFFSET = BATTLE_COMBAT_ACTOR_Y_OFFSET + 35;
+export const BATTLE_ROLE_POSITION = new Vec3(-155, -15 + BATTLE_COMBAT_ACTOR_Y_OFFSET, 0);
 export const BATTLE_MONSTER_START_POSITIONS = [
-    new Vec3(250, 365, 0),
-    new Vec3(298, 192, 0),
-    new Vec3(244, 14, 0),
-    new Vec3(102, 308, 0),
-    new Vec3(106, -76, 0),
-    new Vec3(318, -124, 0),
+    new Vec3(336, -244 + BATTLE_COMBAT_MONSTER_Y_OFFSET, 0),
+    new Vec3(408, -218 + BATTLE_COMBAT_MONSTER_Y_OFFSET, 0),
+    new Vec3(480, -252 + BATTLE_COMBAT_MONSTER_Y_OFFSET, 0),
+    new Vec3(312, -312 + BATTLE_COMBAT_MONSTER_Y_OFFSET, 0),
+    new Vec3(396, -336 + BATTLE_COMBAT_MONSTER_Y_OFFSET, 0),
+    new Vec3(472, -302 + BATTLE_COMBAT_MONSTER_Y_OFFSET, 0),
 ];
 export const BATTLE_MONSTER_TARGET_POSITIONS = [
-    new Vec3(66, 14, 0),
-    new Vec3(148, -12, 0),
-    new Vec3(226, -46, 0),
-    new Vec3(92, -102, 0),
-    new Vec3(178, -138, 0),
-    new Vec3(264, -106, 0),
+    new Vec3(66, 14 + BATTLE_COMBAT_MONSTER_Y_OFFSET, 0),
+    new Vec3(148, -12 + BATTLE_COMBAT_MONSTER_Y_OFFSET, 0),
+    new Vec3(226, -46 + BATTLE_COMBAT_MONSTER_Y_OFFSET, 0),
+    new Vec3(92, -102 + BATTLE_COMBAT_MONSTER_Y_OFFSET, 0),
+    new Vec3(178, -138 + BATTLE_COMBAT_MONSTER_Y_OFFSET, 0),
+    new Vec3(264, -106 + BATTLE_COMBAT_MONSTER_Y_OFFSET, 0),
 ];

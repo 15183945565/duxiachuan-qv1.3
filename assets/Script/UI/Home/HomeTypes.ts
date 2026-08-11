@@ -137,6 +137,13 @@ export interface MailData {
     rewards: MailReward[];
 }
 
+export interface BattleAutoHostState {
+    id: string;
+    startTime: number;
+    finishTime: number;
+    rewards: MailReward[];
+}
+
 export type NoticeType = 'notice' | 'activity';
 
 export interface NoticeData {

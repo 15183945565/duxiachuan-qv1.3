@@ -162,7 +162,7 @@
     "_lpos": {
       "__type__": "cc.Vec3",
       "x": 0,
-      "y": 169,
+      "y": 166,
       "z": 0
     },
     "_lrot": {
@@ -202,8 +202,8 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 486,
-      "height": 84
+      "width": 300,
+      "height": 64
     },
     "_anchorPoint": {
       "__type__": "cc.Vec2",
@@ -298,7 +298,7 @@
     "_lpos": {
       "__type__": "cc.Vec3",
       "x": 0,
-      "y": 169,
+      "y": 166,
       "z": 0
     },
     "_lrot": {
@@ -377,7 +377,7 @@
     "_string": "提示说明",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
-    "_actualFontSize": 31,
+    "_actualFontSize": 30,
     "_fontSize": 30,
     "_fontFamily": "Microsoft YaHei",
     "_lineHeight": 38,
@@ -457,7 +457,7 @@
     "_lpos": {
       "__type__": "cc.Vec3",
       "x": 0,
-      "y": 66,
+      "y": 18,
       "z": 0
     },
     "_lrot": {
@@ -497,8 +497,8 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 620,
-      "height": 116
+      "width": 540,
+      "height": 180
     },
     "_anchorPoint": {
       "__type__": "cc.Vec2",
@@ -596,7 +596,7 @@
     "_lpos": {
       "__type__": "cc.Vec3",
       "x": 0,
-      "y": 66,
+      "y": 18,
       "z": 0
     },
     "_lrot": {
@@ -636,8 +636,8 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 560,
-      "height": 42.84
+      "width": 540,
+      "height": 180
     },
     "_anchorPoint": {
       "__type__": "cc.Vec2",
@@ -675,10 +675,10 @@
     "_string": "是否确定消耗80元宝购买挑战卡 x1？",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
-    "_actualFontSize": 24,
-    "_fontSize": 24,
+    "_actualFontSize": 28,
+    "_fontSize": 28,
     "_fontFamily": "Microsoft YaHei",
-    "_lineHeight": 34,
+    "_lineHeight": 40,
     "_overflow": 2,
     "_enableWrapText": true,
     "_font": null,
@@ -730,11 +730,11 @@
     "__prefab": {
       "__id__": 27
     },
-    "_lineHeight": 34,
+    "_lineHeight": 40,
     "_string": "<outline color=#fff7dc width=1><color=#6f462a>是否确定消耗</color><color=#d83a2e>80</color><color=#6f462a>元宝购买挑战卡 x</color><color=#d83a2e>1</color><color=#6f462a>？</color></outline>",
     "_horizontalAlign": 1,
     "_verticalAlign": 0,
-    "_fontSize": 24,
+    "_fontSize": 28,
     "_fontColor": {
       "__type__": "cc.Color",
       "r": 255,
@@ -742,7 +742,7 @@
       "b": 255,
       "a": 255
     },
-    "_maxWidth": 560,
+    "_maxWidth": 540,
     "_fontFamily": "Microsoft YaHei",
     "_font": null,
     "_isSystemFontUsed": true,
@@ -1952,8 +1952,8 @@
     },
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": -113.38800000000003,
-      "y": -155,
+      "x": -112,
+      "y": -162.13400000000001,
       "z": 0
     },
     "_lrot": {
@@ -2043,7 +2043,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 132,
+      "width": 124,
       "height": 42
     },
     "_anchorPoint": {
@@ -2082,7 +2082,7 @@
     "_string": "取消",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
-    "_actualFontSize": 32,
+    "_actualFontSize": 31,
     "_fontSize": 31,
     "_fontFamily": "Microsoft YaHei",
     "_lineHeight": 38,
@@ -2251,8 +2251,8 @@
     },
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": 121.71900000000005,
-      "y": -155,
+      "x": 111.214,
+      "y": -162.13400000000001,
       "z": 0
     },
     "_lrot": {
@@ -2342,7 +2342,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 132,
+      "width": 124,
       "height": 42
     },
     "_anchorPoint": {
@@ -2381,7 +2381,7 @@
     "_string": "确定",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
-    "_actualFontSize": 32,
+    "_actualFontSize": 31,
     "_fontSize": 31,
     "_fontFamily": "Microsoft YaHei",
     "_lineHeight": 38,
@@ -2624,7 +2624,7 @@
       "a": 255
     },
     "_spriteFrame": {
-      "__uuid__": "7a5fb93c-a537-40ff-bc6f-4c9a35a97379@f9941",
+      "__uuid__": "a4c19736-25da-44f0-8e35-c9c3c293f4da@f9941",
       "__expectedType__": "cc.SpriteFrame"
     },
     "_type": 0,

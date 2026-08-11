@@ -22121,7 +22121,7 @@
     "_lpos": {
       "__type__": "cc.Vec3",
       "x": 0,
-      "y": 182,
+      "y": 166,
       "z": 0
     },
     "_lrot": {
@@ -22161,8 +22161,8 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 486,
-      "height": 84
+      "width": 300,
+      "height": 64
     },
     "_anchorPoint": {
       "__type__": "cc.Vec2",
@@ -22257,7 +22257,7 @@
     "_lpos": {
       "__type__": "cc.Vec3",
       "x": 0,
-      "y": 185,
+      "y": 166,
       "z": 0
     },
     "_lrot": {
@@ -22297,7 +22297,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 300,
+      "width": 280,
       "height": 52
     },
     "_anchorPoint": {
@@ -22336,7 +22336,7 @@
     "_string": "二级突破珠",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
-    "_actualFontSize": 31,
+    "_actualFontSize": 30,
     "_fontSize": 30,
     "_fontFamily": "Microsoft YaHei",
     "_lineHeight": 38,
@@ -25256,8 +25256,8 @@
     },
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": -120,
-      "y": -178,
+      "x": -112,
+      "y": -162.13400000000001,
       "z": 0
     },
     "_lrot": {
@@ -25347,7 +25347,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 132,
+      "width": 124,
       "height": 42
     },
     "_anchorPoint": {
@@ -25386,10 +25386,10 @@
     "_string": "取消",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
-    "_actualFontSize": 30,
-    "_fontSize": 29,
+    "_actualFontSize": 31,
+    "_fontSize": 31,
     "_fontFamily": "Microsoft YaHei",
-    "_lineHeight": 37,
+    "_lineHeight": 38,
     "_overflow": 2,
     "_enableWrapText": true,
     "_font": null,
@@ -25555,8 +25555,8 @@
     },
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": 120,
-      "y": -178,
+      "x": 111.214,
+      "y": -162.13400000000001,
       "z": 0
     },
     "_lrot": {
@@ -25646,7 +25646,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 132,
+      "width": 124,
       "height": 42
     },
     "_anchorPoint": {
@@ -25685,10 +25685,10 @@
     "_string": "确定",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
-    "_actualFontSize": 30,
-    "_fontSize": 29,
+    "_actualFontSize": 31,
+    "_fontSize": 31,
     "_fontFamily": "Microsoft YaHei",
-    "_lineHeight": 37,
+    "_lineHeight": 38,
     "_overflow": 2,
     "_enableWrapText": true,
     "_font": null,

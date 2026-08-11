@@ -492,7 +492,7 @@
       "a": 255
     },
     "_spriteFrame": {
-      "__uuid__": "7a5fb93c-a537-40ff-bc6f-4c9a35a97379@f9941",
+      "__uuid__": "a4c19736-25da-44f0-8e35-c9c3c293f4da@f9941",
       "__expectedType__": "cc.SpriteFrame"
     },
     "_type": 0,
@@ -2731,8 +2731,8 @@
     "_prefab": null,
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": -115,
-      "y": -365,
+      "x": -112,
+      "y": -162.13400000000001,
       "z": 0
     },
     "_lrot": {
@@ -2780,7 +2780,7 @@
     "_lpos": {
       "__type__": "cc.Vec3",
       "x": 0,
-      "y": 0,
+      "y": 1,
       "z": 0
     },
     "_lrot": {
@@ -2818,8 +2818,8 @@
     "__prefab": null,
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 182,
-      "height": 60
+      "width": 124,
+      "height": 42
     },
     "_anchorPoint": {
       "__type__": "cc.Vec2",
@@ -2851,10 +2851,10 @@
     "_string": "再次挑战",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
-    "_actualFontSize": 25,
-    "_fontSize": 25,
+    "_actualFontSize": 31,
+    "_fontSize": 31,
     "_fontFamily": "Microsoft YaHei",
-    "_lineHeight": 33,
+    "_lineHeight": 38,
     "_overflow": 2,
     "_enableWrapText": true,
     "_font": null,
@@ -2902,8 +2902,8 @@
     "__prefab": null,
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 200,
-      "height": 72
+      "width": 162,
+      "height": 62
     },
     "_anchorPoint": {
       "__type__": "cc.Vec2",
@@ -2976,8 +2976,8 @@
     "_prefab": null,
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": 115,
-      "y": -365,
+      "x": 111.214,
+      "y": -162.13400000000001,
       "z": 0
     },
     "_lrot": {
@@ -3025,7 +3025,7 @@
     "_lpos": {
       "__type__": "cc.Vec3",
       "x": 0,
-      "y": 0,
+      "y": 1,
       "z": 0
     },
     "_lrot": {
@@ -3063,8 +3063,8 @@
     "__prefab": null,
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 162,
-      "height": 60
+      "width": 124,
+      "height": 42
     },
     "_anchorPoint": {
       "__type__": "cc.Vec2",
@@ -3096,10 +3096,10 @@
     "_string": "返回",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
-    "_actualFontSize": 25,
-    "_fontSize": 25,
+    "_actualFontSize": 31,
+    "_fontSize": 31,
     "_fontFamily": "Microsoft YaHei",
-    "_lineHeight": 33,
+    "_lineHeight": 38,
     "_overflow": 2,
     "_enableWrapText": true,
     "_font": null,
@@ -3147,8 +3147,8 @@
     "__prefab": null,
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 180,
-      "height": 72
+      "width": 162,
+      "height": 62
     },
     "_anchorPoint": {
       "__type__": "cc.Vec2",

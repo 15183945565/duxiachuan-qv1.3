@@ -11,6 +11,7 @@ import {
     UIOpacity,
     UITransform,
     Vec3,
+    VerticalTextAlignment,
     sp,
     tween,
 } from 'cc';
@@ -26,7 +27,11 @@ abstract class HomeFeatureMagicSceneHost extends HomeViewBase {
  */
 export abstract class HomeFeatureMagicScene extends HomeFeatureMagicSceneHost {
     protected ensureMagicScenePanel(): void {
-        if (!this.bottomFeaturePanel || this.magicSceneRoot?.isValid) return;
+        if (!this.bottomFeaturePanel) return;
+        if (this.magicSceneRoot?.isValid) {
+            this.syncMagicScenePanelLayout();
+            return;
+        }
     
         const rootInfo = this.getOrCreateBottomFeatureNode(
             this.bottomFeaturePanel,
@@ -55,6 +60,7 @@ export abstract class HomeFeatureMagicScene extends HomeFeatureMagicSceneHost {
             HomeConfig.UI_MAGIC_SCENE_SCROLL_BG,
         ).node;
         bg.setSiblingIndex(0);
+        this.syncMagicScenePanelLayout();
 
         this.magicSceneEntryNodes.length = 0;
         this.magicSceneEntrySkeletons.length = 0;
@@ -130,6 +136,8 @@ export abstract class HomeFeatureMagicScene extends HomeFeatureMagicSceneHost {
         this.magicSceneNameFrame = this.magicSceneNameFrames[this.magicSceneIndex] || null;
         this.magicSceneNameLabel = this.magicSceneNameLabels[this.magicSceneIndex] || null;
 
+        this.ensureMagicSceneChallengeCountHint();
+
         this.magicPrevButton = this.getOrCreateBottomFeatureSkinnedNode(this.magicSceneRoot, 'MagicPrevButton', HomeConfig.MAGIC_SWITCH_BUTTON_WIDTH, HomeConfig.MAGIC_SWITCH_BUTTON_HEIGHT, -HomeConfig.MAGIC_SWITCH_BUTTON_X, HomeConfig.MAGIC_SWITCH_BUTTON_Y, HomeConfig.UI_MAGIC_SWITCH_LEFT).node;
         this.magicPrevButton.setSiblingIndex(10);
         this.bindScaledClick(this.magicPrevButton, () => this.switchMagicScene(-1));
@@ -151,6 +159,119 @@ export abstract class HomeFeatureMagicScene extends HomeFeatureMagicSceneHost {
         this.bindScaledClick(this.magicEnterButton, () => this.openMagicFloorPanel());
         this.setupMagicSceneInput();
         this.ensureMagicSceneCloudAnimation();
+    }
+    protected syncMagicScenePanelLayout(): void {
+        if (!this.magicSceneRoot?.isValid) return;
+
+        this.syncMagicSceneNodeTransform(
+            this.magicSceneRoot,
+            HomeConfig.MAGIC_SCENE_ROOT_WIDTH,
+            HomeConfig.MAGIC_SCENE_ROOT_HEIGHT,
+            0,
+            HomeConfig.MAGIC_SCENE_ROOT_Y,
+        );
+
+        const viewport = this.magicSceneViewport?.isValid
+            ? this.magicSceneViewport
+            : this.magicSceneRoot.getChildByName('MagicSceneViewport');
+        if (viewport?.isValid) {
+            this.magicSceneViewport = viewport;
+            this.syncMagicSceneNodeTransform(viewport, HomeConfig.VIEW_WIDTH, HomeConfig.VIEW_HEIGHT, 0, 0, true);
+        }
+
+        const world = this.magicSceneWorld?.isValid
+            ? this.magicSceneWorld
+            : this.magicSceneViewport?.getChildByName('MagicSceneWorld') || null;
+        if (world?.isValid) {
+            this.magicSceneWorld = world;
+            this.syncMagicSceneNodeTransform(world, HomeConfig.MAGIC_SCENE_WORLD_WIDTH, HomeConfig.MAGIC_SCENE_WORLD_HEIGHT, 0, 0, true);
+        }
+
+        const background = this.magicSceneWorld?.getChildByName('MagicSceneScrollBackground') || null;
+        if (background?.isValid) {
+            this.syncMagicSceneNodeTransform(
+                background,
+                HomeConfig.MAGIC_SCENE_WORLD_WIDTH,
+                HomeConfig.MAGIC_SCENE_WORLD_HEIGHT,
+                HomeConfig.MAGIC_SCENE_BACKGROUND_X,
+                HomeConfig.MAGIC_SCENE_BACKGROUND_Y,
+                true,
+                HomeConfig.MAGIC_SCENE_BACKGROUND_SCALE,
+            );
+            background.setSiblingIndex(0);
+            this.applyUiSkin(background, HomeConfig.UI_MAGIC_SCENE_SCROLL_BG, HomeConfig.MAGIC_SCENE_WORLD_WIDTH, HomeConfig.MAGIC_SCENE_WORLD_HEIGHT);
+        }
+    }
+    protected syncMagicSceneNodeTransform(node: Node, width: number, height: number, x: number, y: number, active?: boolean, scale = 1): void {
+        if (active !== undefined) {
+            node.active = active;
+        }
+        node.setPosition(x, y, 0);
+        node.setScale(scale, scale, 1);
+        (node.getComponent(UITransform) || node.addComponent(UITransform)).setContentSize(width, height);
+    }
+    protected ensureMagicSceneChallengeCountHint(): void {
+        if (!this.magicSceneRoot?.isValid) return;
+
+        const root = this.getOrCreateBottomFeatureNode(
+            this.magicSceneRoot,
+            'MagicChallengeCountRoot',
+            HomeConfig.MAGIC_CHALLENGE_COUNT_ROOT_WIDTH,
+            HomeConfig.MAGIC_CHALLENGE_COUNT_ROOT_HEIGHT,
+            HomeConfig.MAGIC_CHALLENGE_COUNT_ROOT_X,
+            HomeConfig.MAGIC_CHALLENGE_COUNT_ROOT_Y,
+        ).node;
+        root.active = true;
+        root.setSiblingIndex(13);
+
+        const prefix = this.getOrCreateBottomFeatureLabel(
+            root,
+            'MagicChallengeCountPrefix',
+            HomeConfig.MAGIC_CHALLENGE_COUNT_PREFIX_TEXT,
+            HomeConfig.MAGIC_CHALLENGE_COUNT_FONT_SIZE,
+            HomeConfig.MAGIC_CHALLENGE_COUNT_PREFIX_X,
+            0,
+            HomeConfig.MAGIC_CHALLENGE_COUNT_PREFIX_WIDTH,
+            HomeConfig.MAGIC_CHALLENGE_COUNT_TEXT_HEIGHT,
+            new Color(188, 176, 155, 255),
+        ).label;
+        this.applyMagicSceneChallengeCountLabelStyle(prefix, new Color(188, 176, 155, 255));
+
+        const value = this.getOrCreateBottomFeatureLabel(
+            root,
+            'MagicChallengeCountValue',
+            HomeConfig.MAGIC_CHALLENGE_COUNT_VALUE_TEXT,
+            HomeConfig.MAGIC_CHALLENGE_COUNT_FONT_SIZE,
+            HomeConfig.MAGIC_CHALLENGE_COUNT_VALUE_X,
+            0,
+            HomeConfig.MAGIC_CHALLENGE_COUNT_VALUE_WIDTH,
+            HomeConfig.MAGIC_CHALLENGE_COUNT_TEXT_HEIGHT,
+            new Color(40, 196, 58, 255),
+        ).label;
+        this.applyMagicSceneChallengeCountLabelStyle(value, new Color(40, 196, 58, 255));
+
+        const reset = this.getOrCreateBottomFeatureLabel(
+            root,
+            'MagicChallengeCountReset',
+            HomeConfig.MAGIC_CHALLENGE_COUNT_RESET_TEXT,
+            HomeConfig.MAGIC_CHALLENGE_COUNT_FONT_SIZE,
+            HomeConfig.MAGIC_CHALLENGE_COUNT_RESET_X,
+            0,
+            HomeConfig.MAGIC_CHALLENGE_COUNT_RESET_WIDTH,
+            HomeConfig.MAGIC_CHALLENGE_COUNT_TEXT_HEIGHT,
+            new Color(40, 196, 58, 255),
+        ).label;
+        this.applyMagicSceneChallengeCountLabelStyle(reset, new Color(40, 196, 58, 255));
+    }
+    protected applyMagicSceneChallengeCountLabelStyle(label: Label, color: Color): void {
+        label.color = color;
+        label.fontSize = HomeConfig.MAGIC_CHALLENGE_COUNT_FONT_SIZE;
+        label.lineHeight = HomeConfig.MAGIC_CHALLENGE_COUNT_LINE_HEIGHT;
+        label.horizontalAlign = HorizontalTextAlignment.LEFT;
+        label.verticalAlign = VerticalTextAlignment.CENTER;
+        label.overflow = Overflow.SHRINK;
+        label.enableWrapText = false;
+        this.setMagicFloorTextEdge(label, true, new Color(2, 5, 2, 255), 2);
     }
     protected ensureMagicSceneCloudAnimation(): void {
         const cloudLayer = this.magicSceneRoot?.getChildByName('MagicSceneCloudLayer');
@@ -383,7 +504,7 @@ export abstract class HomeFeatureMagicScene extends HomeFeatureMagicSceneHost {
             this.magicFloorTitleLabel.string = `${config.title}\u00b7\u5c42\u6570\u9009\u62e9`;
         }
     
-        this.ensureMagicFloorRows(realmName);
+        this.ensureMagicFloorRows(realmName, this.magicSceneIndex);
     
         this.magicFloorPanel.active = true;
         this.ensureInputBlocker(this.magicFloorPanel);
@@ -409,7 +530,11 @@ export abstract class HomeFeatureMagicScene extends HomeFeatureMagicSceneHost {
             event.propagationStopped = true;
         }, this);
     
-        this.magicFloorBoard = this.getOrCreateBottomFeatureNode(this.magicFloorPanel, 'MagicFloorBoard', HomeConfig.MAGIC_FLOOR_BOARD_WIDTH, HomeConfig.MAGIC_FLOOR_BOARD_HEIGHT, 0, 0).node;
+        const boardInfo = this.getOrCreateBottomFeatureNode(this.magicFloorPanel, 'MagicFloorBoard', HomeConfig.MAGIC_FLOOR_BOARD_WIDTH, HomeConfig.MAGIC_FLOOR_BOARD_HEIGHT, 0, 0);
+        this.magicFloorBoard = boardInfo.node;
+        if (!boardInfo.existed) {
+            this.magicFloorBoard.setScale(HomeConfig.MAGIC_FLOOR_BOARD_SCALE, HomeConfig.MAGIC_FLOOR_BOARD_SCALE, 1);
+        }
         this.magicFloorBoard.setSiblingIndex(4);
 
         this.magicFloorScrollBody = this.getOrCreateBottomFeatureSkinnedNode(
@@ -447,10 +572,12 @@ export abstract class HomeFeatureMagicScene extends HomeFeatureMagicSceneHost {
         ).node;
         this.magicFloorContentRoot.setSiblingIndex(5);
     }
-    protected ensureMagicFloorRows(realmName: string): void {
+    protected ensureMagicFloorRows(realmName: string, realmIndex = this.magicSceneIndex): void {
         if (!this.magicFloorContentRoot?.isValid) return;
 
         HomeConfig.MAGIC_FLOOR_NAMES.forEach((floorName, floorIndex) => {
+            const displayName = this.getMagicFloorDisplayName(realmName, floorName);
+            const attackLimit = this.getMagicFloorAttackLimit(realmIndex);
             const rowY = HomeConfig.MAGIC_FLOOR_ROW_START_Y - floorIndex * HomeConfig.MAGIC_FLOOR_ROW_GAP_Y;
             const row = this.getOrCreateBottomFeatureSkinnedNode(
                 this.magicFloorContentRoot!,
@@ -468,15 +595,56 @@ export abstract class HomeFeatureMagicScene extends HomeFeatureMagicSceneHost {
             const icon = this.getOrCreateBottomFeatureSkinnedNode(row, 'MagicFloorIcon', HomeConfig.MAGIC_FLOOR_ICON_WIDTH, HomeConfig.MAGIC_FLOOR_ICON_HEIGHT, HomeConfig.MAGIC_FLOOR_ICON_X, HomeConfig.MAGIC_FLOOR_ICON_Y, iconPath).node;
             icon.setSiblingIndex(1);
 
-            const title = this.getOrCreateBottomFeatureLabel(row, 'MagicFloorName', realmName, 25, HomeConfig.MAGIC_FLOOR_TEXT_X, 28, HomeConfig.MAGIC_FLOOR_TEXT_WIDTH, 38, new Color(46, 31, 20, 255)).label;
+            const title = this.getOrCreateBottomFeatureLabel(row, 'MagicFloorName', displayName, 25, HomeConfig.MAGIC_FLOOR_TEXT_X, 28, HomeConfig.MAGIC_FLOOR_TEXT_WIDTH, 38, new Color(46, 31, 20, 255)).label;
             title.horizontalAlign = HorizontalTextAlignment.LEFT;
             this.setMagicFloorTextEdge(title, false);
 
-            const detail = this.getOrCreateBottomFeatureLabel(row, 'MagicFloorDetail', '\u63a8\u8350\u6218\u529b\uff1a0\n\u9996\u9886\u8fdb\u5ea6\uff1a0/5', 20, HomeConfig.MAGIC_FLOOR_TEXT_X, -20, HomeConfig.MAGIC_FLOOR_TEXT_WIDTH, 62, new Color(90, 62, 40, 255)).label;
+            const detailInfo = this.getOrCreateBottomFeatureNode(row, 'MagicFloorDetail', HomeConfig.MAGIC_FLOOR_DETAIL_WIDTH, 62, HomeConfig.MAGIC_FLOOR_DETAIL_X, -20);
+            const detailNode = detailInfo.node;
+            detailNode.active = true;
+            if (!detailInfo.existed) {
+                detailNode.setPosition(HomeConfig.MAGIC_FLOOR_DETAIL_X, -20, 0);
+            }
+            const detailTransform = detailNode.getComponent(UITransform) || detailNode.addComponent(UITransform);
+            if (!detailInfo.existed || detailTransform.contentSize.width <= 0 || detailTransform.contentSize.height <= 0) {
+                detailTransform.setContentSize(HomeConfig.MAGIC_FLOOR_DETAIL_WIDTH, 62);
+            }
+            const detail = detailNode.getComponent(Label) || detailNode.addComponent(Label);
+            detail.enabled = true;
+            detail.string = this.getMagicFloorDetailPrefixText();
             detail.horizontalAlign = HorizontalTextAlignment.LEFT;
+            detail.verticalAlign = detail.verticalAlign ?? VerticalTextAlignment.CENTER;
+            detail.overflow = Overflow.SHRINK;
+            detail.enableWrapText = true;
             this.setMagicFloorTextEdge(detail, false);
+            this.syncMagicFloorDetailValueLabel(detailNode, 'MagicFloorAttackLimitValue', attackLimit, '\u653b\u51fb\u529b\u9650\u5236\uff1a', detail, detailTransform, 0);
+            this.syncMagicFloorDetailValueLabel(detailNode, 'MagicFloorMonsterRemainValue', HomeConfig.MAGIC_FLOOR_MONSTER_REMAIN_TEXT, '\u5996\u602a\u5269\u4f59\uff1a', detail, detailTransform, 1);
 
-            const status = this.getOrCreateBottomFeatureLabel(row, 'MagicFloorStatus', '\u53ef\u6311\u6218', 20, 156, 34, 136, 32, new Color(15, 139, 60, 255)).label;
+            const statusResult = this.getOrCreateBottomFeatureLabel(
+                row,
+                'MagicFloorStatus',
+                HomeConfig.MAGIC_FLOOR_STATUS_TEXT,
+                HomeConfig.MAGIC_FLOOR_STATUS_FONT_SIZE,
+                HomeConfig.MAGIC_FLOOR_STATUS_X,
+                HomeConfig.MAGIC_FLOOR_STATUS_Y,
+                HomeConfig.MAGIC_FLOOR_STATUS_WIDTH,
+                HomeConfig.MAGIC_FLOOR_STATUS_HEIGHT,
+                new Color(15, 139, 60, 255),
+            );
+            const status = statusResult.label;
+            if (!statusResult.existed) {
+                status.node.setPosition(HomeConfig.MAGIC_FLOOR_STATUS_X, HomeConfig.MAGIC_FLOOR_STATUS_Y, 0);
+                (status.node.getComponent(UITransform) || status.node.addComponent(UITransform)).setContentSize(
+                    HomeConfig.MAGIC_FLOOR_STATUS_WIDTH,
+                    HomeConfig.MAGIC_FLOOR_STATUS_HEIGHT,
+                );
+                status.fontSize = HomeConfig.MAGIC_FLOOR_STATUS_FONT_SIZE;
+                status.lineHeight = HomeConfig.MAGIC_FLOOR_STATUS_FONT_SIZE + 8;
+            }
+            status.color = new Color(15, 139, 60, 255);
+            status.horizontalAlign = HorizontalTextAlignment.CENTER;
+            status.verticalAlign = VerticalTextAlignment.CENTER;
+            status.overflow = Overflow.SHRINK;
             this.setMagicFloorTextEdge(status, false);
 
             const enter = this.getOrCreateBottomFeatureSkinnedNode(row, 'MagicFloorEnterButton', 150, 58, 156, -18, HomeConfig.UI_MAGIC_FLOOR_ENTER_BUTTON).node;
@@ -485,6 +653,107 @@ export abstract class HomeFeatureMagicScene extends HomeFeatureMagicSceneHost {
             this.setMagicFloorTextEdge(enterText, false);
             this.bindScaledClick(enter, () => this.openMagicFloorReservedPage(this.magicSceneIndex, floorIndex));
         });
+    }
+    protected getMagicFloorDisplayName(realmName: string, floorName: string): string {
+        const shortRealmName = realmName.replace(/\u9b54\u754c$/, '');
+        return `${shortRealmName}${floorName}`;
+    }
+    protected getMagicFloorAttackLimit(realmIndex: number): string {
+        return HomeConfig.MAGIC_FLOOR_ATTACK_LIMITS[realmIndex]
+            || HomeConfig.MAGIC_FLOOR_ATTACK_LIMITS[0]
+            || '2700-5000';
+    }
+    protected getMagicFloorDetailPrefixText(): string {
+        return '\u653b\u51fb\u529b\u9650\u5236\uff1a\n\u5996\u602a\u5269\u4f59\uff1a';
+    }
+    protected syncMagicFloorDetailValueLabel(
+        detailNode: Node,
+        name: string,
+        text: string,
+        prefix: string,
+        sourceLabel: Label,
+        sourceTransform: UITransform,
+        lineIndex: number,
+    ): void {
+        const fontSize = sourceLabel.fontSize || 20;
+        const lineHeight = sourceLabel.lineHeight || fontSize + 8;
+        const width = sourceTransform.contentSize.width || HomeConfig.MAGIC_FLOOR_DETAIL_WIDTH;
+        const valueOffsetX = this.estimateMagicFloorTextWidth(prefix, fontSize);
+        const valueWidth = Math.max(width - valueOffsetX + fontSize, fontSize * Math.max(text.length, 4));
+        const valueY = this.getMagicFloorDetailLineY(sourceLabel, sourceTransform.contentSize.height || 62, lineHeight, lineIndex);
+        const template = this.getMagicFloorDetailValueTemplate(detailNode, name);
+        const labelResult = this.getOrCreateBottomFeatureLabel(
+            detailNode,
+            name,
+            text,
+            fontSize,
+            -width * 0.5 + valueOffsetX + valueWidth * 0.5,
+            valueY,
+            valueWidth,
+            lineHeight,
+            this.getMagicFloorNumberColor(),
+        );
+        const label = labelResult.label;
+        label.node.active = true;
+        const labelTransform = label.node.getComponent(UITransform) || label.node.addComponent(UITransform);
+        if (template) {
+            label.node.setPosition(template.node.position.x, template.node.position.y, template.node.position.z);
+            labelTransform.setContentSize(template.transform.contentSize);
+            label.fontSize = template.label.fontSize;
+            label.lineHeight = template.label.lineHeight;
+            label.horizontalAlign = template.label.horizontalAlign;
+            label.verticalAlign = template.label.verticalAlign;
+            label.overflow = template.label.overflow;
+            label.enableWrapText = template.label.enableWrapText;
+        } else if (!labelResult.existed) {
+            label.node.setPosition(-width * 0.5 + valueOffsetX + valueWidth * 0.5, valueY, 0);
+            labelTransform.setContentSize(valueWidth, lineHeight);
+            label.fontSize = fontSize;
+            label.lineHeight = lineHeight;
+            label.horizontalAlign = HorizontalTextAlignment.LEFT;
+            label.verticalAlign = VerticalTextAlignment.CENTER;
+            label.overflow = Overflow.SHRINK;
+            label.enableWrapText = false;
+        }
+        label.string = text;
+        label.color = this.getMagicFloorNumberColor();
+        this.setMagicFloorTextEdge(label, false);
+        label.node.setSiblingIndex((label.node.parent?.children.length || 1) - 1);
+    }
+    protected getMagicFloorDetailValueTemplate(detailNode: Node, name: string): { node: Node; transform: UITransform; label: Label } | null {
+        if (detailNode.parent?.name === 'MagicFloorRow_1') return null;
+
+        const templateNode = this.magicFloorContentRoot
+            ?.getChildByName('MagicFloorRow_1')
+            ?.getChildByName('MagicFloorDetail')
+            ?.getChildByName(name);
+        if (!templateNode?.isValid) return null;
+
+        const transform = templateNode.getComponent(UITransform);
+        const label = templateNode.getComponent(Label);
+        if (!transform || !label) return null;
+        return { node: templateNode, transform, label };
+    }
+    protected getMagicFloorDetailLineY(label: Label, height: number, lineHeight: number, lineIndex: number): number {
+        const totalHeight = lineHeight * 2;
+        let firstLineY = totalHeight * 0.5 - lineHeight * 0.5;
+        if (label.verticalAlign === VerticalTextAlignment.TOP) {
+            firstLineY = height * 0.5 - lineHeight * 0.5;
+        } else if (label.verticalAlign === VerticalTextAlignment.BOTTOM) {
+            firstLineY = -height * 0.5 + totalHeight - lineHeight * 0.5;
+        }
+        return firstLineY - lineIndex * lineHeight;
+    }
+    protected estimateMagicFloorTextWidth(text: string, fontSize: number): number {
+        return Array.from(text).reduce((width, char) => {
+            return width + (/[\x00-\x7F]/.test(char) ? fontSize * 0.55 : fontSize * 0.92);
+        }, 0);
+    }
+    protected getMagicFloorNumberColor(): Color {
+        const hex = HomeConfig.MAGIC_FLOOR_DETAIL_NUMBER_COLOR.replace('#', '');
+        const value = Number.parseInt(hex, 16);
+        if (Number.isNaN(value)) return new Color(214, 41, 32, 255);
+        return new Color((value >> 16) & 255, (value >> 8) & 255, value & 255, 255);
     }
     protected setMagicFloorTextEdge(label: Label, enabled: boolean, color = new Color(255, 241, 200, 255), width = 1): void {
         label.enableOutline = enabled;

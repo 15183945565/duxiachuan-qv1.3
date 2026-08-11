@@ -15,6 +15,9 @@ import { applySimKaiFont, applySimKaiFontToRichText } from '../Common/UIFont';
 import * as HomeConfig from './HomeConfig';
 import { HomeViewBase } from './HomeViewBase';
 
+const RECORD_PAGE_TITLE_COLOR = new Color(79, 64, 43, 255);
+const RECORD_ROW_OUTLINE_COLOR = new Color(246, 245, 235, 255);
+
 abstract class HomeFeatureBeastCardRecordHost extends HomeViewBase {
     protected abstract beastCardRecordPopup: Node | null;
     protected abstract beastCardRecordScrollView: ScrollView | null;
@@ -49,7 +52,6 @@ export abstract class HomeFeatureBeastCardRecord extends HomeFeatureBeastCardRec
         popup.off(Node.EventType.TOUCH_END);
         popup.on(Node.EventType.TOUCH_END, (event: EventTouch) => {
             event.propagationStopped = true;
-            this.closeBeastCardRecordPopup();
         }, this);
 
         const board = this.getOrCreateBeastCardChildSkinnedNode(
@@ -61,60 +63,53 @@ export abstract class HomeFeatureBeastCardRecord extends HomeFeatureBeastCardRec
             HomeConfig.BEAST_RECORD_POPUP_Y,
             HomeConfig.UI_BEAST_RECORD_POPUP_BG,
         );
+        this.applyUiSkinKeepingEditorSize(
+            board,
+            HomeConfig.UI_BEAST_RECORD_POPUP_BG,
+            HomeConfig.BEAST_RECORD_POPUP_WIDTH,
+            HomeConfig.BEAST_RECORD_POPUP_HEIGHT,
+        );
         board.setSiblingIndex(1);
         board.off(Node.EventType.TOUCH_END);
         board.on(Node.EventType.TOUCH_END, (event: EventTouch) => {
             event.propagationStopped = true;
         }, this);
 
-        const titleFrame = this.getOrCreateBeastCardChildSkinnedNode(
+        this.hideLegacyBeastCardRecordNode(board, 'BeastCardRecordTitleFrame');
+
+        const pageTitle = this.getOrCreateBeastCardChildLabel(
             board,
-            'BeastCardRecordTitleFrame',
-            HomeConfig.BEAST_RECORD_TITLE_FRAME_WIDTH,
-            HomeConfig.BEAST_RECORD_TITLE_FRAME_HEIGHT,
-            0,
-            330,
-            HomeConfig.UI_BEAST_RECORD_TITLE_FRAME,
-        );
-        titleFrame.setSiblingIndex(1);
-        const title = this.getOrCreateBeastCardChildLabel(
-            titleFrame,
             'BeastCardRecordTitle',
-            '\u6398\u5b9d\u8bb0\u5f55',
-            30,
+            '\u4ea7\u51fa\u8bb0\u5f55',
+            42,
             0,
-            2,
-            240,
-            46,
-            new Color(225, 203, 162, 255),
+            HomeConfig.BEAST_RECORD_TITLE_Y,
+            HomeConfig.BEAST_RECORD_TITLE_WIDTH,
+            HomeConfig.BEAST_RECORD_TITLE_HEIGHT,
+            RECORD_PAGE_TITLE_COLOR,
             HorizontalTextAlignment.CENTER,
         );
-        title.lineHeight = 38;
-        this.setLabelOutline(title, new Color(54, 30, 18, 255), 2);
-        title.node.setSiblingIndex(2);
+        pageTitle.lineHeight = 52;
+        pageTitle.overflow = Overflow.SHRINK;
+        pageTitle.enableWrapText = false;
+        this.setLabelOutline(pageTitle, RECORD_ROW_OUTLINE_COLOR, 1);
+        pageTitle.node.setSiblingIndex(1);
 
-        const close = this.getOrCreateBeastCardChildSkinnedNode(
-            board,
-            'BeastCardRecordCloseButton',
-            58,
-            58,
-            244,
-            346,
-            HomeConfig.UI_MAIL_BTN_CLOSE,
-        );
-        close.setSiblingIndex(5);
-        this.bindScaledClick(close, () => this.closeBeastCardRecordPopup());
+        this.hideLegacyBeastCardRecordNode(board, 'BeastCardRecordCloseButton');
 
-        const list = this.getOrCreateBeastCardChildNode(
+        const listResult = this.getOrCreateBeastCardChildNode(
             board,
             'BeastCardRecordList',
             HomeConfig.BEAST_RECORD_VIEWPORT_WIDTH,
             HomeConfig.BEAST_RECORD_VIEWPORT_HEIGHT,
             0,
             HomeConfig.BEAST_RECORD_VIEWPORT_Y,
-        ).node;
+        );
+        const list = listResult.node;
         const listTransform = list.getComponent(UITransform) || list.addComponent(UITransform);
-        listTransform.setContentSize(HomeConfig.BEAST_RECORD_VIEWPORT_WIDTH, HomeConfig.BEAST_RECORD_VIEWPORT_HEIGHT);
+        if (!listResult.existed || listTransform.contentSize.width <= 0 || listTransform.contentSize.height <= 0) {
+            listTransform.setContentSize(HomeConfig.BEAST_RECORD_VIEWPORT_WIDTH, HomeConfig.BEAST_RECORD_VIEWPORT_HEIGHT);
+        }
         const listMask = list.getComponent(Mask) || list.addComponent(Mask);
         listMask.type = Mask.Type.GRAPHICS_RECT;
         listMask.enabled = true;
@@ -129,14 +124,23 @@ export abstract class HomeFeatureBeastCardRecord extends HomeFeatureBeastCardRec
         this.beastCardRecordScrollView = scroll;
         list.setSiblingIndex(2);
 
-        const content = this.getOrCreateBeastCardChildNode(
+        const viewportSize = listTransform.contentSize;
+        const contentResult = this.getOrCreateBeastCardChildNode(
             list,
             'BeastCardRecordContent',
-            HomeConfig.BEAST_RECORD_VIEWPORT_WIDTH,
-            HomeConfig.BEAST_RECORD_VIEWPORT_HEIGHT,
+            viewportSize.width > 0 ? viewportSize.width : HomeConfig.BEAST_RECORD_VIEWPORT_WIDTH,
+            viewportSize.height > 0 ? viewportSize.height : HomeConfig.BEAST_RECORD_VIEWPORT_HEIGHT,
             0,
             0,
-        ).node;
+        );
+        const content = contentResult.node;
+        const contentTransform = content.getComponent(UITransform) || content.addComponent(UITransform);
+        if (!contentResult.existed || contentTransform.contentSize.width <= 0 || contentTransform.contentSize.height <= 0) {
+            contentTransform.setContentSize(
+                viewportSize.width > 0 ? viewportSize.width : HomeConfig.BEAST_RECORD_VIEWPORT_WIDTH,
+                viewportSize.height > 0 ? viewportSize.height : HomeConfig.BEAST_RECORD_VIEWPORT_HEIGHT,
+            );
+        }
         content.setSiblingIndex(0);
         this.beastCardRecordContent = content;
         scroll.content = content;
@@ -151,6 +155,11 @@ export abstract class HomeFeatureBeastCardRecord extends HomeFeatureBeastCardRec
         this.refreshBeastCardRecordPopup();
         this.beastCardRecordPopup.active = true;
         this.beastCardRecordPopup.setSiblingIndex(40);
+        const back = this.bottomFeaturePanel?.getChildByName('BottomFeatureBack');
+        if (back?.isValid && this.bottomFeaturePanel?.isValid) {
+            back.active = true;
+            back.setSiblingIndex((this.bottomFeaturePanel.children.length || 1) - 1);
+        }
         this.scheduleOnce(() => {
             this.beastCardRecordScrollView?.scrollToTop(0.01);
         }, 0);
@@ -182,30 +191,69 @@ export abstract class HomeFeatureBeastCardRecord extends HomeFeatureBeastCardRec
         mask.type = Mask.Type.GRAPHICS_RECT;
         mask.enabled = true;
 
-        const content = this.getOrCreateBeastCardChildNode(
+        const listTransform = list.getComponent(UITransform) || list.addComponent(UITransform);
+        const viewportSize = listTransform.contentSize;
+        const viewportWidth = viewportSize.width > 0 ? viewportSize.width : HomeConfig.BEAST_RECORD_VIEWPORT_WIDTH;
+        const viewportHeight = viewportSize.height > 0 ? viewportSize.height : HomeConfig.BEAST_RECORD_VIEWPORT_HEIGHT;
+
+        const contentResult = this.getOrCreateBeastCardChildNode(
             list,
             'BeastCardRecordContent',
-            HomeConfig.BEAST_RECORD_VIEWPORT_WIDTH,
-            HomeConfig.BEAST_RECORD_VIEWPORT_HEIGHT,
+            viewportWidth,
+            viewportHeight,
             0,
             0,
-        ).node;
+        );
+        const content = contentResult.node;
         list.children
             .filter((child) => child !== content && /^BeastCardRecordRow_\d+$/.test(child.name))
             .forEach((child) => {
                 child.setParent(content);
             });
 
-        const viewportHeight = HomeConfig.BEAST_RECORD_VIEWPORT_HEIGHT;
-        const topPadding = 20;
-        const bottomPadding = 20;
-        const contentHeight = Math.max(
-            viewportHeight,
-            topPadding + bottomPadding + records.length * HomeConfig.BEAST_RECORD_ROW_GAP,
-        );
         const contentTransform = content.getComponent(UITransform) || content.addComponent(UITransform);
-        contentTransform.setContentSize(HomeConfig.BEAST_RECORD_VIEWPORT_WIDTH, contentHeight);
-        content.setPosition(0, (viewportHeight - contentHeight) / 2, 0);
+        const existingRecordRows = content.children
+            .filter((child) => /^BeastCardRecordRow_\d+$/.test(child.name))
+            .sort((a, b) => {
+                const aIndex = Number(a.name.replace('BeastCardRecordRow_', ''));
+                const bIndex = Number(b.name.replace('BeastCardRecordRow_', ''));
+                return aIndex - bIndex;
+            });
+        const templateRow = content.getChildByName('BeastCardRecordRow_1') || existingRecordRows[0] || null;
+        const secondTemplateRow = content.getChildByName('BeastCardRecordRow_2') || existingRecordRows[1] || null;
+        const templateTransform = templateRow?.getComponent(UITransform) || null;
+        const templateSize = templateTransform?.contentSize;
+        const rowWidth = templateSize && templateSize.width > 0 ? templateSize.width : HomeConfig.BEAST_RECORD_ROW_WIDTH;
+        const rowHeight = templateSize && templateSize.height > 0 ? templateSize.height : HomeConfig.BEAST_RECORD_ROW_HEIGHT;
+        const rowX = templateRow?.position.x ?? 0;
+        let rowStep = templateRow && secondTemplateRow
+            ? Math.abs(templateRow.position.y - secondTemplateRow.position.y)
+            : rowHeight + HomeConfig.BEAST_RECORD_ROW_GAP;
+        if (!Number.isFinite(rowStep) || rowStep <= 0) {
+            rowStep = rowHeight + HomeConfig.BEAST_RECORD_ROW_GAP;
+        }
+
+        const contentSize = contentTransform.contentSize;
+        let contentHeight = contentSize.height > 0 ? contentSize.height : viewportHeight;
+        const lastTemplateRow = existingRecordRows[existingRecordRows.length - 1] || templateRow;
+        const topPadding = templateRow && contentHeight > 0
+            ? Math.max(0, contentHeight / 2 - templateRow.position.y - rowHeight / 2)
+            : HomeConfig.BEAST_RECORD_ROW_TOP_PADDING;
+        const bottomPadding = lastTemplateRow && contentHeight > 0
+            ? Math.max(0, contentHeight / 2 + lastTemplateRow.position.y - rowHeight / 2)
+            : 40;
+        const requiredContentHeight = Math.max(
+            viewportHeight,
+            topPadding
+                + bottomPadding
+                + records.length * rowHeight
+                + Math.max(0, records.length - 1) * Math.max(0, rowStep - rowHeight),
+        );
+        contentHeight = Math.max(contentHeight, requiredContentHeight);
+        contentTransform.setContentSize(viewportWidth, contentHeight);
+        if (!contentResult.existed) {
+            content.setPosition(0, (viewportHeight - contentHeight) / 2, 0);
+        }
         content.active = true;
         content.setSiblingIndex(0);
         scroll.content = content;
@@ -218,21 +266,21 @@ export abstract class HomeFeatureBeastCardRecord extends HomeFeatureBeastCardRec
                 child.active = false;
             });
 
-        const startY = contentHeight / 2 - topPadding - HomeConfig.BEAST_RECORD_ROW_HEIGHT / 2;
+        const startY = contentHeight / 2 - topPadding - rowHeight / 2;
         for (let index = 0; index < records.length; index += 1) {
             const record = records[index];
             const row = this.getOrCreateBeastCardChildNode(
                 content,
                 `BeastCardRecordRow_${index + 1}`,
-                HomeConfig.BEAST_RECORD_VIEWPORT_WIDTH,
-                HomeConfig.BEAST_RECORD_ROW_HEIGHT,
-                0,
-                startY - index * HomeConfig.BEAST_RECORD_ROW_GAP,
+                rowWidth,
+                rowHeight,
+                rowX,
+                startY - index * rowStep,
             ).node;
-            row.setPosition(0, startY - index * HomeConfig.BEAST_RECORD_ROW_GAP, 0);
+            row.setPosition(rowX, startY - index * rowStep, 0);
             (row.getComponent(UITransform) || row.addComponent(UITransform)).setContentSize(
-                HomeConfig.BEAST_RECORD_VIEWPORT_WIDTH,
-                HomeConfig.BEAST_RECORD_ROW_HEIGHT,
+                rowWidth,
+                rowHeight,
             );
             row.active = true;
             row.setSiblingIndex(index);
@@ -242,34 +290,58 @@ export abstract class HomeFeatureBeastCardRecord extends HomeFeatureBeastCardRec
 
     protected applyBeastCardRecordRow(row: Node, time: string, beastName: string, amount: string): void {
         [
-            'BeastCardRecordTime',
             'BeastCardRecordBeastName',
             'BeastCardRecordOutputText',
+            'BeastCardRecordYuanbaoIcon',
             'BeastCardRecordAmount',
+            'BeastCardRecordTime',
         ].forEach((nodeName) => {
-            const labelNode = row.getChildByName(nodeName);
-            if (labelNode?.isValid) labelNode.active = false;
+            const child = row.getChildByName(nodeName);
+            if (!child?.isValid) return;
+            this.skinApplyVersions.set(child, ++this.skinApplyVersion);
+            child.active = false;
         });
 
-        const richNode = this.getOrCreateBeastCardChildNode(row, 'BeastCardRecordRichText', 470, 63.28, 7, -9).node;
+        const richResult = this.getOrCreateBeastCardChildNode(
+            row,
+            'BeastCardRecordRichText',
+            HomeConfig.BEAST_RECORD_RICH_TEXT_WIDTH,
+            HomeConfig.BEAST_RECORD_RICH_TEXT_HEIGHT,
+            HomeConfig.BEAST_RECORD_RICH_TEXT_X,
+            HomeConfig.BEAST_RECORD_RICH_TEXT_Y,
+        );
+        const richNode = richResult.node;
         richNode.active = true;
-        richNode.setPosition(7, -9, 0);
-        (richNode.getComponent(UITransform) || richNode.addComponent(UITransform)).setContentSize(470, 63.28);
+        if (!richResult.existed) {
+            richNode.setPosition(
+                HomeConfig.BEAST_RECORD_RICH_TEXT_X,
+                HomeConfig.BEAST_RECORD_RICH_TEXT_Y,
+                0,
+            );
+        }
+        const richTransform = richNode.getComponent(UITransform) || richNode.addComponent(UITransform);
+        if (!richResult.existed || richTransform.contentSize.width <= 0 || richTransform.contentSize.height <= 0) {
+            richTransform.setContentSize(
+                HomeConfig.BEAST_RECORD_RICH_TEXT_WIDTH,
+                HomeConfig.BEAST_RECORD_RICH_TEXT_HEIGHT,
+            );
+        }
+        const richSize = richTransform.contentSize;
         const label = richNode.getComponent(Label);
         if (label) label.enabled = false;
         const richText = richNode.getComponent(RichText) || richNode.addComponent(RichText);
         richText.enabled = true;
         richText.string = this.formatBeastCardRecordRichText(time, beastName, amount);
-        richText.fontSize = 21;
-        richText.lineHeight = 28;
-        richText.maxWidth = 470;
+        richText.fontSize = richResult.existed && richText.fontSize > 0 ? richText.fontSize : 25;
+        richText.lineHeight = richResult.existed && richText.lineHeight > 0 ? richText.lineHeight : 34;
+        richText.maxWidth = richSize.width > 0 ? richSize.width : HomeConfig.BEAST_RECORD_RICH_TEXT_WIDTH;
         richText.horizontalAlign = HorizontalTextAlignment.LEFT;
         applySimKaiFontToRichText(richText);
 
         const divider = this.getOrCreateBeastCardChildSkinnedNode(
             row,
             'BeastCardRecordDivider',
-            456,
+            HomeConfig.BEAST_RECORD_ROW_WIDTH,
             4,
             0,
             -35,
@@ -279,17 +351,17 @@ export abstract class HomeFeatureBeastCardRecord extends HomeFeatureBeastCardRec
         richNode.setSiblingIndex(1);
     }
 
+    protected formatBeastCardRecordTime(time: string): string {
+        return time.replace(/[\uff0c,]\s*$/, '');
+    }
+
     protected formatBeastCardRecordRichText(time: string, beastName: string, amount: string): string {
-        const baseColor = '#ead9bd';
-        const valueGreen = '#3dee30';
-        const amountColor = '#ff3434';
-        const outlineColor = '#1a0e08';
         return [
-            `<outline color=${outlineColor} width=2>`,
-            `<color=${baseColor}>${this.escapeRichText(time)}</color><br/>`,
-            `<color=${valueGreen}>${this.escapeRichText(beastName)}</color>`,
-            `<color=${baseColor}>  \u4ea7\u51fa</color>`,
-            `<color=${amountColor}>${this.escapeRichText(amount)}</color>`,
+            '<outline color=#f5efe4 width=1>',
+            `<color=#8f7b58>${this.escapeRichText(this.formatBeastCardRecordTime(time))}\uff0c</color>`,
+            `<color=#19b82d>${this.escapeRichText(beastName)}</color>`,
+            '<color=#8f7b58>\u4ea7\u51fa</color>',
+            `<color=#d63030>${this.escapeRichText(amount)}</color>`,
             '</outline>',
         ].join('');
     }
@@ -333,6 +405,19 @@ export abstract class HomeFeatureBeastCardRecord extends HomeFeatureBeastCardRec
         }
 
         return { node: this.createNode(name, parent, width, height, x, y), existed: false };
+    }
+
+    protected hideLegacyBeastCardRecordNode(parent: Node, name: string): void {
+        const node = parent.getChildByName(name);
+        if (!node?.isValid) return;
+
+        this.skinApplyVersions.set(node, ++this.skinApplyVersion);
+        node.off(Node.EventType.TOUCH_END);
+        node.children.forEach((child) => {
+            this.skinApplyVersions.set(child, ++this.skinApplyVersion);
+            child.active = false;
+        });
+        node.active = false;
     }
 
     protected getOrCreateBeastCardChildSkinnedNode(parent: Node, name: string, width: number, height: number, x: number, y: number, skinPath: string): Node {

@@ -7,8 +7,12 @@ import {
     Mask,
     Node,
     Overflow,
+    Tween,
+    UIOpacity,
     UITransform,
+    Vec3,
     VerticalTextAlignment,
+    tween,
 } from 'cc';
 import { applySimKaiFont } from '../Common/UIFont';
 import {
@@ -36,6 +40,9 @@ abstract class HomeFeatureBeastStrengthenPageHost extends HomeViewBase {
     protected abstract handleBeastStrengthenActionButtonClick(): void;
     protected abstract handleBeastStrengthenRemoveGemButtonClick(): void;
     protected abstract setLabelOutline(label: Label, color: Color, width: number): void;
+    protected abstract isCurrentBeastCardActivated(): boolean;
+    protected abstract showCurrentBeastCardActivationRequiredToast(): void;
+    protected abstract raiseBottomFeatureBackButton(): void;
 }
 
 /**
@@ -146,6 +153,8 @@ export abstract class HomeFeatureBeastStrengthenPage extends HomeFeatureBeastStr
             42,
             new Color(255, 232, 170, 255),
         );
+        (selectedNameLabel.node.getComponent(UITransform) || selectedNameLabel.node.addComponent(UITransform)).setContentSize(260, 42);
+        selectedNameLabel.enableWrapText = false;
         this.applyBeastStrengthenTextOutline(selectedNameLabel, 2);
 
         BEAST_STRENGTHEN_GEM_SLOT_POSITIONS.forEach((position, index) => {
@@ -161,6 +170,17 @@ export abstract class HomeFeatureBeastStrengthenPage extends HomeFeatureBeastStr
             this.getOrCreateBottomFeatureSkinnedNode(slot, 'BeastGemSlotPlus', 58, 58, 0, 0, HomeConfig.UI_BEAST_STRENGTHEN_PLUS_ICON).node.setSiblingIndex(1);
             this.getOrCreateBottomFeatureSkinnedNode(slot, 'BeastGemSlotLock', 42, 52, 0, 0, HomeConfig.UI_BEAST_STRENGTHEN_LOCK_ICON).node.setSiblingIndex(2);
             this.getOrCreateBottomFeatureNode(slot, 'BeastGemSlotIcon', HomeConfig.BEAST_STRENGTHEN_GEM_ICON_SIZE, HomeConfig.BEAST_STRENGTHEN_GEM_ICON_SIZE, 0, 0).node.setSiblingIndex(3);
+            const selectedFrame = this.getOrCreateBottomFeatureSkinnedNode(
+                slot,
+                'BeastGemSlotSelectedFrame',
+                HomeConfig.BEAST_STRENGTHEN_EQUIP_SELECTED_FRAME_SIZE,
+                HomeConfig.BEAST_STRENGTHEN_EQUIP_SELECTED_FRAME_SIZE,
+                0,
+                0,
+                HomeConfig.UI_BEAST_STRENGTHEN_SELECTED_FRAME,
+            ).node;
+            selectedFrame.active = false;
+            selectedFrame.setSiblingIndex(4);
             this.bindScaledClick(slot, () => this.handleBeastStrengthenGemSlotClick(index));
         });
 
@@ -190,8 +210,20 @@ export abstract class HomeFeatureBeastStrengthenPage extends HomeFeatureBeastStr
             slot.setSiblingIndex(index);
             this.getOrCreateBottomFeatureNode(slot, 'BeastEquipIcon', HomeConfig.BEAST_STRENGTHEN_EQUIP_ICON_SIZE, HomeConfig.BEAST_STRENGTHEN_EQUIP_ICON_SIZE, 0, 0).node.setSiblingIndex(1);
             this.getOrCreateBottomFeatureSkinnedNode(slot, 'BeastEquipLock', 42, 52, 0, 0, HomeConfig.UI_BEAST_STRENGTHEN_LOCK_ICON).node.setSiblingIndex(2);
-            const selectedFrame = this.getOrCreateBottomFeatureNode(slot, 'BeastEquipSelectedFrame', 106, 106, 0, 0).node;
+            const selectedFrame = this.getOrCreateBottomFeatureSkinnedNode(
+                slot,
+                'BeastEquipSelectedFrame',
+                HomeConfig.BEAST_STRENGTHEN_EQUIP_SELECTED_FRAME_SIZE,
+                HomeConfig.BEAST_STRENGTHEN_EQUIP_SELECTED_FRAME_SIZE,
+                0,
+                0,
+                HomeConfig.UI_BEAST_STRENGTHEN_SELECTED_FRAME,
+            ).node;
             selectedFrame.active = false;
+            (selectedFrame.getComponent(UITransform) || selectedFrame.addComponent(UITransform)).setContentSize(
+                HomeConfig.BEAST_STRENGTHEN_EQUIP_SELECTED_FRAME_SIZE,
+                HomeConfig.BEAST_STRENGTHEN_EQUIP_SELECTED_FRAME_SIZE,
+            );
             selectedFrame.setSiblingIndex(3);
         });
 
@@ -259,6 +291,10 @@ export abstract class HomeFeatureBeastStrengthenPage extends HomeFeatureBeastStr
     }
 
     protected openBeastStrengthenPage(): void {
+        if (!this.isCurrentBeastCardActivated()) {
+            this.showCurrentBeastCardActivationRequiredToast();
+            return;
+        }
         this.ensureBeastStrengthenPage();
         if (!this.beastStrengthenPage?.isValid) return;
 
@@ -364,20 +400,34 @@ export abstract class HomeFeatureBeastStrengthenPage extends HomeFeatureBeastStr
     }
 
     protected ensureBeastStrengthenGemSelectPopup(): Node | null {
-        if (!this.beastStrengthenPage?.isValid) return null;
+        if (!this.beastStrengthenPage?.isValid || !this.bottomFeaturePanel?.isValid) return null;
 
-        const popup = this.getOrCreateBottomFeatureNode(this.beastStrengthenPage, 'BeastGemSelectPopup', HomeConfig.VIEW_WIDTH, HomeConfig.VIEW_HEIGHT, 0, 0).node;
+        let popup = this.bottomFeaturePanel.getChildByName('BeastGemSelectPopup')
+            || this.beastStrengthenPage.getChildByName('BeastGemSelectPopup');
+        if (!popup?.isValid) {
+            popup = this.createNode('BeastGemSelectPopup', this.bottomFeaturePanel, HomeConfig.VIEW_WIDTH, HomeConfig.VIEW_HEIGHT, 0, 0);
+        } else if (popup.parent !== this.bottomFeaturePanel) {
+            popup.setParent(this.bottomFeaturePanel);
+        }
         popup.active = false;
-        popup.setSiblingIndex(30);
+        popup.setPosition(0, 0, 0);
+        (popup.getComponent(UITransform) || popup.addComponent(UITransform)).setContentSize(HomeConfig.VIEW_WIDTH, HomeConfig.VIEW_HEIGHT);
+        popup.setSiblingIndex((this.bottomFeaturePanel.children.length || 1) - 1);
         this.ensureInputBlocker(popup);
+        popup.off(Node.EventType.TOUCH_END);
+        popup.on(Node.EventType.TOUCH_END, (event: EventTouch) => {
+            event.propagationStopped = true;
+            this.closeBeastStrengthenGemSelectPopup();
+        }, this);
         this.beastStrengthenGemSelectPopup = popup;
 
         const mask = this.getOrCreateBottomFeatureNode(popup, 'BeastGemSelectMask', HomeConfig.VIEW_WIDTH, HomeConfig.VIEW_HEIGHT, 0, 0).node;
+        mask.setPosition(0, 0, 0);
+        (mask.getComponent(UITransform) || mask.addComponent(UITransform)).setContentSize(HomeConfig.VIEW_WIDTH, HomeConfig.VIEW_HEIGHT);
         const graphics = mask.getComponent(Graphics) || mask.addComponent(Graphics);
         graphics.clear();
-        graphics.fillColor = new Color(0, 0, 0, 145);
-        graphics.rect(-HomeConfig.VIEW_WIDTH / 2, -HomeConfig.VIEW_HEIGHT / 2, HomeConfig.VIEW_WIDTH, HomeConfig.VIEW_HEIGHT);
-        graphics.fill();
+        this.ensureInputBlocker(mask);
+        mask.setSiblingIndex(0);
         mask.off(Node.EventType.TOUCH_END);
         mask.on(Node.EventType.TOUCH_END, (event: EventTouch) => {
             event.propagationStopped = true;
@@ -387,15 +437,20 @@ export abstract class HomeFeatureBeastStrengthenPage extends HomeFeatureBeastStr
         const board = this.getOrCreateBottomFeatureNode(
             popup,
             'BeastGemSelectBoard',
-            HomeConfig.ROLE_EQUIP_REPLACE_WIDTH,
-            HomeConfig.ROLE_EQUIP_REPLACE_HEIGHT,
+            HomeConfig.ROLE_EQUIP_REPLACE_DRAWER_WIDTH,
+            HomeConfig.ROLE_EQUIP_REPLACE_DRAWER_HEIGHT,
             0,
-            0,
+            HomeConfig.ROLE_EQUIP_REPLACE_DRAWER_Y,
         ).node;
         board.active = true;
-        board.setPosition(0, 0, 0);
-        (board.getComponent(UITransform) || board.addComponent(UITransform)).setContentSize(HomeConfig.ROLE_EQUIP_REPLACE_WIDTH, HomeConfig.ROLE_EQUIP_REPLACE_HEIGHT);
-        this.applyUiSkin(board, HomeConfig.UI_ROLE_EQUIP_REPLACE_BG, HomeConfig.ROLE_EQUIP_REPLACE_WIDTH, HomeConfig.ROLE_EQUIP_REPLACE_HEIGHT);
+        board.setPosition(0, HomeConfig.ROLE_EQUIP_REPLACE_DRAWER_Y, 0);
+        (board.getComponent(UITransform) || board.addComponent(UITransform)).setContentSize(HomeConfig.ROLE_EQUIP_REPLACE_DRAWER_WIDTH, HomeConfig.ROLE_EQUIP_REPLACE_DRAWER_HEIGHT);
+        this.applyUiSkin(
+            board,
+            HomeConfig.UI_BEAST_STRENGTHEN_GEM_SELECT_BG,
+            HomeConfig.ROLE_EQUIP_REPLACE_DRAWER_WIDTH,
+            HomeConfig.ROLE_EQUIP_REPLACE_DRAWER_HEIGHT,
+        );
         board.setSiblingIndex(2);
         board.off(Node.EventType.TOUCH_START);
         board.off(Node.EventType.TOUCH_END);
@@ -406,8 +461,8 @@ export abstract class HomeFeatureBeastStrengthenPage extends HomeFeatureBeastStr
             event.propagationStopped = true;
         }, this);
 
-        const title = this.getOrCreateBeastStrengthenLabel(board, 'BeastGemSelectTitle', '\u9009\u62e9\u5b9d\u77f3', 32, 0, 330, 280, 48, new Color(255, 236, 188, 255));
-        title.node.setPosition(0, 330, 0);
+        const title = this.getOrCreateBeastStrengthenLabel(board, 'BeastGemSelectTitle', '\u653e\u7f6e\u5b9d\u77f3', 32, 0, HomeConfig.ROLE_EQUIP_REPLACE_DRAWER_TITLE_Y, 280, 48, new Color(255, 236, 188, 255));
+        title.node.setPosition(0, HomeConfig.ROLE_EQUIP_REPLACE_DRAWER_TITLE_Y, 0);
         (title.node.getComponent(UITransform) || title.node.addComponent(UITransform)).setContentSize(280, 48);
         title.fontSize = 32;
         title.lineHeight = 40;
@@ -420,26 +475,86 @@ export abstract class HomeFeatureBeastStrengthenPage extends HomeFeatureBeastStr
         const closeButton = board.getChildByName('BeastGemSelectCloseButton');
         if (closeButton?.isValid) closeButton.active = false;
 
-        const viewportHeight = 610;
-        const viewport = this.getOrCreateBottomFeatureNode(board, 'BeastGemSelectViewport', 480, viewportHeight, 0, -18).node;
+        const viewportHeight = HomeConfig.ROLE_EQUIP_REPLACE_DRAWER_VIEWPORT_HEIGHT;
+        const viewport = this.getOrCreateBottomFeatureNode(
+            board,
+            'BeastGemSelectViewport',
+            HomeConfig.ROLE_EQUIP_REPLACE_DRAWER_VIEWPORT_WIDTH,
+            viewportHeight,
+            0,
+            HomeConfig.ROLE_EQUIP_REPLACE_DRAWER_VIEWPORT_Y,
+        ).node;
         viewport.active = true;
-        viewport.setPosition(0, -18, 0);
-        (viewport.getComponent(UITransform) || viewport.addComponent(UITransform)).setContentSize(480, viewportHeight);
+        viewport.setPosition(0, HomeConfig.ROLE_EQUIP_REPLACE_DRAWER_VIEWPORT_Y, 0);
+        (viewport.getComponent(UITransform) || viewport.addComponent(UITransform)).setContentSize(HomeConfig.ROLE_EQUIP_REPLACE_DRAWER_VIEWPORT_WIDTH, viewportHeight);
         const viewportMask = viewport.getComponent(Mask) || viewport.addComponent(Mask);
         viewportMask.type = Mask.Type.GRAPHICS_RECT;
         viewport.setSiblingIndex(3);
 
-        const grid = this.getOrCreateBottomFeatureNode(viewport, 'BeastGemSelectGrid', 480, viewportHeight, 0, 0).node;
+        const grid = this.getOrCreateBottomFeatureNode(viewport, 'BeastGemSelectGrid', HomeConfig.ROLE_EQUIP_REPLACE_DRAWER_VIEWPORT_WIDTH, viewportHeight, 0, 0).node;
         grid.active = true;
         grid.setPosition(0, 0, 0);
-        (grid.getComponent(UITransform) || grid.addComponent(UITransform)).setContentSize(480, viewportHeight);
+        (grid.getComponent(UITransform) || grid.addComponent(UITransform)).setContentSize(HomeConfig.ROLE_EQUIP_REPLACE_DRAWER_VIEWPORT_WIDTH, viewportHeight);
         grid.setSiblingIndex(0);
         return popup;
     }
 
-    protected closeBeastStrengthenGemSelectPopup(): void {
-        if (this.beastStrengthenGemSelectPopup?.isValid) {
-            this.beastStrengthenGemSelectPopup.active = false;
+    protected async slideBeastStrengthenGemSelectDrawer(
+        board: Node,
+        fromY: number,
+        toY: number,
+        duration = 0.18,
+        easing: 'sineOut' | 'sineIn' = 'sineOut',
+    ): Promise<void> {
+        board.active = true;
+        board.setPosition(0, fromY, 0);
+        Tween.stopAllByTarget(board);
+        await new Promise<void>((resolve) => {
+            tween(board)
+                .to(duration, { position: new Vec3(0, toY, 0) }, { easing })
+                .call(() => resolve())
+                .start();
+        });
+    }
+
+    protected showBeastStrengthenGemSelectDrawer(popup: Node, board: Node): void {
+        const parent = popup.parent;
+        popup.active = true;
+        popup.setPosition(0, 0, 0);
+        (popup.getComponent(UITransform) || popup.addComponent(UITransform)).setContentSize(HomeConfig.VIEW_WIDTH, HomeConfig.VIEW_HEIGHT);
+        if (parent?.isValid) {
+            popup.setSiblingIndex((parent.children.length || 1) - 1);
         }
+        const opacity = popup.getComponent(UIOpacity) || popup.addComponent(UIOpacity);
+        opacity.opacity = 255;
+        void this.slideBeastStrengthenGemSelectDrawer(
+            board,
+            HomeConfig.ROLE_EQUIP_REPLACE_DRAWER_HIDDEN_Y,
+            HomeConfig.ROLE_EQUIP_REPLACE_DRAWER_Y,
+            0.22,
+            'sineOut',
+        );
+    }
+
+    protected closeBeastStrengthenGemSelectPopup(): void {
+        const popup = this.beastStrengthenGemSelectPopup;
+        if (!popup?.isValid || !popup.active) return;
+        const board = popup.getChildByName('BeastGemSelectBoard');
+        if (!board?.isValid) {
+            popup.active = false;
+            this.raiseBottomFeatureBackButton();
+            return;
+        }
+
+        void this.slideBeastStrengthenGemSelectDrawer(
+            board,
+            board.position.y,
+            HomeConfig.ROLE_EQUIP_REPLACE_DRAWER_HIDDEN_Y,
+            0.16,
+            'sineIn',
+        ).then(() => {
+            popup.active = false;
+            this.raiseBottomFeatureBackButton();
+        });
     }
 }

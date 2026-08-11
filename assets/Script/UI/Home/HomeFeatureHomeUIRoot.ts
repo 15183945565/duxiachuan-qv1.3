@@ -41,7 +41,7 @@ export abstract class HomeFeatureHomeUIRoot extends HomeViewBase {
             ? this.gameSceneLayer
             : this.node.getChildByName(UI_LAYER_NAMES.gameScene);
         if (gameLayer?.isValid) {
-            ['DuelJianghuMusicAudio', 'DuelJianghuEffectAudio', 'DuelLuanshiMusicAudio', 'GlobalButtonClickAudio'].forEach((name) => {
+            ['DuelJianghuMusicAudio', 'DuelJianghuEffectAudio', 'DuelLuanshiMusicAudio', 'BattleEffectAudio', 'GlobalButtonClickAudio'].forEach((name) => {
                 const audioNode = this.node.getChildByName(name);
                 if (audioNode?.isValid) audioNode.setParent(gameLayer);
             });

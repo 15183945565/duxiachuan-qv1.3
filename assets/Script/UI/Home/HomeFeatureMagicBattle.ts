@@ -1,6 +1,7 @@
 import {
     Node,
     Tween,
+    Vec3,
     sp,
     tween,
 } from 'cc';
@@ -42,6 +43,8 @@ abstract class HomeFeatureMagicBattleHost extends HomeViewBase {
     protected abstract setupMagicMapAssistCards(): void;
     protected abstract closeMagicMapAssistCardConfirmPopup(): void;
     protected abstract hideLegacyMagicBattleAssistCards(): void;
+    protected abstract refreshMagicBattleAssistEffectLabels(): void;
+    protected abstract getMagicBattlePowerMultiplier(): number;
     protected abstract openBattleRewardPopup(
         rewards?: Array<{ item: BagIllustrationCatalogItem; amount: string }> | null,
         closeMode?: 'battle' | 'popupOnly' | 'magic',
@@ -77,12 +80,14 @@ export abstract class HomeFeatureMagicBattle extends HomeFeatureMagicBattleHost 
         this.magicBattleTarget = monster;
         this.magicBattleActive = false;
         this.magicBattleDuelTargetId = '';
+        this.magicBattleAttackSequenceId += 1;
         this.magicBattleEnemyMaxHp = monster.maxHp || (monster.isBoss ? HomeConfig.MAGIC_MAP_BOSS_MONSTER_MAX_HP : HomeConfig.MAGIC_MAP_SMALL_MONSTER_MAX_HP);
         this.magicBattleEnemyHp = this.magicBattleEnemyMaxHp;
         this.ensureMagicBattleDamageHud();
         this.ensureMagicBattleDuelPopup();
         this.hideLegacyMagicBattleAssistCards();
         this.closeMagicMapAssistCardConfirmPopup();
+        this.refreshMagicBattleAssistEffectLabels();
         this.magicBattleDamageCollapsed = false;
         this.resetMagicBattleDamageState();
         if (this.magicBattleEnemyNameLabel) {
@@ -96,10 +101,16 @@ export abstract class HomeFeatureMagicBattle extends HomeFeatureMagicBattleHost 
         if (this.magicBattleHintLabel) this.magicBattleHintLabel.string = '\u6218\u6597\u8d44\u6e90\u52a0\u8f7d\u4e2d';
     
         try {
-            const [monsterData] = await Promise.all([
-                this.loadSkeletonAsset(monster.isBoss ? HomeConfig.MAGIC_MAP_BOSS_MONSTER_SKEL_PATH : HomeConfig.MAGIC_MAP_SMALL_MONSTER_SKEL_PATH),
+            const monsterPath = HomeConfig.getMagicMapMonsterSkelPath(this.magicMapActiveRealmIndex, monster.isBoss);
+            const [monsterData, hitEffectData] = await Promise.all([
+                this.loadSkeletonAsset(monsterPath),
+                this.loadSkeletonAsset(HomeConfig.BATTLE_MONSTER_HIT_EFFECT_SKEL_PATH).catch((error) => {
+                    console.warn('[MainHomeView] magic battle hit effect asset is not ready.', error);
+                    return null;
+                }),
             ]);
             if (!this.magicMonsterBattlePanel.active || this.magicBattleTarget !== monster) return;
+            this.magicBattleHitEffectSkeletonData = hitEffectData;
             const roleData = await this.ensureRoleSkeletonData(this.profile.gender);
             if (!roleData || !this.magicBattleRoleSkeleton || !this.magicBattleMonsterSkeleton) {
                 throw new Error('Magic battle skeleton node is missing');
@@ -114,11 +125,13 @@ export abstract class HomeFeatureMagicBattle extends HomeFeatureMagicBattleHost 
             this.setSkeletonVisible(this.magicBattleMonsterSkeleton, true);
             this.playSkeletonAnimation(this.magicBattleRoleSkeleton, HomeConfig.IDLE_ANIMATIONS, true);
             this.playSkeletonAnimation(this.magicBattleMonsterSkeleton, HomeConfig.MAGIC_MAP_IDLE_ANIMATIONS, true);
-            const monsterScale = monster.isBoss ? HomeConfig.MAGIC_BATTLE_BOSS_MONSTER_SCALE : HomeConfig.MAGIC_BATTLE_SMALL_MONSTER_SCALE;
+            const monsterScale = HomeConfig.getMagicMapMonsterScale(this.magicMapActiveRealmIndex, monster.isBoss, true);
             this.magicBattleMonsterSkeleton.node.setScale(-monsterScale, monsterScale, 1);
+            this.resetMagicBattleRoomActors();
+            this.ensureMagicBattleHitEffect();
             this.refreshMagicBattleHp();
     
-            this.magicBattleAttackTimer = 0.45;
+            this.magicBattleAttackTimer = HomeConfig.MAGIC_BATTLE_ATTACK_START_DELAY;
             this.magicBattleResultTimer = HomeConfig.MAGIC_MONSTER_BATTLE_RESULT_DELAY;
             this.magicBattleActive = true;
             if (this.magicBattleHintLabel) this.magicBattleHintLabel.string = '\u6218\u6597\u4e2d';
@@ -140,27 +153,251 @@ export abstract class HomeFeatureMagicBattle extends HomeFeatureMagicBattleHost 
             return;
         }
         if (this.magicBattleAttackTimer <= 0) {
-            const roleDuration = this.playMagicBattleOneShot(
-                this.magicBattleRoleSkeleton,
-                HomeConfig.BATTLE_ROLE_NORMAL_ATTACK_ANIMATIONS[this.profile.gender],
-                HomeConfig.IDLE_ANIMATIONS,
-                HomeConfig.BATTLE_ROLE_ATTACK_TIME_SCALE,
+            this.startMagicBattleAttackCycle();
+        }
+    }
+    protected getMagicBattleRoleAnchor(): Node | null {
+        return this.magicBattleRoleSkeleton?.node?.parent || this.findNode('MagicBattleRoleAnchor', this.magicMonsterBattlePanel || undefined);
+    }
+    protected getMagicBattleMonsterAnchor(): Node | null {
+        return this.magicBattleMonsterSkeleton?.node?.parent || this.findNode('MagicBattleMonsterAnchor', this.magicMonsterBattlePanel || undefined);
+    }
+    protected getMagicBattlePlayerSlotPosition(slotIndex: number): Vec3 {
+        const count = Math.max(1, HomeConfig.MAGIC_BATTLE_PLAYER_SLOT_COUNT);
+        const clampedIndex = this.clamp(Math.floor(slotIndex), 0, count - 1);
+        const span = HomeConfig.MAGIC_BATTLE_PLAYER_SLOT_TOP_Y - HomeConfig.MAGIC_BATTLE_PLAYER_SLOT_BOTTOM_Y;
+        const step = count > 1 ? span / (count - 1) : 0;
+        let y = HomeConfig.MAGIC_BATTLE_PLAYER_SLOT_CENTER_Y;
+        if (clampedIndex > 0) {
+            const offsetIndex = Math.ceil(clampedIndex / 2);
+            const direction = clampedIndex % 2 === 1 ? 1 : -1;
+            y = HomeConfig.MAGIC_BATTLE_PLAYER_SLOT_CENTER_Y + direction * offsetIndex * step;
+        }
+        return new Vec3(
+            HomeConfig.MAGIC_BATTLE_PLAYER_SLOT_X,
+            this.clamp(y, HomeConfig.MAGIC_BATTLE_PLAYER_SLOT_BOTTOM_Y, HomeConfig.MAGIC_BATTLE_PLAYER_SLOT_TOP_Y),
+            0,
+        );
+    }
+    protected getMagicBattleRoleAttackPosition(homePosition: Vec3): Vec3 {
+        const attackPosition = HomeConfig.MAGIC_BATTLE_ROLE_ATTACK_POSITION.clone();
+        const slotOffsetY = homePosition.y - HomeConfig.MAGIC_BATTLE_PLAYER_SLOT_CENTER_Y;
+        attackPosition.y += slotOffsetY * HomeConfig.MAGIC_BATTLE_ROLE_ATTACK_Y_OFFSET_RATIO;
+        return attackPosition;
+    }
+    protected resetMagicBattleRoomActors(): void {
+        const roleAnchor = this.getMagicBattleRoleAnchor();
+        if (roleAnchor?.isValid) {
+            Tween.stopAllByTarget(roleAnchor);
+            roleAnchor.setPosition(this.getMagicBattlePlayerSlotPosition(HomeConfig.MAGIC_BATTLE_LOCAL_PLAYER_SLOT_INDEX));
+        }
+        const monsterAnchor = this.getMagicBattleMonsterAnchor();
+        if (monsterAnchor?.isValid) {
+            Tween.stopAllByTarget(monsterAnchor);
+            monsterAnchor.setPosition(HomeConfig.MAGIC_BATTLE_MONSTER_POSITION);
+        }
+        if (this.magicBattleRoleSkeleton?.isValid && this.magicBattleRoleSkeleton.skeletonData) {
+            this.playSkeletonAnimation(this.magicBattleRoleSkeleton, HomeConfig.IDLE_ANIMATIONS, true);
+        }
+        if (this.magicBattleMonsterSkeleton?.isValid && this.magicBattleMonsterSkeleton.skeletonData) {
+            this.playSkeletonAnimation(this.magicBattleMonsterSkeleton, HomeConfig.MAGIC_MAP_IDLE_ANIMATIONS, true);
+        }
+        this.raiseMagicBattleActorLayers();
+    }
+    protected startMagicBattleAttackCycle(): void {
+        if (this.magicBattleEnemyHp <= 0) {
+            this.magicBattleAttackTimer = HomeConfig.MAGIC_MONSTER_BATTLE_ATTACK_GAP;
+            return;
+        }
+        const roleAnchor = this.getMagicBattleRoleAnchor();
+        const monsterAnchor = this.getMagicBattleMonsterAnchor();
+        if (!roleAnchor?.isValid || !monsterAnchor?.isValid) {
+            this.magicBattleAttackTimer = HomeConfig.MAGIC_MONSTER_BATTLE_ATTACK_GAP;
+            return;
+        }
+
+        const sequenceId = ++this.magicBattleAttackSequenceId;
+        const timeline = HomeConfig.MAGIC_BATTLE_ATTACK_TIMELINES[this.profile.gender];
+        const frameRate = HomeConfig.BATTLE_ROLE_ATTACK_FRAME_RATE;
+        const homePosition = this.getMagicBattlePlayerSlotPosition(HomeConfig.MAGIC_BATTLE_LOCAL_PLAYER_SLOT_INDEX);
+        const attackPosition = this.getMagicBattleRoleAttackPosition(homePosition);
+        roleAnchor.setPosition(homePosition);
+        Tween.stopAllByTarget(roleAnchor);
+        this.raiseMagicBattleActorLayers();
+        this.playMagicBattleOneShot(
+            this.magicBattleRoleSkeleton,
+            HomeConfig.BATTLE_ROLE_NORMAL_ATTACK_ANIMATIONS[this.profile.gender],
+            HomeConfig.IDLE_ANIMATIONS,
+            HomeConfig.BATTLE_ROLE_ATTACK_TIME_SCALE,
+        );
+        this.scheduleMagicBattleRoleMove(sequenceId, roleAnchor, attackPosition, timeline.moveStartFrame, timeline.moveEndFrame);
+        this.scheduleMagicBattleRoleMove(sequenceId, roleAnchor, homePosition, timeline.returnStartFrame, timeline.returnEndFrame);
+
+        const minimumHitTime = timeline.moveEndFrame / frameRate;
+        const hitTimes = HomeConfig.BATTLE_ROLE_NORMAL_ATTACK_HIT_TIMES[this.profile.gender];
+        hitTimes.forEach((hitTime, index) => {
+            this.scheduleOnce(() => {
+                this.playMagicBattleAttackHit(sequenceId, index, hitTimes.length);
+            }, Math.max(minimumHitTime, hitTime / Math.max(HomeConfig.BATTLE_ROLE_ATTACK_TIME_SCALE, 0.01)));
+        });
+
+        this.scheduleOnce(() => {
+            if (!this.isMagicBattleAttackSequenceValid(sequenceId) || !roleAnchor.isValid) return;
+            Tween.stopAllByTarget(roleAnchor);
+            roleAnchor.setPosition(homePosition);
+            if (this.magicBattleRoleSkeleton?.isValid && this.magicBattleRoleSkeleton.skeletonData) {
+                this.playSkeletonAnimation(this.magicBattleRoleSkeleton, HomeConfig.IDLE_ANIMATIONS, true);
+            }
+        }, Math.max(0, timeline.endFrame / frameRate));
+
+        this.magicBattleAttackTimer = Math.max(
+            0.1,
+            timeline.endFrame / frameRate + HomeConfig.MAGIC_MONSTER_BATTLE_ATTACK_GAP,
+        );
+    }
+    protected scheduleMagicBattleRoleMove(
+        sequenceId: number,
+        roleAnchor: Node,
+        targetPosition: Vec3,
+        startFrame: number,
+        endFrame: number,
+    ): void {
+        const frameRate = HomeConfig.BATTLE_ROLE_ATTACK_FRAME_RATE;
+        const delay = Math.max(0, startFrame / frameRate);
+        const duration = Math.max(0, (endFrame - startFrame) / frameRate);
+        this.scheduleOnce(() => {
+            if (!this.isMagicBattleAttackSequenceValid(sequenceId) || !roleAnchor.isValid) return;
+            Tween.stopAllByTarget(roleAnchor);
+            this.raiseMagicBattleActorLayers();
+            if (duration <= 0.001) {
+                roleAnchor.setPosition(targetPosition);
+                return;
+            }
+            tween(roleAnchor)
+                .to(duration, { position: targetPosition.clone() }, { easing: 'sineInOut' })
+                .start();
+        }, delay);
+    }
+    protected isMagicBattleAttackSequenceValid(sequenceId: number): boolean {
+        return sequenceId === this.magicBattleAttackSequenceId
+            && this.magicBattleActive
+            && this.magicMonsterBattlePanel?.active === true
+            && !this.magicBattleDuelTargetId;
+    }
+    protected playMagicBattleAttackHit(sequenceId: number, hitIndex: number, hitCount: number): void {
+        if (!this.isMagicBattleAttackSequenceValid(sequenceId)) return;
+        if (this.magicBattleEnemyHp <= 0) return;
+
+        this.playBattleAttackSound();
+        this.playMagicBattleMonsterHurt();
+        const totalDamage = this.getMagicBattleAttackCycleDamage();
+        const count = Math.max(1, hitCount);
+        const sliceStart = Math.floor((totalDamage * hitIndex) / count);
+        const sliceEnd = Math.floor((totalDamage * (hitIndex + 1)) / count);
+        const damage = Math.max(1, sliceEnd - sliceStart);
+        const appliedDamage = Math.min(this.magicBattleEnemyHp, damage);
+        this.magicBattleEnemyHp = Math.max(0, this.magicBattleEnemyHp - appliedDamage);
+        this.applyMagicBattlePlayerDamage(appliedDamage);
+        this.refreshMagicBattleHp();
+        this.raiseMagicBattleOverlayLayers();
+    }
+    protected playMagicBattleMonsterHurt(): void {
+        this.playMagicBattleHitEffect();
+        this.playMagicBattleOneShot(
+            this.magicBattleMonsterSkeleton,
+            [...HomeConfig.BATTLE_MONSTER_HURT_ANIMATIONS, ...HomeConfig.MAGIC_MAP_HURT_ANIMATIONS],
+            HomeConfig.MAGIC_MAP_IDLE_ANIMATIONS,
+            1,
+        );
+    }
+    protected getMagicBattleAttackCycleDamage(): number {
+        const damageRatio = this.magicBattleTarget?.isBoss
+            ? HomeConfig.MAGIC_BATTLE_BOSS_DAMAGE_PER_HIT_RATIO
+            : HomeConfig.MAGIC_BATTLE_PLAYER_DAMAGE_PER_HIT_RATIO;
+        return Math.ceil(this.magicBattleEnemyMaxHp * damageRatio * this.getMagicBattlePowerMultiplier());
+    }
+    protected ensureMagicBattleHitEffect(): sp.Skeleton | null {
+        if (!this.magicMonsterBattlePanel?.isValid) return null;
+        if (!this.magicBattleHitEffectSkeleton?.isValid) {
+            const effectNode = this.createNode(
+                'MagicBattleMonsterHitEffect',
+                this.magicMonsterBattlePanel,
+                HomeConfig.MAGIC_BATTLE_HIT_EFFECT_WIDTH,
+                HomeConfig.MAGIC_BATTLE_HIT_EFFECT_HEIGHT,
+                0,
+                0,
             );
-            this.playMagicBattleOneShot(
-                this.magicBattleMonsterSkeleton,
-                HomeConfig.MAGIC_MAP_HURT_ANIMATIONS,
-                HomeConfig.MAGIC_MAP_IDLE_ANIMATIONS,
-                1,
-            );
-            this.magicBattleAttackTimer = roleDuration + HomeConfig.MAGIC_MONSTER_BATTLE_ATTACK_GAP;
-            const damageRatio = this.magicBattleTarget?.isBoss
-                ? HomeConfig.MAGIC_BATTLE_BOSS_DAMAGE_PER_HIT_RATIO
-                : HomeConfig.MAGIC_BATTLE_PLAYER_DAMAGE_PER_HIT_RATIO;
-            const damage = Math.ceil(this.magicBattleEnemyMaxHp * damageRatio);
-            const appliedDamage = Math.min(this.magicBattleEnemyHp, damage);
-            this.magicBattleEnemyHp = Math.max(0, this.magicBattleEnemyHp - damage);
-            this.applyMagicBattlePlayerDamage(appliedDamage);
-            this.refreshMagicBattleHp();
+            effectNode.active = false;
+            effectNode.setScale(HomeConfig.MAGIC_BATTLE_HIT_EFFECT_SCALE, HomeConfig.MAGIC_BATTLE_HIT_EFFECT_SCALE, 1);
+            this.magicBattleHitEffectSkeleton = effectNode.addComponent(sp.Skeleton);
+            this.prepareSkeletonRenderer(this.magicBattleHitEffectSkeleton);
+            this.setSkeletonVisible(this.magicBattleHitEffectSkeleton, false);
+        }
+        return this.magicBattleHitEffectSkeleton;
+    }
+    protected playMagicBattleHitEffect(): void {
+        const skeleton = this.ensureMagicBattleHitEffect();
+        const data = this.magicBattleHitEffectSkeletonData;
+        const effectNode = skeleton?.node;
+        const monsterAnchor = this.getMagicBattleMonsterAnchor();
+        if (!this.magicMonsterBattlePanel?.isValid || !skeleton?.isValid || !effectNode?.isValid || !data || !monsterAnchor?.isValid) return;
+
+        this.unschedule(this.hideMagicBattleHitEffect);
+        effectNode.active = true;
+        effectNode.setPosition(
+            monsterAnchor.position.x + HomeConfig.MAGIC_BATTLE_HIT_EFFECT_OFFSET.x,
+            monsterAnchor.position.y + HomeConfig.MAGIC_BATTLE_HIT_EFFECT_OFFSET.y,
+            monsterAnchor.position.z + HomeConfig.MAGIC_BATTLE_HIT_EFFECT_OFFSET.z,
+        );
+        effectNode.setScale(HomeConfig.MAGIC_BATTLE_HIT_EFFECT_SCALE, HomeConfig.MAGIC_BATTLE_HIT_EFFECT_SCALE, 1);
+        this.prepareSkeletonRenderer(skeleton);
+        skeleton.skeletonData = data;
+        skeleton.timeScale = 1;
+        this.setSkeletonVisible(skeleton, true);
+        const duration = this.playMagicBattleOneShot(
+            skeleton,
+            HomeConfig.BATTLE_MONSTER_HIT_EFFECT_ANIMATIONS,
+            [],
+            1,
+        ) || HomeConfig.BATTLE_MONSTER_HIT_EFFECT_FALLBACK_DURATION;
+        this.raiseMagicBattleOverlayLayers();
+        this.scheduleOnce(this.hideMagicBattleHitEffect, duration);
+    }
+    protected hideMagicBattleHitEffect(): void {
+        this.unschedule(this.hideMagicBattleHitEffect);
+        if (!this.magicBattleHitEffectSkeleton?.isValid) return;
+
+        this.setSkeletonVisible(this.magicBattleHitEffectSkeleton, false);
+        if (this.magicBattleHitEffectSkeleton.node?.isValid) {
+            this.magicBattleHitEffectSkeleton.node.active = false;
+        }
+    }
+    protected raiseMagicBattleActorLayers(): void {
+        const panel = this.magicMonsterBattlePanel;
+        const roleAnchor = this.getMagicBattleRoleAnchor();
+        const monsterAnchor = this.getMagicBattleMonsterAnchor();
+        if (!panel?.isValid || !roleAnchor?.isValid || !monsterAnchor?.isValid) return;
+        if (roleAnchor.parent !== panel || monsterAnchor.parent !== panel) return;
+
+        const roleIndex = panel.children.indexOf(roleAnchor);
+        const monsterIndex = panel.children.indexOf(monsterAnchor);
+        if (roleIndex < 0 || monsterIndex < 0 || roleIndex > monsterIndex) return;
+
+        monsterAnchor.setSiblingIndex(roleIndex);
+    }
+    protected raiseMagicBattleOverlayLayers(): void {
+        const panel = this.magicMonsterBattlePanel;
+        if (!panel?.isValid) return;
+
+        this.raiseMagicBattleActorLayers();
+        if (this.magicBattleHitEffectSkeleton?.node?.isValid && this.magicBattleHitEffectSkeleton.node.parent === panel) {
+            this.magicBattleHitEffectSkeleton.node.setSiblingIndex(Math.max(0, panel.children.length - 1));
+        }
+        if (this.magicBattleDamageHudRoot?.isValid && this.magicBattleDamageHudRoot.parent === panel) {
+            this.magicBattleDamageHudRoot.setSiblingIndex(Math.max(0, panel.children.length - 1));
+        }
+        if (this.magicBattleDuelPopup?.isValid && this.magicBattleDuelPopup.active && this.magicBattleDuelPopup.parent === panel) {
+            this.magicBattleDuelPopup.setSiblingIndex(Math.max(0, panel.children.length - 1));
         }
     }
     protected playMagicBattleOneShot(
@@ -261,9 +498,15 @@ export abstract class HomeFeatureMagicBattle extends HomeFeatureMagicBattleHost 
     protected prepareMagicMonsterBattleRewardScene(): void {
         this.magicBattleActive = false;
         this.magicBattleAttackTimer = 0;
+        this.magicBattleAttackSequenceId += 1;
         this.magicBattleResultTimer = 0;
         this.magicBattleDuelTargetId = '';
         this.magicBattleDuelVersion += 1;
+        const roleAnchor = this.getMagicBattleRoleAnchor();
+        if (roleAnchor?.isValid) Tween.stopAllByTarget(roleAnchor);
+        const monsterAnchor = this.getMagicBattleMonsterAnchor();
+        if (monsterAnchor?.isValid) Tween.stopAllByTarget(monsterAnchor);
+        this.hideMagicBattleHitEffect();
         if (this.magicBattleDamageHudRoot?.isValid) this.magicBattleDamageHudRoot.active = false;
         if (this.magicBattleDuelPopup?.isValid) this.magicBattleDuelPopup.active = false;
         this.closeMagicMapAssistCardConfirmPopup();
@@ -287,9 +530,15 @@ export abstract class HomeFeatureMagicBattle extends HomeFeatureMagicBattleHost 
     protected stopMagicMonsterBattle(): void {
         this.magicBattleActive = false;
         this.magicBattleAttackTimer = 0;
+        this.magicBattleAttackSequenceId += 1;
         this.magicBattleResultTimer = 0;
         this.magicBattleDuelTargetId = '';
         this.magicBattleDuelVersion += 1;
+        const roleAnchor = this.getMagicBattleRoleAnchor();
+        if (roleAnchor?.isValid) Tween.stopAllByTarget(roleAnchor);
+        const monsterAnchor = this.getMagicBattleMonsterAnchor();
+        if (monsterAnchor?.isValid) Tween.stopAllByTarget(monsterAnchor);
+        this.hideMagicBattleHitEffect();
         if (this.magicBattleDamageHudRoot?.isValid) this.magicBattleDamageHudRoot.active = false;
         if (this.magicBattleDuelPopup?.isValid) this.magicBattleDuelPopup.active = false;
         if (this.magicBattleDuelPlayerSkeleton?.isValid) {
@@ -352,6 +601,10 @@ export abstract class HomeFeatureMagicBattle extends HomeFeatureMagicBattleHost 
             message: `\u662f\u5426\u5728\u5f53\u524d\u9b54\u754c\u5c42\u6570\u8fdb\u884c\u6311\u6218`,
             variant: 'magicFloorConfirm',
             onConfirm: () => {
+                if (!this.consumeMagicFloorTicket()) {
+                    this.showToast('\u9b54\u754c\u95e8\u7968\u4e0d\u8db3');
+                    return;
+                }
                 void this.openMagicMapPanel(realmIndex, floorIndex);
             },
         });

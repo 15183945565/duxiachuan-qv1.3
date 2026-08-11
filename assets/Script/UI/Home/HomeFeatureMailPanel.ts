@@ -28,8 +28,10 @@ export abstract class HomeFeatureMailPanel extends HomeViewBase {
             return;
         }
         this.ensureMailData();
+        this.completeDueBattleAutoHostIfNeeded(false);
         this.buildMailPanel();
         if (!this.mailPanel) return;
+        this.ensureMailPanelRuntimeBindings();
     
         this.mailPanel.active = true;
         this.ensureInputBlocker(this.mailPanel);
@@ -140,10 +142,9 @@ export abstract class HomeFeatureMailPanel extends HomeViewBase {
         });
         this.mailUnreadDot = this.findNode('MailTabUnreadDot', board);
 
-        const emptyNode = this.findNode('MailEmpty', board) || this.findNode('MailCount', board);
-        this.mailEmptyLabel = emptyNode?.getComponent(Label) || null;
-        if (this.mailEmptyLabel && this.mailEmptyLabel.string.trim().length <= 0) {
-            this.mailEmptyLabel.string = '\u6682\u65e0\u90ae\u4ef6';
+        this.ensureMailEmptyLabel();
+        if (this.mailEmptyLabel?.node?.isValid) {
+            this.mailEmptyLabel.node.active = false;
         }
 
         const deleteButton = this.findNode('MailDeleteRead', board);
@@ -164,6 +165,36 @@ export abstract class HomeFeatureMailPanel extends HomeViewBase {
             this.applyUiSkin(claimButton, HomeConfig.UI_MAIL_BUTTON_BG, HomeConfig.MAIL_BUTTON_WIDTH, HomeConfig.MAIL_BUTTON_HEIGHT);
             this.bindScaledClick(claimButton, () => this.claimAllMailRewards());
         }
+    }
+    protected ensureMailPanelRuntimeBindings(): void {
+        if (!this.mailPanel?.isValid) return;
+
+        const board = this.findNode('MailBoard', this.mailPanel);
+        if (!board?.isValid) return;
+
+        if (!this.mailListRoot?.isValid) {
+            this.mailListRoot = this.findNode('MailListRoot', board);
+        }
+        if (!this.mailListRoot?.isValid) {
+            this.mailListRoot = this.createNode('MailListRoot', board, 596, 760, 0, -18);
+            this.mailUsesEditorLayout = false;
+        }
+        this.mailListRoot.active = true;
+        this.mailListRoot.setSiblingIndex(Math.min(3, Math.max(0, board.children.length - 1)));
+        this.mailListContent = this.ensureMailListContent(this.mailListRoot, this.mailUsesEditorLayout);
+        this.mailListContent.active = true;
+
+        if (!this.mailRowTemplate?.isValid) {
+            this.mailRowTemplate = this.findNode('MailRowTemplate', this.mailListContent)
+                || this.findNode('MailRowTemplate', this.mailListRoot);
+        }
+        if (!this.mailRowTemplate?.isValid) {
+            this.mailRowTemplate = this.createMailRowTemplate(this.mailListContent);
+        } else if (this.mailRowTemplate.parent !== this.mailListContent) {
+            this.mailRowTemplate.setParent(this.mailListContent);
+        }
+        this.mailRowTemplate.active = false;
+        this.ensureMailEmptyLabel();
     }
     protected rebuildSimpleMailBoard(board: Node): void {
         this.mailUsesEditorLayout = false;
@@ -355,10 +386,61 @@ export abstract class HomeFeatureMailPanel extends HomeViewBase {
         if (!this.mailListRoot) return;
         const parent = this.mailListContent || this.ensureMailListContent(this.mailListRoot, this.mailUsesEditorLayout);
 
-        this.mailEmptyLabel = this.createLabel(parent, 'MailEmpty', '\u6682\u65e0\u90ae\u4ef6', 34, 0, 0, 360, 68, new Color(86, 58, 36, 255));
+        let emptyNode = parent.getChildByName('MailEmpty') || parent.getChildByName('MailCount');
+        if (!emptyNode) {
+            emptyNode = this.createNode('MailEmpty', parent, 360, 68, 0, 0);
+        }
+        emptyNode.active = true;
+        emptyNode.setPosition(0, 0, 0);
+        (emptyNode.getComponent(UITransform) || emptyNode.addComponent(UITransform)).setContentSize(360, 68);
+        this.mailEmptyLabel = emptyNode.getComponent(Label) || emptyNode.addComponent(Label);
+        this.mailEmptyLabel.string = '\u6682\u65e0\u90ae\u4ef6';
+        this.mailEmptyLabel.fontSize = 34;
+        this.mailEmptyLabel.lineHeight = 44;
+        this.mailEmptyLabel.horizontalAlign = HorizontalTextAlignment.CENTER;
+        this.mailEmptyLabel.verticalAlign = VerticalTextAlignment.CENTER;
+        this.mailEmptyLabel.color = new Color(86, 58, 36, 255);
         this.mailEmptyLabel.enableOutline = true;
         this.mailEmptyLabel.outlineColor = new Color(255, 242, 202, 255);
         this.mailEmptyLabel.outlineWidth = 2;
+        applySimKaiFont(this.mailEmptyLabel);
+    }
+    protected ensureMailEmptyLabel(): Label | null {
+        if (!this.mailListRoot) return null;
+        const parent = this.mailListContent || this.ensureMailListContent(this.mailListRoot, this.mailUsesEditorLayout);
+        let emptyNode = this.mailEmptyLabel?.node?.isValid ? this.mailEmptyLabel.node : null;
+        emptyNode = emptyNode
+            || parent.getChildByName('MailEmpty')
+            || parent.getChildByName('MailCount')
+            || this.findNode('MailEmpty', this.mailListRoot)
+            || this.findNode('MailCount', this.mailListRoot)
+            || this.findNode('MailEmpty', this.mailPanel || this.node)
+            || this.findNode('MailCount', this.mailPanel || this.node);
+
+        if (!emptyNode?.isValid) {
+            this.createMailEmptyLabel();
+            return this.mailEmptyLabel;
+        }
+
+        if (emptyNode.parent !== parent) {
+            emptyNode.setParent(parent);
+            emptyNode.setPosition(0, 0, 0);
+        }
+        const transform = emptyNode.getComponent(UITransform) || emptyNode.addComponent(UITransform);
+        if (transform.contentSize.width <= 0 || transform.contentSize.height <= 0) {
+            transform.setContentSize(360, 68);
+        }
+        const label = emptyNode.getComponent(Label) || emptyNode.addComponent(Label);
+        label.string = '\u6682\u65e0\u90ae\u4ef6';
+        label.horizontalAlign = HorizontalTextAlignment.CENTER;
+        label.verticalAlign = VerticalTextAlignment.CENTER;
+        label.color = new Color(86, 58, 36, 255);
+        label.enableOutline = true;
+        label.outlineColor = new Color(255, 242, 202, 255);
+        label.outlineWidth = 2;
+        applySimKaiFont(label);
+        this.mailEmptyLabel = label;
+        return this.mailEmptyLabel;
     }
     protected bindEditorButton(root: Node, name: string, onClick: () => void): void {
         const button = this.findNode(name, root);
@@ -467,11 +549,27 @@ export abstract class HomeFeatureMailPanel extends HomeViewBase {
         }
     }
     protected getVisibleMails(): MailData[] {
+        const sortMails = (mails: MailData[]): MailData[] => mails
+            .map((mail, index) => ({ mail, index }))
+            .sort((left, right) => {
+                const groupDiff = this.getMailDisplaySortGroup(left.mail) - this.getMailDisplaySortGroup(right.mail);
+                if (groupDiff !== 0) return groupDiff;
+
+                const timeDiff = right.mail.createTime - left.mail.createTime;
+                if (timeDiff !== 0) return timeDiff;
+
+                return left.index - right.index;
+            })
+            .map((entry) => entry.mail);
+
         if (this.mailActiveTab === 'unread') {
-            return this.mailData.filter((mail) => mail.state === 0);
+            return sortMails(this.mailData.filter((mail) => mail.state === 0));
         }
-    
-        return this.mailData.filter((mail) => (mail.category === 'system' ? 'system' : 'normal') === this.mailActiveTab);
+
+        return sortMails(this.mailData.filter((mail) => (mail.category === 'system' ? 'system' : 'normal') === this.mailActiveTab));
+    }
+    protected getMailDisplaySortGroup(mail: MailData): number {
+        return mail.state === 2 ? 1 : 0;
     }
     protected closeMailPanel(): void {
         if (!this.mailPanel) return;
@@ -481,23 +579,23 @@ export abstract class HomeFeatureMailPanel extends HomeViewBase {
         this.updateMailBadge();
     }
     protected refreshMailPanel(): void {
+        this.ensureMailPanelRuntimeBindings();
         if (!this.mailListRoot) return;
         this.mailListContent = this.ensureMailListContent(this.mailListRoot, this.mailUsesEditorLayout);
 
         this.clearMailListRuntimeChildren();
         const mails = this.getVisibleMails();
         if (mails.length <= 0) {
-            if (this.mailEmptyLabel?.node?.isValid) {
-                this.mailEmptyLabel.node.active = true;
-                this.mailEmptyLabel.string = '\u6682\u65e0\u90ae\u4ef6';
-            } else {
-                this.createMailEmptyLabel();
+            const emptyLabel = this.ensureMailEmptyLabel();
+            if (emptyLabel?.node?.isValid) {
+                emptyLabel.node.active = true;
+                emptyLabel.string = '\u6682\u65e0\u90ae\u4ef6';
+                emptyLabel.node.setSiblingIndex((emptyLabel.node.parent?.children.length || 1) - 1);
             }
         } else {
             if (this.mailEmptyLabel?.node?.isValid) {
                 this.mailEmptyLabel.node.active = false;
             }
-            this.mailEmptyLabel = null;
             mails.forEach((mail, index) => this.createMailRow(mail, index));
         }
         this.refreshMailListScroll(mails.length);
@@ -510,28 +608,65 @@ export abstract class HomeFeatureMailPanel extends HomeViewBase {
         const viewportWidth = viewportTransform.contentSize.width || 596;
         const viewportHeight = viewportTransform.contentSize.height || 760;
         const rowHeight = this.mailRowTemplate?.getComponent(UITransform)?.contentSize.height || HomeConfig.MAIL_ROW_HEIGHT;
-        const rowStartY = this.mailRowTemplate?.position.y ?? HomeConfig.MAIL_ROW_START_Y;
+        const rowStartY = this.getMailListRowStartY(rowHeight);
         const rowGap = HomeConfig.MAIL_ROW_GAP;
         const topEdge = mailCount > 0 ? rowStartY + rowHeight / 2 : viewportHeight / 2;
         const bottomEdge = mailCount > 0 ? rowStartY - (mailCount - 1) * rowGap - rowHeight / 2 : -viewportHeight / 2;
-        const contentHeight = Math.max(viewportHeight, topEdge - bottomEdge + 36);
+        const topPadding = mailCount > 0 ? HomeConfig.MAIL_LIST_TOP_PADDING : 0;
+        const bottomPadding = mailCount > 0 ? HomeConfig.MAIL_LIST_BOTTOM_PADDING : 0;
+        const contentHeight = Math.max(viewportHeight, topEdge - bottomEdge + topPadding + bottomPadding);
         const contentTransform = this.mailListContent.getComponent(UITransform) || this.mailListContent.addComponent(UITransform);
         contentTransform.setContentSize(viewportWidth, contentHeight);
 
-        const maxScrollY = Math.max(0, -viewportHeight / 2 - bottomEdge + 36);
-        const currentY = this.mailListContent.position.y || 0;
-        this.mailListContent.setPosition(0, this.clamp(currentY, 0, maxScrollY), 0);
+        const maxScrollY = Math.max(0, -viewportHeight / 2 - bottomEdge + bottomPadding);
+        this.mailListContent.setPosition(0, 0, 0);
         const scroll = this.mailListScrollView || this.mailListRoot.getComponent(ScrollView);
         if (scroll) {
             scroll.content = this.mailListContent;
             scroll.horizontal = false;
             scroll.vertical = true;
-            scroll.enabled = true;
-            scroll.scrollToTop(0.01);
-            return;
+            scroll.enabled = false;
         }
-        this.bindBagGridScroll(this.mailListRoot, this.mailListContent, maxScrollY);
-        this.bindBagGridScroll(this.mailListContent, this.mailListContent, maxScrollY);
+        this.bindMailListHardClampScroll(maxScrollY);
+    }
+    protected getMailListRowStartY(rowHeight: number): number {
+        const viewportHeight = this.mailListRoot?.getComponent(UITransform)?.contentSize.height || 760;
+        return viewportHeight / 2 - rowHeight / 2 - HomeConfig.MAIL_LIST_TOP_PADDING;
+    }
+    protected bindMailListHardClampScroll(maxScrollY: number): void {
+        if (!this.mailListRoot || !this.mailListContent) return;
+
+        const root = this.mailListRoot;
+        const content = this.mailListContent;
+        let dragStartY = 0;
+        let contentStartY = 0;
+        const clampContent = (): void => {
+            content.setPosition(0, this.clamp(content.position.y || 0, 0, maxScrollY), 0);
+        };
+
+        root.off(Node.EventType.TOUCH_START);
+        root.off(Node.EventType.TOUCH_MOVE);
+        root.off(Node.EventType.TOUCH_END);
+        root.off(Node.EventType.TOUCH_CANCEL);
+        root.on(Node.EventType.TOUCH_START, (event: EventTouch) => {
+            event.propagationStopped = true;
+            dragStartY = event.getUILocation().y;
+            contentStartY = content.position.y || 0;
+            clampContent();
+        }, this);
+        root.on(Node.EventType.TOUCH_MOVE, (event: EventTouch) => {
+            event.propagationStopped = true;
+            const dragOffsetY = event.getUILocation().y - dragStartY;
+            content.setPosition(0, this.clamp(contentStartY + dragOffsetY, 0, maxScrollY), 0);
+        }, this);
+        root.on(Node.EventType.TOUCH_END, (event: EventTouch) => {
+            event.propagationStopped = true;
+            clampContent();
+        }, this);
+        root.on(Node.EventType.TOUCH_CANCEL, (event: EventTouch) => {
+            event.propagationStopped = true;
+            clampContent();
+        }, this);
     }
     protected createMailRow(mail: MailData, index: number): void {
         if (!this.mailListRoot) return;
@@ -547,7 +682,7 @@ export abstract class HomeFeatureMailPanel extends HomeViewBase {
             HomeConfig.MAIL_ROW_WIDTH,
             HomeConfig.MAIL_ROW_HEIGHT,
             0,
-            HomeConfig.MAIL_ROW_START_Y - index * HomeConfig.MAIL_ROW_GAP,
+            this.getMailListRowStartY(HomeConfig.MAIL_ROW_HEIGHT) - index * HomeConfig.MAIL_ROW_GAP,
         );
         this.createSkinnedNode('MailRowSkin', row, HomeConfig.MAIL_ROW_WIDTH, HomeConfig.MAIL_ROW_HEIGHT, 0, 0, HomeConfig.UI_FRAME_MAIL_ROW).setSiblingIndex(0);
         this.bindGridItemTap(row, () => {
@@ -594,7 +729,7 @@ export abstract class HomeFeatureMailPanel extends HomeViewBase {
         const rowSpacing = HomeConfig.MAIL_ROW_GAP;
         row.setPosition(
             preserveTemplateLayout ? this.mailRowTemplate.position.x : 0,
-            (preserveTemplateLayout ? this.mailRowTemplate.position.y : HomeConfig.MAIL_ROW_START_Y) - index * rowSpacing,
+            this.getMailListRowStartY(rowTransform.contentSize.height || HomeConfig.MAIL_ROW_HEIGHT) - index * rowSpacing,
             preserveTemplateLayout ? this.mailRowTemplate.position.z : 0,
         );
     
@@ -805,6 +940,10 @@ export abstract class HomeFeatureMailPanel extends HomeViewBase {
     
         [...content.children].forEach((child) => {
             if (child === this.mailRowTemplate || child.name === 'MailRowTemplate') {
+                child.active = false;
+                return;
+            }
+            if (child === this.mailEmptyLabel?.node || child.name === 'MailEmpty' || child.name === 'MailCount') {
                 child.active = false;
                 return;
             }

@@ -523,14 +523,21 @@ export abstract class HomeFeatureMarketSell extends HomeFeatureMarketSellHost {
         }
         dim.setSiblingIndex(0);
 
-        const board = this.getOrCreateEditorSkinnedNode('MarketSellConfirmBoard', popup, 725, 505, 0, 0, HomeConfig.UI_MARKET_DETAIL_POPUP_BG);
+        const board = this.getOrCreateEditorSkinnedNode('MarketSellConfirmBoard', popup, HomeConfig.SHARED_CONFIRM_BOARD_WIDTH, HomeConfig.SHARED_CONFIRM_BOARD_HEIGHT, 0, 0, HomeConfig.UI_MARKET_DETAIL_POPUP_BG);
         board.active = true;
         board.setSiblingIndex(1);
-        const titleSkin = this.getOrCreateEditorSkinnedNode('MarketSellConfirmTitleSkin', board, 486, 84, 0, 182, HomeConfig.UI_MARKET_DETAIL_TITLE_BG);
+        (board.getComponent(UITransform) || board.addComponent(UITransform)).setContentSize(HomeConfig.SHARED_CONFIRM_BOARD_WIDTH, HomeConfig.SHARED_CONFIRM_BOARD_HEIGHT);
+        const titleSkin = this.getOrCreateEditorSkinnedNode('MarketSellConfirmTitleSkin', board, HomeConfig.SHARED_CONFIRM_TITLE_WIDTH, HomeConfig.SHARED_CONFIRM_TITLE_HEIGHT, 0, HomeConfig.SHARED_CONFIRM_TITLE_Y, HomeConfig.UI_MARKET_DETAIL_TITLE_BG);
         titleSkin.active = true;
+        titleSkin.setPosition(0, HomeConfig.SHARED_CONFIRM_TITLE_Y, 0);
+        (titleSkin.getComponent(UITransform) || titleSkin.addComponent(UITransform)).setContentSize(HomeConfig.SHARED_CONFIRM_TITLE_WIDTH, HomeConfig.SHARED_CONFIRM_TITLE_HEIGHT);
         titleSkin.setSiblingIndex(1);
-        const title = this.getOrCreateEditorLabel(board, 'MarketSellConfirmTitle', this.getCatalogDisplayName(item), 30, 0, 185, 300, 52, new Color(126, 74, 36, 255));
+        const title = this.getOrCreateEditorLabel(board, 'MarketSellConfirmTitle', this.getCatalogDisplayName(item), HomeConfig.SHARED_CONFIRM_TITLE_FONT_SIZE, 0, HomeConfig.SHARED_CONFIRM_TITLE_Y, HomeConfig.SHARED_CONFIRM_TITLE_LABEL_WIDTH, HomeConfig.SHARED_CONFIRM_TITLE_LABEL_HEIGHT, new Color(126, 74, 36, 255));
         title.node.active = true;
+        title.node.setPosition(0, HomeConfig.SHARED_CONFIRM_TITLE_Y, 0);
+        (title.node.getComponent(UITransform) || title.node.addComponent(UITransform)).setContentSize(HomeConfig.SHARED_CONFIRM_TITLE_LABEL_WIDTH, HomeConfig.SHARED_CONFIRM_TITLE_LABEL_HEIGHT);
+        title.fontSize = HomeConfig.SHARED_CONFIRM_TITLE_FONT_SIZE;
+        title.lineHeight = HomeConfig.SHARED_CONFIRM_TITLE_LINE_HEIGHT;
         title.overflow = Overflow.SHRINK;
         this.setLabelOutline(title, new Color(255, 245, 215, 255), 2);
         title.node.setSiblingIndex(2);
@@ -596,19 +603,31 @@ export abstract class HomeFeatureMarketSell extends HomeFeatureMarketSellHost {
         feeSuffix.horizontalAlign = HorizontalTextAlignment.LEFT;
         this.setLabelOutline(feeSuffix, new Color(255, 247, 224, 255), 1);
 
-        const cancel = this.getOrCreateEditorSkinnedNode('MarketSellConfirmCancel', board, 162, 62, -120, -178, HomeConfig.UI_MARKET_DETAIL_BUTTON_BG);
+        const cancel = this.getOrCreateEditorSkinnedNode('MarketSellConfirmCancel', board, HomeConfig.SHARED_CONFIRM_BUTTON_WIDTH, HomeConfig.SHARED_CONFIRM_BUTTON_HEIGHT, HomeConfig.SHARED_CONFIRM_CANCEL_BUTTON_X, HomeConfig.SHARED_CONFIRM_BUTTON_Y, HomeConfig.UI_MARKET_DETAIL_BUTTON_BG);
         cancel.active = true;
+        cancel.setPosition(HomeConfig.SHARED_CONFIRM_CANCEL_BUTTON_X, HomeConfig.SHARED_CONFIRM_BUTTON_Y, 0);
+        (cancel.getComponent(UITransform) || cancel.addComponent(UITransform)).setContentSize(HomeConfig.SHARED_CONFIRM_BUTTON_WIDTH, HomeConfig.SHARED_CONFIRM_BUTTON_HEIGHT);
         cancel.setSiblingIndex(8);
-        const cancelLabel = this.getOrCreateEditorLabel(cancel, 'MarketSellConfirmCancelLabel', '\u53d6\u6d88', 29, 0, 1, 132, 42, new Color(255, 238, 218, 255));
+        const cancelLabel = this.getOrCreateEditorLabel(cancel, 'MarketSellConfirmCancelLabel', '\u53d6\u6d88', HomeConfig.SHARED_CONFIRM_BUTTON_FONT_SIZE, 0, HomeConfig.SHARED_CONFIRM_BUTTON_LABEL_Y, HomeConfig.SHARED_CONFIRM_BUTTON_LABEL_WIDTH, HomeConfig.SHARED_CONFIRM_BUTTON_LABEL_HEIGHT, new Color(255, 238, 218, 255));
         cancelLabel.node.active = true;
+        cancelLabel.node.setPosition(0, HomeConfig.SHARED_CONFIRM_BUTTON_LABEL_Y, 0);
+        (cancelLabel.node.getComponent(UITransform) || cancelLabel.node.addComponent(UITransform)).setContentSize(HomeConfig.SHARED_CONFIRM_BUTTON_LABEL_WIDTH, HomeConfig.SHARED_CONFIRM_BUTTON_LABEL_HEIGHT);
+        cancelLabel.fontSize = HomeConfig.SHARED_CONFIRM_BUTTON_FONT_SIZE;
+        cancelLabel.lineHeight = HomeConfig.SHARED_CONFIRM_BUTTON_LINE_HEIGHT;
         this.setLabelOutline(cancelLabel, new Color(85, 48, 30, 255), 2);
         this.bindScaledClick(cancel, () => this.closeMarketSellConfirmPopup());
 
-        const confirm = this.getOrCreateEditorSkinnedNode('MarketSellConfirmSubmit', board, 162, 62, 120, -178, HomeConfig.UI_MARKET_DETAIL_BUTTON_BG);
+        const confirm = this.getOrCreateEditorSkinnedNode('MarketSellConfirmSubmit', board, HomeConfig.SHARED_CONFIRM_BUTTON_WIDTH, HomeConfig.SHARED_CONFIRM_BUTTON_HEIGHT, HomeConfig.SHARED_CONFIRM_ACCEPT_BUTTON_X, HomeConfig.SHARED_CONFIRM_BUTTON_Y, HomeConfig.UI_MARKET_DETAIL_BUTTON_BG);
         confirm.active = true;
+        confirm.setPosition(HomeConfig.SHARED_CONFIRM_ACCEPT_BUTTON_X, HomeConfig.SHARED_CONFIRM_BUTTON_Y, 0);
+        (confirm.getComponent(UITransform) || confirm.addComponent(UITransform)).setContentSize(HomeConfig.SHARED_CONFIRM_BUTTON_WIDTH, HomeConfig.SHARED_CONFIRM_BUTTON_HEIGHT);
         confirm.setSiblingIndex(9);
-        const confirmLabel = this.getOrCreateEditorLabel(confirm, 'MarketSellConfirmSubmitLabel', '\u786e\u5b9a', 29, 0, 1, 132, 42, new Color(255, 238, 218, 255));
+        const confirmLabel = this.getOrCreateEditorLabel(confirm, 'MarketSellConfirmSubmitLabel', '\u786e\u5b9a', HomeConfig.SHARED_CONFIRM_BUTTON_FONT_SIZE, 0, HomeConfig.SHARED_CONFIRM_BUTTON_LABEL_Y, HomeConfig.SHARED_CONFIRM_BUTTON_LABEL_WIDTH, HomeConfig.SHARED_CONFIRM_BUTTON_LABEL_HEIGHT, new Color(255, 238, 218, 255));
         confirmLabel.node.active = true;
+        confirmLabel.node.setPosition(0, HomeConfig.SHARED_CONFIRM_BUTTON_LABEL_Y, 0);
+        (confirmLabel.node.getComponent(UITransform) || confirmLabel.node.addComponent(UITransform)).setContentSize(HomeConfig.SHARED_CONFIRM_BUTTON_LABEL_WIDTH, HomeConfig.SHARED_CONFIRM_BUTTON_LABEL_HEIGHT);
+        confirmLabel.fontSize = HomeConfig.SHARED_CONFIRM_BUTTON_FONT_SIZE;
+        confirmLabel.lineHeight = HomeConfig.SHARED_CONFIRM_BUTTON_LINE_HEIGHT;
         this.setLabelOutline(confirmLabel, new Color(85, 48, 30, 255), 2);
         this.bindScaledClick(confirm, () => this.confirmMarketSellListing(item, categoryPath, priceRange));
         this.refreshMarketSellConfirmDraftLabels();

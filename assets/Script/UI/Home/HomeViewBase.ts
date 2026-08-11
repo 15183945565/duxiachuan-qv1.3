@@ -60,6 +60,7 @@ import {
     RoleAssetConfig,
     MailReward,
     MailData,
+    BattleAutoHostState,
     NoticeType,
     NoticeData,
     RankPlayerData,
@@ -79,6 +80,9 @@ type ProfileAvatarFrameItem = (typeof HomeConfig.PROFILE_AVATAR_FRAME_ITEMS)[num
 type HomeRoleAttributeSet = { attack: number; life: number; defense: number };
 type HomeRoleProgressSnapshot = { level: number; attrs: HomeRoleAttributeSet; power: number };
 type HomeRoleBreakthroughMaterialId = typeof HomeConfig.ROLE_BREAKTHROUGH_MATERIALS[number]['id'];
+
+const equipmentFrameEffectCallbacks = new WeakMap<Node, () => void>();
+const equipmentFrameEffectFrameCache = new Map<string, SpriteFrame>();
 
 @ccclass('HomeViewBase')
 export abstract class HomeViewBase extends Component {
@@ -315,6 +319,8 @@ export abstract class HomeViewBase extends Component {
     protected battleCombatLayer: Node | null = null;
     protected battleCombatBgSkeleton: sp.Skeleton | null = null;
     protected battleCombatRoleSkeleton: sp.Skeleton | null = null;
+    protected battleMonsterHitEffectSkeleton: sp.Skeleton | null = null;
+    protected battleMonsterHitEffectSkeletonData: sp.SkeletonData | null = null;
     protected battleWaveLabel: Label | null = null;
     protected battleDamageNumberRoot: Node | null = null;
     protected battleRewardPopup: Node | null = null;
@@ -332,6 +338,14 @@ export abstract class HomeViewBase extends Component {
     protected battleCombatAttacking = false;
     protected battleCurrentWave = 0;
     protected battleWaveEnding = false;
+    protected battleWaveStartTimeMs = 0;
+    protected battleAutoHostState: BattleAutoHostState | null = null;
+    protected battleAutoHostIndicator: Node | null = null;
+    protected battleAutoHostIndicatorFrames: SpriteFrame[] = [];
+    protected battleAutoHostIndicatorLoadPromise: Promise<SpriteFrame[]> | null = null;
+    protected battleAutoHostIndicatorFrameIndex = 0;
+    protected battleAutoHostIndicatorFrameTimer = 0;
+    protected battleAutoHostCheckTimer = 0;
     protected shopPanel: Node | null = null;
     protected shopGridRoot: Node | null = null;
     protected shopCurrencyLabel: Label | null = null;
@@ -392,11 +406,14 @@ export abstract class HomeViewBase extends Component {
     protected magicBattleBackgroundSkeleton: sp.Skeleton | null = null;
     protected magicBattleRoleSkeleton: sp.Skeleton | null = null;
     protected magicBattleMonsterSkeleton: sp.Skeleton | null = null;
+    protected magicBattleHitEffectSkeleton: sp.Skeleton | null = null;
+    protected magicBattleHitEffectSkeletonData: sp.SkeletonData | null = null;
     protected magicBattleEnemyNameLabel: Label | null = null;
     protected magicBattleEnemyHpLabel: Label | null = null;
     protected magicBattleHintLabel: Label | null = null;
     protected magicBattleTarget: MagicMapMonsterRuntime | null = null;
     protected magicBattleActive = false;
+    protected magicBattleAttackSequenceId = 0;
     protected magicBattleAttackTimer = 0;
     protected magicBattleResultTimer = 0;
     protected magicBattleEnemyHp = 100;
@@ -415,6 +432,10 @@ export abstract class HomeViewBase extends Component {
     protected beastCardOutputAmountUnitLabel: Label | null = null;
     protected beastCardRecordButton: Node | null = null;
     protected beastCardStrengthenButton: Node | null = null;
+    protected beastCardActivationButton: Node | null = null;
+    protected beastCardActivationStatusRoot: Node | null = null;
+    protected beastCardActivationStatusTitleLabel: Label | null = null;
+    protected beastCardActivationStatusTimeLabel: Label | null = null;
     protected beastStrengthenPage: Node | null = null;
     protected beastStrengthenBackground: Node | null = null;
     protected beastCardPrevButton: Node | null = null;
@@ -423,6 +444,8 @@ export abstract class HomeViewBase extends Component {
     protected beastCardLoadVersion = 0;
     protected beastCardCountdownElapsed = 0;
     protected beastCardNextOutputAt = Date.now() + 24 * 60 * 60 * 1000;
+    protected beastCardActivationStateLoaded = false;
+    protected readonly beastCardActiveUntilByKey = new Map<string, number>();
     protected roleDropdown: Node | null = null;
     protected roleSelectLabel: Label | null = null;
     protected nameEditBox: EditBox | null = null;
@@ -577,6 +600,129 @@ export abstract class HomeViewBase extends Component {
         label.horizontalAlign = HorizontalTextAlignment.CENTER;
         label.verticalAlign = VerticalTextAlignment.CENTER;
         return label;
+    }
+    protected getEquipmentCatalogDisplayLevel(item?: BagIllustrationCatalogItem | null): number {
+        if (!item || item.category !== 'equipment') return 0;
+        const runtimeLevel = (item as BagIllustrationCatalogItem & { displayLevel?: number }).displayLevel;
+        if (typeof runtimeLevel === 'number' && runtimeLevel > 0) return Math.floor(runtimeLevel);
+
+        const idLevelMatch = /(?:^equipment_[a-z]+_lv|^equipment_\d+_lv)(\d+)$/.exec(item.id);
+        if (idLevelMatch) return Number(idLevelMatch[1]);
+
+        const catalogIndexMatch = /^equipment_(\d+)$/.exec(item.id);
+        if (catalogIndexMatch) {
+            const catalogIndex = Number(catalogIndexMatch[1]);
+            if (catalogIndex >= 113 && catalogIndex <= 152) {
+                const levelByGroupOffset = [2, 3, 4, 5, 1];
+                const baseTier = levelByGroupOffset[(catalogIndex - 113) % 5] || 0;
+                if (baseTier === 3) return 21;
+                if (baseTier === 4) return 31;
+                if (baseTier === 5) return 41;
+                return baseTier;
+            }
+        }
+
+        const nameLevelMatch = /^(\d+)\u7ea7/.exec(item.name);
+        if (nameLevelMatch) return Number(nameLevelMatch[1]);
+
+        const chineseLevelMatch = /^([一二三四五])\u7ea7/.exec(item.name);
+        const chineseLevelMap: Record<string, number> = {
+            '\u4e00': 1,
+            '\u4e8c': 2,
+            '\u4e09': 3,
+            '\u56db': 4,
+            '\u4e94': 5,
+        };
+        if (chineseLevelMatch) return chineseLevelMap[chineseLevelMatch[1]] || 0;
+
+        const frameLevelMatch = /item_frame_lv(\d+)/.exec(item.framePath);
+        return frameLevelMatch ? Number(frameLevelMatch[1]) : 0;
+    }
+    protected getEquipmentFrameEffectGroup(level: number): (typeof HomeConfig.BAG_EQUIPMENT_FRAME_EFFECT_GROUPS)[number] | null {
+        const safeLevel = Math.max(0, Math.floor(level));
+        return HomeConfig.BAG_EQUIPMENT_FRAME_EFFECT_GROUPS.find((group) => (
+            safeLevel >= group.minLevel && safeLevel <= group.maxLevel
+        )) || null;
+    }
+    protected getEquipmentFrameEffectPaths(level: number): readonly string[] {
+        return this.getEquipmentFrameEffectGroup(level)?.framePaths || [];
+    }
+    protected syncEquipmentFrameEffectForItem(parent: Node, name: string, item: BagIllustrationCatalogItem | null | undefined, width: number, height: number, x = 0, y = 0): Node | null {
+        const group = this.getEquipmentFrameEffectGroup(this.getEquipmentCatalogDisplayLevel(item));
+        const framePaths = group?.framePaths || [];
+        const existing = parent.getChildByName(name);
+        if (framePaths.length === 0) {
+            if (existing?.isValid) {
+                this.stopEquipmentFrameEffect(existing);
+                existing.active = false;
+            }
+            return null;
+        }
+
+        const effectWidth = width * (group?.scaleX || 1);
+        const effectHeight = height * (group?.scaleY || 1);
+        const effectX = x + (group?.offsetX || 0);
+        const effectY = y + (group?.offsetY || 0);
+        const node = existing?.isValid ? existing : this.createNode(name, parent, effectWidth, effectHeight, effectX, effectY);
+        node.active = true;
+        node.setPosition(effectX, effectY, 0);
+        (node.getComponent(UITransform) || node.addComponent(UITransform)).setContentSize(effectWidth, effectHeight);
+        const sprite = node.getComponent(Sprite) || node.addComponent(Sprite);
+        sprite.type = Sprite.Type.SIMPLE;
+        sprite.sizeMode = Sprite.SizeMode.CUSTOM;
+        if (!sprite.spriteFrame) sprite.enabled = false;
+        this.startEquipmentFrameEffect(node, framePaths, effectWidth, effectHeight);
+        return node;
+    }
+    protected startEquipmentFrameEffect(node: Node, framePaths: readonly string[], width: number, height: number): void {
+        this.stopEquipmentFrameEffect(node);
+        if (framePaths.length === 0) return;
+
+        let frameIndex = 0;
+        const sprite = node.getComponent(Sprite) || node.addComponent(Sprite);
+        sprite.type = Sprite.Type.SIMPLE;
+        sprite.sizeMode = Sprite.SizeMode.CUSTOM;
+        (node.getComponent(UITransform) || node.addComponent(UITransform)).setContentSize(width, height);
+
+        const applyFrame = (path: string, callback: () => void): void => {
+            this.loadEquipmentFrameEffectFrame(path)
+                .then((frame) => {
+                    if (!node.isValid || equipmentFrameEffectCallbacks.get(node) !== callback) return;
+                    sprite.spriteFrame = frame;
+                    sprite.enabled = true;
+                })
+                .catch((err) => {
+                    console.warn('[MainHomeView] equipment frame effect load failed', path, err);
+                });
+        };
+
+        const callback = (): void => {
+            if (!node.isValid) {
+                this.stopEquipmentFrameEffect(node);
+                return;
+            }
+            frameIndex = (frameIndex + 1) % framePaths.length;
+            applyFrame(framePaths[frameIndex], callback);
+        };
+
+        equipmentFrameEffectCallbacks.set(node, callback);
+        applyFrame(framePaths[0], callback);
+        if (framePaths.length > 1) {
+            this.schedule(callback, 1 / HomeConfig.BAG_EQUIPMENT_FRAME_EFFECT_FPS);
+        }
+    }
+    protected stopEquipmentFrameEffect(node: Node): void {
+        const callback = equipmentFrameEffectCallbacks.get(node);
+        if (!callback) return;
+        this.unschedule(callback);
+        equipmentFrameEffectCallbacks.delete(node);
+    }
+    protected async loadEquipmentFrameEffectFrame(path: string): Promise<SpriteFrame> {
+        const cached = equipmentFrameEffectFrameCache.get(path);
+        if (cached) return cached;
+        const frame = await this.loadSpriteFrameAsset(path);
+        equipmentFrameEffectFrameCache.set(path, frame);
+        return frame;
     }
     protected drawRect(node: Node, width: number, height: number, color: Color): Graphics {
         const graphics = node.addComponent(Graphics);
@@ -927,6 +1073,7 @@ export abstract class HomeViewBase extends Component {
     protected abstract playBattleRoleAttackAnimation(isSkill: boolean, loop: boolean): number;
     protected abstract getBattleRoleAttackFallbackDuration(isSkill: boolean): number;
     protected abstract getTrackAnimationDuration(track: unknown): number;
+    protected abstract playBattleAttackSound(): void;
     protected abstract playBattleMonsterHurt(isSkill?: boolean): void;
     protected abstract finishBattleChallenge(): void;
     protected abstract returnToBattleEntryFromResult(): void;
@@ -934,6 +1081,10 @@ export abstract class HomeViewBase extends Component {
     protected abstract stopBattleTweens(): void;
     protected abstract setBattleTitle(text: string): void;
     protected abstract raiseBattleTopControls(): void;
+    protected abstract canEnterBattleChallenge(showToast?: boolean): boolean;
+    protected abstract refreshBattleAutoHostEntryState(): void;
+    protected abstract updateBattleAutoHostIndicator(deltaTime: number): void;
+    protected abstract completeDueBattleAutoHostIfNeeded(showToast?: boolean): boolean;
     protected abstract loadBattleBackgroundSkeletonData(): Promise<void>;
     protected abstract playBattleBackgroundAnimation(): void;
     protected abstract stopBattleBackgroundAnimation(): void;
@@ -1055,6 +1206,8 @@ export abstract class HomeViewBase extends Component {
     protected abstract createShopCurrencyIcon(parent: Node, x: number, y: number, size: number): Node;
     protected abstract ensureShopStore(): void;
     protected abstract saveShopStore(): void;
+    protected abstract getMagicFloorTicketCount(): number;
+    protected abstract consumeMagicFloorTicket(): boolean;
     protected abstract updateShopCurrencyLabels(): void;
     protected abstract formatCurrency(value: number): string;
     protected abstract refreshProfilePopupLabels(): void;
@@ -1138,6 +1291,7 @@ export abstract class HomeViewBase extends Component {
     protected abstract ensureMailData(): void;
     protected abstract createDefaultMails(): MailData[];
     protected abstract saveMails(): void;
+    protected abstract queueBattleHostedMailRewards(rewards: MailReward[]): void;
     protected abstract openMailPanel(): void;
     protected abstract buildMailPanel(): void;
     protected abstract bindEditorMailPanel(panel: Node): void;

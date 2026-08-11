@@ -34,6 +34,7 @@ export abstract class HomeFeatureBattleEntry extends HomeFeatureBattleEntryHost 
         this.battlePanel.setSiblingIndex((this.battlePanel.parent?.children.length || 1) - 1);
         this.resetBattlePanelToEntry();
         this.playBattleBackgroundAnimation();
+        this.refreshBattleAutoHostEntryState();
         this.refreshBottomEntryChrome();
     }
 
@@ -148,6 +149,7 @@ export abstract class HomeFeatureBattleEntry extends HomeFeatureBattleEntryHost 
         this.createBattleDailyChallengeCount(this.battleEntryUiRoot);
         this.createBattleEntryActionButtons(this.battleEntryUiRoot);
         this.createBattleChallengeLimitHint(this.battleEntryUiRoot);
+        this.refreshBattleAutoHostEntryState();
     }
 
     protected createBattleLevelSubtitle(parent: Node): void {

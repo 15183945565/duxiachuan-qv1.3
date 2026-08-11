@@ -134,8 +134,10 @@ export abstract class HomeFeatureCommerceConfirm extends HomeFeatureCommerceConf
     protected hideCommerceConfirmCloseButton(popup: Node): void {
         const close = this.findNode('ConfirmPopupClose', popup);
         if (!close?.isValid) return;
+        close.off(Node.EventType.TOUCH_END);
         close.active = false;
         close.setScale(0, 0, 1);
+        close.setPosition(0, -2000, 0);
     }
     protected layoutCommerceQuantityConfirmPopup(
         popup: Node,
@@ -155,8 +157,8 @@ export abstract class HomeFeatureCommerceConfirm extends HomeFeatureCommerceConf
             popup,
             popup,
             'ConfirmPopupBoard',
-            725,
-            505,
+            HomeConfig.SHARED_CONFIRM_BOARD_WIDTH,
+            HomeConfig.SHARED_CONFIRM_BOARD_HEIGHT,
             0,
             0,
             HomeConfig.UI_CONFIRM_POPUP_BG,
@@ -167,10 +169,10 @@ export abstract class HomeFeatureCommerceConfirm extends HomeFeatureCommerceConf
             board,
             popup,
             'ConfirmPopupTitleSkin',
-            486,
-            84,
+            HomeConfig.SHARED_CONFIRM_TITLE_WIDTH,
+            HomeConfig.SHARED_CONFIRM_TITLE_HEIGHT,
             0,
-            169,
+            HomeConfig.SHARED_CONFIRM_TITLE_Y,
             HomeConfig.UI_CONFIRM_TITLE_BG,
         );
         titleSkin.setSiblingIndex(1);
@@ -180,19 +182,19 @@ export abstract class HomeFeatureCommerceConfirm extends HomeFeatureCommerceConf
             popup,
             'ConfirmPopupTitle',
             titleText || '\u63d0\u793a\u8bf4\u660e',
-            30,
+            HomeConfig.SHARED_CONFIRM_TITLE_FONT_SIZE,
             0,
-            169,
-            280,
-            52,
+            HomeConfig.SHARED_CONFIRM_TITLE_Y,
+            HomeConfig.SHARED_CONFIRM_TITLE_LABEL_WIDTH,
+            HomeConfig.SHARED_CONFIRM_TITLE_LABEL_HEIGHT,
             new Color(126, 74, 36, 255),
         );
-        title.lineHeight = 38;
+        title.lineHeight = HomeConfig.SHARED_CONFIRM_TITLE_LINE_HEIGHT;
         title.overflow = Overflow.SHRINK;
         this.setLabelOutline(title, new Color(255, 245, 215, 255), 2);
         title.node.setSiblingIndex(2);
 
-        const messageBg = this.getOrCreateConfirmChild(board, popup, 'ConfirmMessageBg', 620, 116, 0, 66);
+        const messageBg = this.getOrCreateConfirmChild(board, popup, 'ConfirmMessageBg', HomeConfig.SHARED_CONFIRM_MESSAGE_WIDTH, HomeConfig.SHARED_CONFIRM_MESSAGE_HEIGHT, 0, HomeConfig.SHARED_CONFIRM_MESSAGE_Y);
         this.hideCommerceConfirmMessageBg(messageBg);
         messageBg.setSiblingIndex(3);
 
@@ -201,13 +203,13 @@ export abstract class HomeFeatureCommerceConfirm extends HomeFeatureCommerceConf
             popup,
             'ConfirmMessage',
             '',
-            24,
+            28,
             0,
-            66,
-            560,
-            42.84,
+            HomeConfig.SHARED_CONFIRM_MESSAGE_Y,
+            HomeConfig.SHARED_CONFIRM_MESSAGE_WIDTH,
+            HomeConfig.SHARED_CONFIRM_MESSAGE_HEIGHT,
         );
-        message.lineHeight = 34;
+        message.lineHeight = 40;
         message.node.setSiblingIndex(4);
 
         const quantityRoot = this.getOrCreateConfirmChild(board, popup, 'ConfirmQuantityRoot', 300, 46, 0, -58);
@@ -269,13 +271,13 @@ export abstract class HomeFeatureCommerceConfirm extends HomeFeatureCommerceConf
             board,
             popup,
             'ConfirmCancelButton',
-            162,
-            62,
-            -113.38800000000003,
-            -155,
+            HomeConfig.SHARED_CONFIRM_BUTTON_WIDTH,
+            HomeConfig.SHARED_CONFIRM_BUTTON_HEIGHT,
+            HomeConfig.SHARED_CONFIRM_CANCEL_BUTTON_X,
+            HomeConfig.SHARED_CONFIRM_BUTTON_Y,
             HomeConfig.UI_CONFIRM_BUTTON_BG,
         );
-        cancel.setPosition(-113.38800000000003, -155, 0);
+        cancel.setPosition(HomeConfig.SHARED_CONFIRM_CANCEL_BUTTON_X, HomeConfig.SHARED_CONFIRM_BUTTON_Y, 0);
         cancel.setSiblingIndex(6);
 
         const cancelLabel = this.getOrCreateConfirmLabel(
@@ -283,14 +285,14 @@ export abstract class HomeFeatureCommerceConfirm extends HomeFeatureCommerceConf
             popup,
             'ConfirmCancelButtonLabel',
             '\u53d6\u6d88',
-            31,
+            HomeConfig.SHARED_CONFIRM_BUTTON_FONT_SIZE,
             0,
-            1,
-            132,
-            42,
+            HomeConfig.SHARED_CONFIRM_BUTTON_LABEL_Y,
+            HomeConfig.SHARED_CONFIRM_BUTTON_LABEL_WIDTH,
+            HomeConfig.SHARED_CONFIRM_BUTTON_LABEL_HEIGHT,
             new Color(255, 238, 218, 255),
         );
-        cancelLabel.lineHeight = 38;
+        cancelLabel.lineHeight = HomeConfig.SHARED_CONFIRM_BUTTON_LINE_HEIGHT;
         this.setLabelOutline(cancelLabel, new Color(94, 36, 35, 255), 2);
         cancelLabel.node.setSiblingIndex(1);
 
@@ -298,13 +300,13 @@ export abstract class HomeFeatureCommerceConfirm extends HomeFeatureCommerceConf
             board,
             popup,
             'ConfirmAcceptButton',
-            162,
-            62,
-            121.71900000000005,
-            -155,
+            HomeConfig.SHARED_CONFIRM_BUTTON_WIDTH,
+            HomeConfig.SHARED_CONFIRM_BUTTON_HEIGHT,
+            HomeConfig.SHARED_CONFIRM_ACCEPT_BUTTON_X,
+            HomeConfig.SHARED_CONFIRM_BUTTON_Y,
             HomeConfig.UI_CONFIRM_BUTTON_BG,
         );
-        accept.setPosition(121.71900000000005, -155, 0);
+        accept.setPosition(HomeConfig.SHARED_CONFIRM_ACCEPT_BUTTON_X, HomeConfig.SHARED_CONFIRM_BUTTON_Y, 0);
         accept.setSiblingIndex(7);
 
         const acceptLabel = this.getOrCreateConfirmLabel(
@@ -312,14 +314,14 @@ export abstract class HomeFeatureCommerceConfirm extends HomeFeatureCommerceConf
             popup,
             'ConfirmAcceptButtonLabel',
             '\u786e\u5b9a',
-            31,
+            HomeConfig.SHARED_CONFIRM_BUTTON_FONT_SIZE,
             0,
-            1,
-            132,
-            42,
+            HomeConfig.SHARED_CONFIRM_BUTTON_LABEL_Y,
+            HomeConfig.SHARED_CONFIRM_BUTTON_LABEL_WIDTH,
+            HomeConfig.SHARED_CONFIRM_BUTTON_LABEL_HEIGHT,
             new Color(255, 238, 218, 255),
         );
-        acceptLabel.lineHeight = 38;
+        acceptLabel.lineHeight = HomeConfig.SHARED_CONFIRM_BUTTON_LINE_HEIGHT;
         this.setLabelOutline(acceptLabel, new Color(28, 85, 82, 255), 2);
         acceptLabel.node.setSiblingIndex(1);
 
