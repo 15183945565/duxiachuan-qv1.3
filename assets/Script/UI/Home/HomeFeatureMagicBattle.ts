@@ -11,7 +11,7 @@ import {
 } from './BagIllustrationCatalog.generated';
 import * as HomeConfig from './HomeConfig';
 import { HomeViewBase } from './HomeViewBase';
-import { MagicMapMonsterRuntime } from './HomeTypes';
+import { MagicMapMonsterRuntime, type RoleGender } from './HomeTypes';
 
 type MagicBattleParticipantId = 'player' | 'npc-half' | 'npc-double';
 
@@ -21,6 +21,7 @@ interface MagicBattleDamageParticipant {
     isPlayer: boolean;
     skelPath?: string;
     duelScale?: number;
+    duelGender?: RoleGender;
     damageMultiplier: number;
     damage: number;
     hp: number;
@@ -56,18 +57,7 @@ abstract class HomeFeatureMagicBattleHost extends HomeViewBase {
  */
 export abstract class HomeFeatureMagicBattle extends HomeFeatureMagicBattleHost {
     protected openMagicDuelResult(monster: MagicMapMonsterRuntime): void {
-        this.openSharedFlowPopup('BattleResultPopup', {
-            title: '\u9b54\u754c\u5bf9\u51b3\u7ed3\u7b97',
-            onAgain: () => this.openMagicMonsterTarget(monster),
-            onClose: () => {
-                if (this.magicMapPanel) {
-                    this.magicMapPanel.active = true;
-                    this.ensureInputBlocker(this.magicMapPanel);
-                    this.magicMapPanel.setSiblingIndex((this.magicMapPanel.parent?.children.length || 1) - 1);
-                }
-                this.startMagicMapWander();
-            },
-        });
+        void this.startMagicMonsterBattle(monster);
     }
     protected async startMagicMonsterBattle(monster: MagicMapMonsterRuntime): Promise<void> {
         if (!this.magicMonsterBattlePanel?.isValid) return;

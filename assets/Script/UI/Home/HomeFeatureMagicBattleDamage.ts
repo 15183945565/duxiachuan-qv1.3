@@ -9,6 +9,7 @@ import {
 } from 'cc';
 import { applySimKaiFont } from '../Common/UIFont';
 import * as HomeConfig from './HomeConfig';
+import type { RoleGender } from './HomeTypes';
 import { HomeViewBase } from './HomeViewBase';
 
 type MagicBattleParticipantId = 'player' | 'npc-half' | 'npc-double';
@@ -19,6 +20,7 @@ interface MagicBattleDamageParticipant {
     isPlayer: boolean;
     skelPath?: string;
     duelScale?: number;
+    duelGender?: RoleGender;
     attackAnimations?: readonly string[];
     damageMultiplier: number;
     damage: number;
@@ -195,6 +197,7 @@ export abstract class HomeFeatureMagicBattleDamage extends HomeFeatureMagicBattl
                 isPlayer: false,
                 skelPath: HomeConfig.ROLE_ASSETS.male.skelPath,
                 duelScale: HomeConfig.ROLE_ASSETS.male.mapScale,
+                duelGender: 'male',
                 attackAnimations: HomeConfig.BATTLE_ROLE_NORMAL_ATTACK_ANIMATIONS.male,
                 damageMultiplier: 0.5,
                 damage: 0,
@@ -209,6 +212,7 @@ export abstract class HomeFeatureMagicBattleDamage extends HomeFeatureMagicBattl
                 isPlayer: false,
                 skelPath: HomeConfig.ROLE_ASSETS.female.skelPath,
                 duelScale: HomeConfig.ROLE_ASSETS.female.mapScale,
+                duelGender: 'female',
                 attackAnimations: HomeConfig.BATTLE_ROLE_NORMAL_ATTACK_ANIMATIONS.female,
                 damageMultiplier: 2,
                 damage: 0,

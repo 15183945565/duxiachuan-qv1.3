@@ -127,9 +127,10 @@ export abstract class HomeFeatureBattleEntry extends HomeFeatureBattleEntryHost 
 
     protected getOrCreateBattleLabel(parent: Node, name: string, text: string, fontSize: number, x: number, y: number, width: number, height: number, color: Color): { label: Label; existed: boolean } {
         const result = this.getOrCreateBattleNode(parent, name, width, height, x, y);
-        const label = result.node.getComponent(Label) || result.node.addComponent(Label);
+        const existingLabel = result.node.getComponent(Label);
+        const label = existingLabel || result.node.addComponent(Label);
         label.string = text;
-        if (!result.existed) {
+        if (!existingLabel) {
             applySimKaiFont(label);
             label.fontSize = fontSize;
             label.lineHeight = fontSize + 8;

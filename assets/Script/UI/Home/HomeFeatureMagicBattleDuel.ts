@@ -15,6 +15,7 @@ import {
     tween,
 } from 'cc';
 import * as HomeConfig from './HomeConfig';
+import type { RoleGender } from './HomeTypes';
 import { HomeViewBase } from './HomeViewBase';
 
 type MagicBattleParticipantId = 'player' | 'npc-half' | 'npc-double';
@@ -25,6 +26,7 @@ interface MagicBattleDamageParticipant {
     isPlayer: boolean;
     skelPath?: string;
     duelScale?: number;
+    duelGender?: RoleGender;
     attackAnimations?: readonly string[];
     damageMultiplier: number;
     damage: number;
@@ -42,9 +44,11 @@ abstract class HomeFeatureMagicBattleDuelHost extends HomeViewBase {
     protected abstract magicBattleDuelTargetHp: number;
     protected abstract magicBattleDuelVersion: number;
     protected abstract magicBattleDuelTargetId: MagicBattleParticipantId | '';
+    protected abstract magicBattleHitEffectSkeletonData: sp.SkeletonData | null;
     protected abstract readonly magicBattleParticipants: MagicBattleDamageParticipant[];
 
     protected abstract setLabelOutline(label: Label, color: Color, width: number): void;
+    protected abstract playBattleAttackSound(): void;
     protected abstract playMagicBattleOneShot(
         target: sp.Skeleton | null,
         oneShotCandidates: readonly string[],
@@ -84,7 +88,7 @@ export abstract class HomeFeatureMagicBattleDuel extends HomeFeatureMagicBattleD
             event.propagationStopped = true;
         }, this);
 
-        const board = this.getOrCreateBattleSkinnedNode(
+        const boardInfo = this.getOrCreateBattleSkinnedNode(
             popup,
             'MagicBattleDuelBoard',
             HomeConfig.MAGIC_BATTLE_DUEL_POPUP_WIDTH,
@@ -92,13 +96,16 @@ export abstract class HomeFeatureMagicBattleDuel extends HomeFeatureMagicBattleD
             0,
             64,
             HomeConfig.UI_MAGIC_DUEL_POPUP_BG,
-        ).node;
-        board.setPosition(0, 64, 0);
-        (board.getComponent(UITransform) || board.addComponent(UITransform)).setContentSize(
-            HomeConfig.MAGIC_BATTLE_DUEL_POPUP_WIDTH,
-            HomeConfig.MAGIC_BATTLE_DUEL_POPUP_HEIGHT,
         );
-        this.applyUiSkin(board, HomeConfig.UI_MAGIC_DUEL_POPUP_BG, HomeConfig.MAGIC_BATTLE_DUEL_POPUP_WIDTH, HomeConfig.MAGIC_BATTLE_DUEL_POPUP_HEIGHT);
+        const board = boardInfo.node;
+        if (!boardInfo.existed) {
+            board.setPosition(0, 64, 0);
+            (board.getComponent(UITransform) || board.addComponent(UITransform)).setContentSize(
+                HomeConfig.MAGIC_BATTLE_DUEL_POPUP_WIDTH,
+                HomeConfig.MAGIC_BATTLE_DUEL_POPUP_HEIGHT,
+            );
+            this.applyUiSkin(board, HomeConfig.UI_MAGIC_DUEL_POPUP_BG, HomeConfig.MAGIC_BATTLE_DUEL_POPUP_WIDTH, HomeConfig.MAGIC_BATTLE_DUEL_POPUP_HEIGHT);
+        }
         board.setSiblingIndex(1);
         board.off(Node.EventType.TOUCH_END);
         board.on(Node.EventType.TOUCH_END, (event: EventTouch) => {
@@ -169,24 +176,27 @@ export abstract class HomeFeatureMagicBattleDuel extends HomeFeatureMagicBattleD
         return popup;
     }
     protected createMagicBattleDuelCard(parent: Node, suffix: string, x: number, titleText: string): sp.Skeleton {
-        const card = this.getOrCreateBattleNode(
+        const cardInfo = this.getOrCreateBattleNode(
             parent,
             `MagicBattleDuel${suffix}Card`,
             HomeConfig.MAGIC_BATTLE_DUEL_CARD_WIDTH,
             HomeConfig.MAGIC_BATTLE_DUEL_CARD_HEIGHT,
             x,
             HomeConfig.MAGIC_BATTLE_DUEL_CARD_Y,
-        ).node;
-        card.setPosition(x, HomeConfig.MAGIC_BATTLE_DUEL_CARD_Y, 0);
-        (card.getComponent(UITransform) || card.addComponent(UITransform)).setContentSize(
-            HomeConfig.MAGIC_BATTLE_DUEL_CARD_WIDTH,
-            HomeConfig.MAGIC_BATTLE_DUEL_CARD_HEIGHT,
         );
+        const card = cardInfo.node;
+        if (!cardInfo.existed) {
+            card.setPosition(x, HomeConfig.MAGIC_BATTLE_DUEL_CARD_Y, 0);
+            (card.getComponent(UITransform) || card.addComponent(UITransform)).setContentSize(
+                HomeConfig.MAGIC_BATTLE_DUEL_CARD_WIDTH,
+                HomeConfig.MAGIC_BATTLE_DUEL_CARD_HEIGHT,
+            );
+        }
         const oldCardSprite = card.getComponent(Sprite);
         if (oldCardSprite) oldCardSprite.enabled = false;
         card.setSiblingIndex(4);
 
-        const title = this.getOrCreateBattleLabel(
+        const titleInfo = this.getOrCreateBattleLabel(
             card,
             `MagicBattleDuel${suffix}Title`,
             titleText,
@@ -196,14 +206,17 @@ export abstract class HomeFeatureMagicBattleDuel extends HomeFeatureMagicBattleD
             184,
             36,
             new Color(255, 237, 186, 255),
-        ).label;
-        title.node.setPosition(0, 118, 0);
-        (title.node.getComponent(UITransform) || title.node.addComponent(UITransform)).setContentSize(184, 36);
-        title.fontSize = 24;
+        );
+        const title = titleInfo.label;
+        if (!titleInfo.existed) {
+            title.node.setPosition(0, 118, 0);
+            (title.node.getComponent(UITransform) || title.node.addComponent(UITransform)).setContentSize(184, 36);
+            title.fontSize = 24;
+        }
         title.lineHeight = 30;
         this.setLabelOutline(title, new Color(59, 25, 12, 255), 2);
 
-        const hpText = this.getOrCreateBattleLabel(
+        const hpTextInfo = this.getOrCreateBattleLabel(
             card,
             `MagicBattleDuel${suffix}HpText`,
             '',
@@ -213,14 +226,17 @@ export abstract class HomeFeatureMagicBattleDuel extends HomeFeatureMagicBattleD
             180,
             28,
             Color.WHITE,
-        ).label;
-        hpText.node.setPosition(0, 88, 0);
-        (hpText.node.getComponent(UITransform) || hpText.node.addComponent(UITransform)).setContentSize(180, 28);
-        hpText.fontSize = 20;
+        );
+        const hpText = hpTextInfo.label;
+        if (!hpTextInfo.existed) {
+            hpText.node.setPosition(0, 88, 0);
+            (hpText.node.getComponent(UITransform) || hpText.node.addComponent(UITransform)).setContentSize(180, 28);
+            hpText.fontSize = 20;
+        }
         hpText.lineHeight = 26;
         this.setLabelOutline(hpText, new Color(20, 18, 18, 255), 2);
 
-        const hpFrame = this.getOrCreateBattleSkinnedNode(
+        const hpFrameInfo = this.getOrCreateBattleSkinnedNode(
             card,
             `MagicBattleDuel${suffix}HpFrame`,
             HomeConfig.MAGIC_BATTLE_DUEL_HP_BAR_WIDTH,
@@ -228,15 +244,18 @@ export abstract class HomeFeatureMagicBattleDuel extends HomeFeatureMagicBattleD
             0,
             64,
             HomeConfig.UI_MAGIC_DAMAGE_BAR_FRAME,
-        ).node;
-        hpFrame.setPosition(0, 64, 0);
-        (hpFrame.getComponent(UITransform) || hpFrame.addComponent(UITransform)).setContentSize(
-            HomeConfig.MAGIC_BATTLE_DUEL_HP_BAR_WIDTH,
-            HomeConfig.MAGIC_BATTLE_DUEL_HP_BAR_HEIGHT,
         );
-        this.applyUiSkin(hpFrame, HomeConfig.UI_MAGIC_DAMAGE_BAR_FRAME, HomeConfig.MAGIC_BATTLE_DUEL_HP_BAR_WIDTH, HomeConfig.MAGIC_BATTLE_DUEL_HP_BAR_HEIGHT);
+        const hpFrame = hpFrameInfo.node;
+        if (!hpFrameInfo.existed) {
+            hpFrame.setPosition(0, 64, 0);
+            (hpFrame.getComponent(UITransform) || hpFrame.addComponent(UITransform)).setContentSize(
+                HomeConfig.MAGIC_BATTLE_DUEL_HP_BAR_WIDTH,
+                HomeConfig.MAGIC_BATTLE_DUEL_HP_BAR_HEIGHT,
+            );
+            this.applyUiSkin(hpFrame, HomeConfig.UI_MAGIC_DAMAGE_BAR_FRAME, HomeConfig.MAGIC_BATTLE_DUEL_HP_BAR_WIDTH, HomeConfig.MAGIC_BATTLE_DUEL_HP_BAR_HEIGHT);
+        }
         hpFrame.setSiblingIndex(5);
-        const hpFill = this.getOrCreateBattleSkinnedNode(
+        const hpFillInfo = this.getOrCreateBattleSkinnedNode(
             card,
             `MagicBattleDuel${suffix}HpFill`,
             HomeConfig.MAGIC_BATTLE_DUEL_HP_BAR_WIDTH,
@@ -244,25 +263,31 @@ export abstract class HomeFeatureMagicBattleDuel extends HomeFeatureMagicBattleD
             0,
             64,
             HomeConfig.UI_MAGIC_DAMAGE_HP_BAR,
-        ).node;
-        hpFill.setPosition(0, 64, 0);
-        (hpFill.getComponent(UITransform) || hpFill.addComponent(UITransform)).setContentSize(
-            HomeConfig.MAGIC_BATTLE_DUEL_HP_BAR_WIDTH,
-            HomeConfig.MAGIC_BATTLE_DUEL_HP_BAR_HEIGHT,
         );
-        this.applyUiSkin(hpFill, HomeConfig.UI_MAGIC_DAMAGE_HP_BAR, HomeConfig.MAGIC_BATTLE_DUEL_HP_BAR_WIDTH, HomeConfig.MAGIC_BATTLE_DUEL_HP_BAR_HEIGHT);
+        const hpFill = hpFillInfo.node;
+        if (!hpFillInfo.existed) {
+            hpFill.setPosition(0, 64, 0);
+            (hpFill.getComponent(UITransform) || hpFill.addComponent(UITransform)).setContentSize(
+                HomeConfig.MAGIC_BATTLE_DUEL_HP_BAR_WIDTH,
+                HomeConfig.MAGIC_BATTLE_DUEL_HP_BAR_HEIGHT,
+            );
+            this.applyUiSkin(hpFill, HomeConfig.UI_MAGIC_DAMAGE_HP_BAR, HomeConfig.MAGIC_BATTLE_DUEL_HP_BAR_WIDTH, HomeConfig.MAGIC_BATTLE_DUEL_HP_BAR_HEIGHT);
+        }
         hpFill.setSiblingIndex(6);
 
-        const visual = this.getOrCreateBattleNode(
+        const visualInfo = this.getOrCreateBattleNode(
             card,
             `MagicBattleDuel${suffix}Visual`,
             300,
             250,
             0,
             HomeConfig.MAGIC_BATTLE_DUEL_VISUAL_Y,
-        ).node;
-        visual.setPosition(0, HomeConfig.MAGIC_BATTLE_DUEL_VISUAL_Y, 0);
-        (visual.getComponent(UITransform) || visual.addComponent(UITransform)).setContentSize(300, 250);
+        );
+        const visual = visualInfo.node;
+        if (!visualInfo.existed) {
+            visual.setPosition(0, HomeConfig.MAGIC_BATTLE_DUEL_VISUAL_Y, 0);
+            (visual.getComponent(UITransform) || visual.addComponent(UITransform)).setContentSize(300, 250);
+        }
         visual.setSiblingIndex(3);
         const skeleton = visual.getComponent(sp.Skeleton) || visual.addComponent(sp.Skeleton);
         this.prepareSkeletonRenderer(skeleton);
@@ -288,6 +313,12 @@ export abstract class HomeFeatureMagicBattleDuel extends HomeFeatureMagicBattleD
         try {
             const roleData = await this.ensureRoleSkeletonData(this.profile.gender);
             const targetData = await this.loadSkeletonAsset(target.skelPath || HomeConfig.getRoleAssetForWeaponLevel('male', 1).skelPath);
+            if (!this.magicBattleHitEffectSkeletonData) {
+                this.magicBattleHitEffectSkeletonData = await this.loadSkeletonAsset(HomeConfig.BATTLE_MONSTER_HIT_EFFECT_SKEL_PATH).catch((error) => {
+                    console.warn('[MainHomeView] magic duel hit effect asset is not ready.', error);
+                    return null;
+                });
+            }
             if (version !== this.magicBattleDuelVersion || this.magicBattleDuelTargetId !== targetId) return;
             if (!roleData || !this.magicBattleDuelPlayerSkeleton?.isValid || !this.magicBattleDuelTargetSkeleton?.isValid) {
                 throw new Error('Magic battle duel skeleton node is missing');
@@ -295,7 +326,6 @@ export abstract class HomeFeatureMagicBattleDuel extends HomeFeatureMagicBattleD
 
             this.prepareSkeletonRenderer(this.magicBattleDuelPlayerSkeleton);
             this.magicBattleDuelPlayerSkeleton.skeletonData = roleData;
-            this.magicBattleDuelPlayerSkeleton.node.setPosition(0, HomeConfig.MAGIC_BATTLE_DUEL_VISUAL_Y, 0);
             const playerScale = this.getRoleMapScale(this.profile.gender);
             this.magicBattleDuelPlayerSkeleton.node.setScale(
                 playerScale,
@@ -307,7 +337,6 @@ export abstract class HomeFeatureMagicBattleDuel extends HomeFeatureMagicBattleD
 
             this.prepareSkeletonRenderer(this.magicBattleDuelTargetSkeleton);
             this.magicBattleDuelTargetSkeleton.skeletonData = targetData;
-            this.magicBattleDuelTargetSkeleton.node.setPosition(0, HomeConfig.MAGIC_BATTLE_DUEL_VISUAL_Y, 0);
             const targetScale = target.duelScale || HomeConfig.MAGIC_BATTLE_DUEL_NPC_SCALE;
             this.magicBattleDuelTargetSkeleton.node.setScale(-targetScale, targetScale, 1);
             this.setSkeletonVisible(this.magicBattleDuelTargetSkeleton, true);
@@ -352,11 +381,14 @@ export abstract class HomeFeatureMagicBattleDuel extends HomeFeatureMagicBattleD
         if (hpText) hpText.string = `${Math.max(0, hp)}/${Math.max(1, maxHp)}`;
         const fill = this.findNode(`MagicBattleDuel${suffix}HpFill`, popup);
         if (fill?.isValid) {
+            const frame = this.findNode(`MagicBattleDuel${suffix}HpFrame`, popup);
+            const frameTransform = frame?.getComponent(UITransform);
+            const framePosition = frame?.getPosition(new Vec3()) || new Vec3(0, 64, 0);
             const ratio = this.clamp(hp / Math.max(1, maxHp), 0, 1);
-            const barWidth = HomeConfig.MAGIC_BATTLE_DUEL_HP_BAR_WIDTH;
-            const barHeight = HomeConfig.MAGIC_BATTLE_DUEL_HP_BAR_HEIGHT;
+            const barWidth = frameTransform?.contentSize.width || HomeConfig.MAGIC_BATTLE_DUEL_HP_BAR_WIDTH;
+            const barHeight = frameTransform?.contentSize.height || HomeConfig.MAGIC_BATTLE_DUEL_HP_BAR_HEIGHT;
             const width = Math.max(2, Math.floor(barWidth * ratio));
-            fill.setPosition(-(barWidth - width) / 2, 64, 0);
+            fill.setPosition(framePosition.x - (barWidth - width) / 2, framePosition.y, 0);
             (fill.getComponent(UITransform) || fill.addComponent(UITransform)).setContentSize(width, barHeight);
             this.applyUiSkin(fill, HomeConfig.UI_MAGIC_DAMAGE_HP_BAR, width, barHeight);
         }
@@ -377,6 +409,7 @@ export abstract class HomeFeatureMagicBattleDuel extends HomeFeatureMagicBattleD
                 this.magicBattleDuelTargetSkeleton,
                 true,
                 HomeConfig.BATTLE_ROLE_NORMAL_ATTACK_ANIMATIONS[this.profile.gender],
+                this.profile.gender,
             );
             const damage = playerWins && round >= HomeConfig.MAGIC_BATTLE_DUEL_DURATION
                 ? this.magicBattleDuelTargetHp
@@ -401,6 +434,7 @@ export abstract class HomeFeatureMagicBattleDuel extends HomeFeatureMagicBattleD
                 this.magicBattleDuelPlayerSkeleton,
                 false,
                 target.attackAnimations || HomeConfig.BATTLE_ROLE_NORMAL_ATTACK_ANIMATIONS.male,
+                target.duelGender || 'male',
             );
             const damage = !playerWins && round >= HomeConfig.MAGIC_BATTLE_DUEL_DURATION
                 ? this.magicBattleDuelPlayerHp
@@ -424,33 +458,131 @@ export abstract class HomeFeatureMagicBattleDuel extends HomeFeatureMagicBattleD
         defender: sp.Skeleton | null,
         attackerTowardRight: boolean,
         attackAnimations: readonly string[],
+        attackerGender: RoleGender,
     ): void {
-        if (attacker?.isValid && attacker.skeletonData) {
-            const node = attacker.node;
-            const start = node.position.clone();
-            const offsetX = attackerTowardRight ? 26 : -26;
-            Tween.stopAllByTarget(node);
-            tween(node)
-                .to(0.12, { position: new Vec3(start.x + offsetX, start.y, start.z) }, { easing: 'sineOut' })
-                .to(0.16, { position: start }, { easing: 'sineIn' })
-                .start();
-            this.playMagicBattleOneShot(
-                attacker,
-                attackAnimations,
-                HomeConfig.IDLE_ANIMATIONS,
-                HomeConfig.BATTLE_ROLE_ATTACK_TIME_SCALE,
-            );
-        }
+        if (!attacker?.isValid || !attacker.skeletonData || !defender?.isValid || !defender.skeletonData) return;
+        const attackerNode = attacker.node;
+        const defenderNode = defender.node;
+        const attackerParentTransform = attackerNode.parent?.getComponent(UITransform);
+        if (!attackerParentTransform) return;
 
-        this.scheduleOnce(() => {
-            if (!defender?.isValid || !defender.skeletonData) return;
-            this.playMagicBattleOneShot(
-                defender,
-                HomeConfig.MAGIC_MAP_HURT_ANIMATIONS,
-                HomeConfig.IDLE_ANIMATIONS,
-                1,
+        const start = attackerNode.getPosition(new Vec3());
+        const defenderWorld = defenderNode.getWorldPosition(new Vec3());
+        const defenderLocalToAttackerParent = attackerParentTransform.convertToNodeSpaceAR(defenderWorld);
+        const stopOffsetX = attackerTowardRight
+            ? -HomeConfig.MAGIC_BATTLE_DUEL_ATTACK_STOP_OFFSET_X
+            : HomeConfig.MAGIC_BATTLE_DUEL_ATTACK_STOP_OFFSET_X;
+        const attackPosition = new Vec3(
+            defenderLocalToAttackerParent.x + stopOffsetX,
+            defenderLocalToAttackerParent.y + HomeConfig.MAGIC_BATTLE_DUEL_ATTACK_OFFSET_Y,
+            start.z,
+        );
+        const timeline = HomeConfig.MAGIC_BATTLE_ATTACK_TIMELINES[attackerGender];
+        const frameRate = HomeConfig.BATTLE_ROLE_ATTACK_FRAME_RATE;
+        const moveDuration = Math.max(0.01, (timeline.moveEndFrame - timeline.moveStartFrame) / frameRate);
+        const returnDelay = Math.max(0, timeline.returnStartFrame / frameRate);
+        const returnDuration = Math.max(0.01, (timeline.returnEndFrame - timeline.returnStartFrame) / frameRate);
+        const hitTimes = HomeConfig.BATTLE_ROLE_NORMAL_ATTACK_HIT_TIMES[attackerGender];
+
+        Tween.stopAllByTarget(attackerNode);
+        attackerNode.setPosition(start);
+        if (defenderNode.parent?.isValid) defenderNode.parent.setSiblingIndex(17);
+        if (attackerNode.parent?.isValid) attackerNode.parent.setSiblingIndex(18);
+        tween(attackerNode)
+            .to(moveDuration, { position: attackPosition }, { easing: 'sineOut' })
+            .delay(Math.max(0, returnDelay - moveDuration))
+            .to(returnDuration, { position: start }, { easing: 'sineInOut' })
+            .call(() => {
+                if (!attacker?.isValid || !attacker.skeletonData) return;
+                attackerNode.setPosition(start);
+                this.playSkeletonAnimation(attacker, HomeConfig.IDLE_ANIMATIONS, true);
+            })
+            .start();
+
+        this.playMagicBattleOneShot(
+            attacker,
+            attackAnimations,
+            HomeConfig.IDLE_ANIMATIONS,
+            HomeConfig.BATTLE_ROLE_ATTACK_TIME_SCALE,
+        );
+
+        const minimumHitTime = Math.max(0, timeline.moveEndFrame / frameRate);
+        hitTimes.forEach((hitTime) => {
+            this.scheduleOnce(() => {
+                if (!this.magicBattleDuelPopup?.active) return;
+                if (!attacker?.isValid || !defender?.isValid || !defender.skeletonData) return;
+                this.playBattleAttackSound();
+                this.playMagicBattleDuelHitEffect(defender, attackerTowardRight);
+                this.playMagicBattleOneShot(
+                    defender,
+                    [...HomeConfig.BATTLE_MONSTER_HURT_ANIMATIONS, ...HomeConfig.MAGIC_MAP_HURT_ANIMATIONS],
+                    HomeConfig.IDLE_ANIMATIONS,
+                    1,
+                );
+            }, Math.max(minimumHitTime, hitTime / Math.max(HomeConfig.BATTLE_ROLE_ATTACK_TIME_SCALE, 0.01)));
+        });
+    }
+    protected ensureMagicBattleDuelHitEffect(): sp.Skeleton | null {
+        const board = this.findNode('MagicBattleDuelBoard', this.magicBattleDuelPopup || undefined);
+        if (!board?.isValid) return null;
+
+        let effectNode = board.getChildByName('MagicBattleDuelHitEffect');
+        if (!effectNode?.isValid) {
+            effectNode = this.createNode(
+                'MagicBattleDuelHitEffect',
+                board,
+                HomeConfig.MAGIC_BATTLE_DUEL_HIT_EFFECT_WIDTH,
+                HomeConfig.MAGIC_BATTLE_DUEL_HIT_EFFECT_HEIGHT,
+                0,
+                0,
             );
-        }, 0.12);
+            effectNode.active = false;
+            effectNode.setScale(HomeConfig.MAGIC_BATTLE_DUEL_HIT_EFFECT_SCALE, HomeConfig.MAGIC_BATTLE_DUEL_HIT_EFFECT_SCALE, 1);
+        }
+        const skeleton = effectNode.getComponent(sp.Skeleton) || effectNode.addComponent(sp.Skeleton);
+        this.prepareSkeletonRenderer(skeleton);
+        this.setSkeletonVisible(skeleton, false);
+        return skeleton;
+    }
+    protected playMagicBattleDuelHitEffect(defender: sp.Skeleton | null, attackerTowardRight: boolean): void {
+        const data = this.magicBattleHitEffectSkeletonData;
+        const skeleton = this.ensureMagicBattleDuelHitEffect();
+        const effectNode = skeleton?.node;
+        const board = this.findNode('MagicBattleDuelBoard', this.magicBattleDuelPopup || undefined);
+        const boardTransform = board?.getComponent(UITransform);
+        if (!data || !skeleton?.isValid || !effectNode?.isValid || !defender?.isValid || !boardTransform) return;
+
+        const defenderLocal = boardTransform.convertToNodeSpaceAR(defender.node.getWorldPosition(new Vec3()));
+        this.unschedule(this.hideMagicBattleDuelHitEffect);
+        effectNode.active = true;
+        const effectOffsetX = attackerTowardRight
+            ? -HomeConfig.MAGIC_BATTLE_DUEL_HIT_EFFECT_OFFSET_X
+            : HomeConfig.MAGIC_BATTLE_DUEL_HIT_EFFECT_RIGHT_TO_LEFT_OFFSET_X;
+        effectNode.setPosition(
+            defenderLocal.x + effectOffsetX,
+            defenderLocal.y + HomeConfig.MAGIC_BATTLE_DUEL_HIT_EFFECT_OFFSET_Y,
+            0,
+        );
+        effectNode.setScale(HomeConfig.MAGIC_BATTLE_DUEL_HIT_EFFECT_SCALE, HomeConfig.MAGIC_BATTLE_DUEL_HIT_EFFECT_SCALE, 1);
+        effectNode.setSiblingIndex(19);
+        skeleton.skeletonData = data;
+        skeleton.timeScale = 1;
+        this.prepareSkeletonRenderer(skeleton);
+        this.setSkeletonVisible(skeleton, true);
+        const duration = this.playMagicBattleOneShot(
+            skeleton,
+            HomeConfig.BATTLE_MONSTER_HIT_EFFECT_ANIMATIONS,
+            [],
+            1,
+        ) || HomeConfig.BATTLE_MONSTER_HIT_EFFECT_FALLBACK_DURATION;
+        this.scheduleOnce(this.hideMagicBattleDuelHitEffect, duration);
+    }
+    protected hideMagicBattleDuelHitEffect(): void {
+        this.unschedule(this.hideMagicBattleDuelHitEffect);
+        const effectNode = this.findNode('MagicBattleDuelHitEffect', this.magicBattleDuelPopup || undefined);
+        const skeleton = effectNode?.getComponent(sp.Skeleton);
+        if (skeleton?.isValid) this.setSkeletonVisible(skeleton, false);
+        if (effectNode?.isValid) effectNode.active = false;
     }
     protected finishMagicBattleDuel(targetId: MagicBattleParticipantId, version: number): void {
         if (version !== this.magicBattleDuelVersion || this.magicBattleDuelTargetId !== targetId) return;
@@ -499,6 +631,7 @@ export abstract class HomeFeatureMagicBattleDuel extends HomeFeatureMagicBattleD
             Tween.stopAllByTarget(this.magicBattleDuelTargetSkeleton.node);
             this.setSkeletonVisible(this.magicBattleDuelTargetSkeleton, false);
         }
+        this.hideMagicBattleDuelHitEffect();
         this.magicBattleDuelPlayerHp = 0;
         this.magicBattleDuelTargetHp = 0;
         if (resumeBattle && this.magicMonsterBattlePanel?.active && this.magicBattleEnemyHp > 0) {

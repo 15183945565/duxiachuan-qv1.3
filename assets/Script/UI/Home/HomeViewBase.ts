@@ -615,10 +615,7 @@ export abstract class HomeViewBase extends Component {
             if (catalogIndex >= 113 && catalogIndex <= 152) {
                 const levelByGroupOffset = [2, 3, 4, 5, 1];
                 const baseTier = levelByGroupOffset[(catalogIndex - 113) % 5] || 0;
-                if (baseTier === 3) return 21;
-                if (baseTier === 4) return 31;
-                if (baseTier === 5) return 41;
-                return baseTier;
+                return HomeConfig.getEquipmentStageStartLevelByTier(baseTier);
             }
         }
 

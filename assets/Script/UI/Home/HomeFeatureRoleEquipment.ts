@@ -378,9 +378,7 @@ export abstract class HomeFeatureRoleEquipment extends HomeFeatureRoleEquipmentH
         if (baseItems.length === 0) return [];
         return Array.from({ length: 50 }, (_, index) => {
             const displayLevel = index + 1;
-            const baseTier = config.id === 'weapon' && displayLevel <= 20
-                ? 1
-                : Math.min(5, Math.ceil(displayLevel / 10));
+            const baseTier = HomeConfig.getEquipmentStageTierByLevel(displayLevel);
             const baseItem = baseItems.find((item) => this.getEquipmentBaseTier(item) === baseTier)
                 || baseItems[baseTier - 1]
                 || baseItems[0];

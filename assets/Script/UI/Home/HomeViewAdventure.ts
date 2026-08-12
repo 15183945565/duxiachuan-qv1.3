@@ -20,7 +20,7 @@ import {
     type BeastStrengthenState,
 } from './HomeBeastStrengthenConfig';
 
-import { SharedPopupContent } from './HomeTypes';
+import { SharedPopupContent, type RoleGender } from './HomeTypes';
 import * as HomeConfig from './HomeConfig';
 import { HomeViewRoleBag } from './HomeViewRoleBag';
 
@@ -32,6 +32,7 @@ interface MagicBattleDamageParticipant {
     isPlayer: boolean;
     skelPath?: string;
     duelScale?: number;
+    duelGender?: RoleGender;
     damageMultiplier: number;
     damage: number;
     hp: number;

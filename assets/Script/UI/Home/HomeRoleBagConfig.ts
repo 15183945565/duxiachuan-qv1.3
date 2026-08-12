@@ -90,10 +90,27 @@ export const UI_BAG_EQUIPMENT_FRAME_EFFECT_41_50 = [
     `${BAG_UI_ROOT}/EquipmentFrameEffects/lv41_50/equipment_frame_effect_41_50_07`,
 ] as const;
 export const BAG_EQUIPMENT_FRAME_EFFECT_GROUPS = [
-    { minLevel: 21, maxLevel: 30, framePaths: UI_BAG_EQUIPMENT_FRAME_EFFECT_21_30, scaleX: 1.57, scaleY: 1.54, offsetX: 1, offsetY: 0 },
-    { minLevel: 31, maxLevel: 40, framePaths: UI_BAG_EQUIPMENT_FRAME_EFFECT_31_40, scaleX: 1.64, scaleY: 1.66, offsetX: -1, offsetY: -1 },
-    { minLevel: 41, maxLevel: 50, framePaths: UI_BAG_EQUIPMENT_FRAME_EFFECT_41_50, scaleX: 1.16, scaleY: 1.2, offsetX: -3.9, offsetY: 0 },
+    { minLevel: 20, maxLevel: 29, framePaths: UI_BAG_EQUIPMENT_FRAME_EFFECT_21_30, scaleX: 1.57, scaleY: 1.54, offsetX: 1, offsetY: 0 },
+    { minLevel: 30, maxLevel: 39, framePaths: UI_BAG_EQUIPMENT_FRAME_EFFECT_31_40, scaleX: 1.64, scaleY: 1.66, offsetX: -1, offsetY: -1 },
+    { minLevel: 40, maxLevel: 50, framePaths: UI_BAG_EQUIPMENT_FRAME_EFFECT_41_50, scaleX: 1.16, scaleY: 1.2, offsetX: -3.9, offsetY: 0 },
 ] as const;
+export const EQUIPMENT_STAGE_LEVEL_RANGES = [
+    { tier: 1, minLevel: 1, maxLevel: 19 },
+    { tier: 3, minLevel: 20, maxLevel: 29 },
+    { tier: 4, minLevel: 30, maxLevel: 39 },
+    { tier: 5, minLevel: 40, maxLevel: 50 },
+] as const;
+export function getEquipmentStageTierByLevel(level: number): number {
+    const safeLevel = Math.max(1, Math.min(50, Math.floor(level || 1)));
+    return EQUIPMENT_STAGE_LEVEL_RANGES.find((range) => safeLevel >= range.minLevel && safeLevel <= range.maxLevel)?.tier || 1;
+}
+export function getEquipmentStageStartLevelByTier(tier: number): number {
+    const safeTier = Math.max(1, Math.floor(tier || 1));
+    if (safeTier >= 5) return 40;
+    if (safeTier === 4) return 30;
+    if (safeTier >= 2) return 20;
+    return 1;
+}
 export const UI_BAG_ONE_KEY_LOCK = `${BAG_UI_ROOT}/bag_one_key_lock`;
 export const UI_BAG_ACTION_BUTTON_BG = `${BAG_UI_ROOT}/bag_action_button_bg`;
 export const UI_BAG_MODE_ROOT = `${BAG_UI_ROOT}/Mode`;
@@ -570,16 +587,16 @@ export const ROLE_ASSETS: Record<RoleGender, RoleAssetConfig> = {
 
 export const ROLE_WEAPON_SPINE_ASSETS: Record<RoleGender, Array<RoleAssetConfig & { minWeaponLevel: number; maxWeaponLevel: number }>> = {
     male: [
-        { ...ROLE_ASSETS.male, skelPath: 'Spine/RoleWeapon/Level01_20/Male/skeleton', minWeaponLevel: 1, maxWeaponLevel: 20 },
-        { ...ROLE_ASSETS.male, skelPath: 'Spine/RoleWeapon/Level21_30/Male/skeleton', minWeaponLevel: 21, maxWeaponLevel: 30 },
-        { ...ROLE_ASSETS.male, skelPath: 'Spine/RoleWeapon/Level31_40/Male/skeleton', minWeaponLevel: 31, maxWeaponLevel: 40 },
-        { ...ROLE_ASSETS.male, skelPath: 'Spine/RoleWeapon/Level41_50/Male/skeleton', minWeaponLevel: 41, maxWeaponLevel: 50 },
+        { ...ROLE_ASSETS.male, skelPath: 'Spine/RoleWeapon/Level01_20/Male/skeleton', minWeaponLevel: 1, maxWeaponLevel: 19 },
+        { ...ROLE_ASSETS.male, skelPath: 'Spine/RoleWeapon/Level21_30/Male/skeleton', minWeaponLevel: 20, maxWeaponLevel: 29 },
+        { ...ROLE_ASSETS.male, skelPath: 'Spine/RoleWeapon/Level31_40/Male/skeleton', minWeaponLevel: 30, maxWeaponLevel: 39 },
+        { ...ROLE_ASSETS.male, skelPath: 'Spine/RoleWeapon/Level41_50/Male/skeleton', minWeaponLevel: 40, maxWeaponLevel: 50 },
     ],
     female: [
-        { ...ROLE_ASSETS.female, skelPath: 'Spine/RoleWeapon/Level01_20/Female/skeleton', minWeaponLevel: 1, maxWeaponLevel: 20 },
-        { ...ROLE_ASSETS.female, skelPath: 'Spine/RoleWeapon/Level21_30/Female/skeleton', minWeaponLevel: 21, maxWeaponLevel: 30 },
-        { ...ROLE_ASSETS.female, skelPath: 'Spine/RoleWeapon/Level31_40/Female/skeleton', minWeaponLevel: 31, maxWeaponLevel: 40 },
-        { ...ROLE_ASSETS.female, skelPath: 'Spine/RoleWeapon/Level41_50/Female/skeleton', minWeaponLevel: 41, maxWeaponLevel: 50 },
+        { ...ROLE_ASSETS.female, skelPath: 'Spine/RoleWeapon/Level01_20/Female/skeleton', minWeaponLevel: 1, maxWeaponLevel: 19 },
+        { ...ROLE_ASSETS.female, skelPath: 'Spine/RoleWeapon/Level21_30/Female/skeleton', minWeaponLevel: 20, maxWeaponLevel: 29 },
+        { ...ROLE_ASSETS.female, skelPath: 'Spine/RoleWeapon/Level31_40/Female/skeleton', minWeaponLevel: 30, maxWeaponLevel: 39 },
+        { ...ROLE_ASSETS.female, skelPath: 'Spine/RoleWeapon/Level41_50/Female/skeleton', minWeaponLevel: 40, maxWeaponLevel: 50 },
     ],
 };
 

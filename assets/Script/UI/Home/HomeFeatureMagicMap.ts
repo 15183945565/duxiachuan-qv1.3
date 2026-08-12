@@ -683,10 +683,6 @@ export abstract class HomeFeatureMagicMap extends HomeFeatureMagicMapHost {
             title: '\u7cfb\u7edf\u63d0\u793a',
             message: '',
             onConfirm: () => {
-                if (monster.occupiedBy) {
-                    this.openMagicDuelResult(monster);
-                    return;
-                }
                 void this.startMagicMonsterBattle(monster);
             },
         });
