@@ -406,9 +406,10 @@ export abstract class HomeFeatureMagicBattle extends HomeFeatureMagicBattleHost 
                 const track = target.setAnimation(0, animation, false);
                 if (!track) continue;
                 for (const idleAnimation of idleCandidates) {
+                    if (!target.findAnimation(idleAnimation)) continue;
                     try {
-                        target.addAnimation(0, idleAnimation, true, 0);
-                        break;
+                        const idleTrack = target.addAnimation(0, idleAnimation, true, 0);
+                        if (idleTrack) break;
                     } catch {
                         // Try the next idle animation name.
                     }

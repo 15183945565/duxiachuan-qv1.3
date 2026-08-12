@@ -54,7 +54,7 @@ export const UI_BAG_TAB_DECOMPOSE_ACTIVE = `${BAG_UI_ROOT}/bag_tab_decompose_act
 export const UI_BAG_TAB_BEAST_SYNTH = `${BAG_UI_ROOT}/bag_tab_beast_synth`;
 export const UI_BAG_TAB_SYNTH_ACTIVE = `${BAG_UI_ROOT}/bag_tab_synth_active`;
 export const UI_BAG_ITEM_FRAME_LV1 = `${BAG_UI_ROOT}/ItemFrames/item_frame_lv1`;
-export const BAG_EQUIPMENT_FRAME_EFFECT_FPS = 12;
+export const BAG_EQUIPMENT_FRAME_EFFECT_FPS = 7;
 export const UI_BAG_EQUIPMENT_FRAME_EFFECT_21_30 = [
     `${BAG_UI_ROOT}/EquipmentFrameEffects/lv21_30/equipment_frame_effect_21_30_00`,
     `${BAG_UI_ROOT}/EquipmentFrameEffects/lv21_30/equipment_frame_effect_21_30_01`,
@@ -126,8 +126,8 @@ export const UI_ROLE_EQUIP_LEG = `${UI_ROLE_EQUIP_ROOT}/role_equip_leg`;
 export const UI_ROLE_EQUIP_SHOES = `${UI_ROLE_EQUIP_ROOT}/role_equip_shoes`;
 export const UI_ROLE_EQUIP_NECKLACE = `${UI_ROLE_EQUIP_ROOT}/role_equip_necklace`;
 export const UI_ROLE_EQUIP_RING = `${UI_ROLE_EQUIP_ROOT}/role_equip_ring`;
-export const BAG_ITEM_DETAIL_ATTR_FRAME_WIDTH = 725;
-export const BAG_ITEM_DETAIL_ATTR_FRAME_HEIGHT = 505;
+export const BAG_ITEM_DETAIL_ATTR_FRAME_WIDTH = 586;
+export const BAG_ITEM_DETAIL_ATTR_FRAME_HEIGHT = 367;
 export const BAG_ITEM_DETAIL_TITLE_WIDTH = 486;
 export const BAG_ITEM_DETAIL_TITLE_HEIGHT = 84;
 
@@ -209,6 +209,17 @@ export const ROLE_PAGE_POWER_DIGIT_OFFSET_Y = -4;
 export const ROLE_PAGE_POWER_DETAIL_BUTTON_SIZE = 50;
 export const ROLE_PAGE_POWER_DETAIL_BUTTON_X = 176;
 export const ROLE_PAGE_POWER_DETAIL_BUTTON_Y = 0;
+export const ROLE_PAGE_EQUIPMENT_INLINE_ATTR_WIDTH = 210;
+export const ROLE_PAGE_EQUIPMENT_INLINE_ATTR_HEIGHT = 146;
+export const ROLE_PAGE_EQUIPMENT_INLINE_ATTR_X = 0;
+export const ROLE_PAGE_EQUIPMENT_INLINE_ATTR_Y = -430;
+export const ROLE_PAGE_EQUIPMENT_INLINE_ATTR_ROW_GAP = 37;
+export const ROLE_PAGE_EQUIPMENT_INLINE_ATTR_LABEL_X = -42;
+export const ROLE_PAGE_EQUIPMENT_INLINE_ATTR_VALUE_X = 44;
+export const ROLE_PAGE_EQUIPMENT_INLINE_ATTR_LABEL_WIDTH = 70;
+export const ROLE_PAGE_EQUIPMENT_INLINE_ATTR_VALUE_WIDTH = 84;
+export const ROLE_PAGE_EQUIPMENT_INLINE_ATTR_TEXT_HEIGHT = 30;
+export const ROLE_PAGE_EQUIPMENT_INLINE_ATTR_FONT_SIZE = 20;
 export const ROLE_EQUIP_SELECTED_FRAME_SIZE = 136;
 export const ROLE_ADVANCE_POWER_FRAME_Y = 452;
 export const ROLE_ADVANCE_PANEL_WIDTH = 650;
@@ -285,11 +296,11 @@ export const ROLE_POWER_LIFE_RATE = 1.4;
 export const ROLE_POWER_DEFENSE_RATE = 20;
 export const ROLE_STRENGTHEN_COST_BASE = 7;
 export const ROLE_STRENGTHEN_COST_PER_LEVEL = 2;
-export const ROLE_ATTR_DETAIL_WIDTH = 725;
-export const ROLE_ATTR_DETAIL_HEIGHT = 505;
+export const ROLE_ATTR_DETAIL_WIDTH = 640;
+export const ROLE_ATTR_DETAIL_HEIGHT = 442;
 export const ROLE_ATTR_DETAIL_Y = 0;
-export const ROLE_EQUIP_DETAIL_WIDTH = 725;
-export const ROLE_EQUIP_DETAIL_HEIGHT = 505;
+export const ROLE_EQUIP_DETAIL_WIDTH = 586;
+export const ROLE_EQUIP_DETAIL_HEIGHT = 367;
 export const ROLE_EQUIP_REPLACE_WIDTH = 530;
 export const ROLE_EQUIP_REPLACE_HEIGHT = 768;
 export const ROLE_EQUIP_REPLACE_GRID_COLS = 4;
@@ -520,8 +531,11 @@ export const ROLE_INITIAL_BAG_MATERIALS = [
     ...ROLE_STRENGTHEN_MATERIALS.map((item) => ({ itemId: item.itemId, count: item.count })),
 ];
 export const ROLE_INITIAL_BAG_EQUIPMENTS = BAG_ILLUSTRATION_CATALOG
-    .filter((item) => item.category === 'equipment' && !/^equipment_[a-z]+_lv\d{3}$/.test(item.id))
-    .map((item) => ({ itemId: item.id, count: /^equipment_(15[3-9]|16[0-8])$/.test(item.id) ? 1 : 3 }));
+    .filter((item) => item.category === 'equipment' && (
+        /^equipment_[a-z]+_lv\d{3}$/.test(item.id)
+        || /^equipment_(15[3-9]|16[0-8])$/.test(item.id)
+    ))
+    .map((item) => ({ itemId: item.id, count: 1 }));
 export const ROLE_INITIAL_BAG_GEMS = BAG_ILLUSTRATION_CATALOG
     .filter((item) => item.category === 'gem')
     .map((item) => ({ itemId: item.id, count: 12 }));

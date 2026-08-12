@@ -1,0 +1,216 @@
+
+skeleton.png
+size: 851,699
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+zi-shenmotiaozhan_00000
+  rotate: true
+  xy: 2, 143
+  size: 135, 137
+  orig: 160, 160
+  offset: 12, 13
+  index: -1
+zi-shenmotiaozhan_00001
+  rotate: true
+  xy: 423, 142
+  size: 135, 137
+  orig: 160, 160
+  offset: 12, 13
+  index: -1
+zi-shenmotiaozhan_00002
+  rotate: true
+  xy: 562, 141
+  size: 136, 137
+  orig: 160, 160
+  offset: 12, 13
+  index: -1
+zi-shenmotiaozhan_00003
+  rotate: true
+  xy: 701, 140
+  size: 136, 137
+  orig: 160, 160
+  offset: 12, 13
+  index: -1
+zi-shenmotiaozhan_00004
+  rotate: true
+  xy: 2, 5
+  size: 136, 137
+  orig: 160, 160
+  offset: 12, 13
+  index: -1
+zi-shenmotiaozhan_00005
+  rotate: true
+  xy: 141, 5
+  size: 136, 137
+  orig: 160, 160
+  offset: 12, 13
+  index: -1
+zi-shenmotiaozhan_00006
+  rotate: true
+  xy: 2, 561
+  size: 136, 140
+  orig: 160, 160
+  offset: 12, 10
+  index: -1
+zi-shenmotiaozhan_00007
+  rotate: true
+  xy: 144, 561
+  size: 136, 140
+  orig: 160, 160
+  offset: 12, 10
+  index: -1
+zi-shenmotiaozhan_00008
+  rotate: true
+  xy: 286, 560
+  size: 137, 140
+  orig: 160, 160
+  offset: 12, 10
+  index: -1
+zi-shenmotiaozhan_00009
+  rotate: true
+  xy: 428, 558
+  size: 139, 140
+  orig: 160, 160
+  offset: 12, 10
+  index: -1
+zi-shenmotiaozhan_00010
+  rotate: true
+  xy: 570, 558
+  size: 139, 140
+  orig: 160, 160
+  offset: 12, 10
+  index: -1
+zi-shenmotiaozhan_00011
+  rotate: true
+  xy: 2, 420
+  size: 139, 140
+  orig: 160, 160
+  offset: 12, 10
+  index: -1
+zi-shenmotiaozhan_00012
+  rotate: true
+  xy: 144, 420
+  size: 139, 140
+  orig: 160, 160
+  offset: 12, 10
+  index: -1
+zi-shenmotiaozhan_00013
+  rotate: true
+  xy: 286, 419
+  size: 139, 140
+  orig: 160, 160
+  offset: 12, 10
+  index: -1
+zi-shenmotiaozhan_00014
+  rotate: true
+  xy: 428, 417
+  size: 139, 140
+  orig: 160, 160
+  offset: 12, 10
+  index: -1
+zi-shenmotiaozhan_00015
+  rotate: true
+  xy: 570, 417
+  size: 139, 140
+  orig: 160, 160
+  offset: 12, 10
+  index: -1
+zi-shenmotiaozhan_00016
+  rotate: false
+  xy: 558, 3
+  size: 136, 136
+  orig: 160, 160
+  offset: 12, 12
+  index: -1
+zi-shenmotiaozhan_00017
+  rotate: false
+  xy: 696, 2
+  size: 136, 136
+  orig: 160, 160
+  offset: 12, 12
+  index: -1
+zi-shenmotiaozhan_00018
+  rotate: true
+  xy: 707, 278
+  size: 137, 138
+  orig: 160, 160
+  offset: 12, 11
+  index: -1
+zi-shenmotiaozhan_00019
+  rotate: false
+  xy: 2, 280
+  size: 139, 138
+  orig: 160, 160
+  offset: 12, 11
+  index: -1
+zi-shenmotiaozhan_00020
+  rotate: true
+  xy: 143, 143
+  size: 137, 138
+  orig: 160, 160
+  offset: 12, 11
+  index: -1
+zi-shenmotiaozhan_00021
+  rotate: true
+  xy: 283, 142
+  size: 137, 138
+  orig: 160, 160
+  offset: 12, 11
+  index: -1
+zi-shenmotiaozhan_00022
+  rotate: false
+  xy: 712, 558
+  size: 137, 139
+  orig: 160, 160
+  offset: 12, 11
+  index: -1
+zi-shenmotiaozhan_00023
+  rotate: false
+  xy: 712, 417
+  size: 137, 139
+  orig: 160, 160
+  offset: 12, 11
+  index: -1
+zi-shenmotiaozhan_00024
+  rotate: true
+  xy: 143, 282
+  size: 136, 139
+  orig: 160, 160
+  offset: 12, 11
+  index: -1
+zi-shenmotiaozhan_00025
+  rotate: true
+  xy: 284, 281
+  size: 136, 139
+  orig: 160, 160
+  offset: 12, 11
+  index: -1
+zi-shenmotiaozhan_00026
+  rotate: true
+  xy: 425, 279
+  size: 136, 139
+  orig: 160, 160
+  offset: 12, 11
+  index: -1
+zi-shenmotiaozhan_00027
+  rotate: true
+  xy: 566, 279
+  size: 136, 139
+  orig: 160, 160
+  offset: 12, 11
+  index: -1
+zi-shenmotiaozhan_00028
+  rotate: true
+  xy: 280, 5
+  size: 135, 137
+  orig: 160, 160
+  offset: 12, 13
+  index: -1
+zi-shenmotiaozhan_00029
+  rotate: true
+  xy: 419, 5
+  size: 135, 137
+  orig: 160, 160
+  offset: 12, 13
+  index: -1

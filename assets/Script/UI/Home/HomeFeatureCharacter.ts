@@ -100,8 +100,10 @@ export abstract class HomeFeatureCharacter extends HomeFeatureCharacterHost {
             event.propagationStopped = true;
         }, this);
         this.getOrCreateRoleAttrSkin(board, 'RoleAttrDetailBoardSkin', HomeConfig.ROLE_ATTR_DETAIL_WIDTH, HomeConfig.ROLE_ATTR_DETAIL_HEIGHT, 0, 0, HomeConfig.UI_CONFIRM_POPUP_BG).setSiblingIndex(0);
-        this.getOrCreateRoleAttrSkin(board, 'RoleAttrDetailTitleSkin', HomeConfig.BAG_ITEM_DETAIL_TITLE_WIDTH, HomeConfig.BAG_ITEM_DETAIL_TITLE_HEIGHT, 0, 182, HomeConfig.UI_CONFIRM_TITLE_BG).setSiblingIndex(1);
-        const titleLabel = this.getOrCreateRoleAttrLabel(board, 'RoleAttrDetailTitle', '\u5c5e\u6027\u8be6\u60c5', 30, 0, 186, 220, 42, Color.BLACK);
+        const titleSkin = this.getOrCreateRoleAttrNode(board, 'RoleAttrDetailTitleSkin', HomeConfig.BAG_ITEM_DETAIL_TITLE_WIDTH, HomeConfig.BAG_ITEM_DETAIL_TITLE_HEIGHT, 0, HomeConfig.SHARED_CONFIRM_TITLE_Y);
+        titleSkin.active = false;
+        titleSkin.setSiblingIndex(1);
+        const titleLabel = this.getOrCreateRoleAttrLabel(board, 'RoleAttrDetailTitle', '\u5c5e\u6027\u8be6\u60c5', 30, 0, HomeConfig.SHARED_CONFIRM_TITLE_Y, 220, 42, Color.BLACK);
         this.applyRoleAttrLabelStyle(titleLabel, 3);
         titleLabel.node.setSiblingIndex(2);
         const closeButton = board.getChildByName('RoleAttrDetailClose');

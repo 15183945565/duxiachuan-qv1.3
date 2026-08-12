@@ -20,7 +20,7 @@ abstract class HomeFeatureItemDetailHost extends HomeViewBase {
 }
 
 const BAG_ILLUSTRATION_DETAIL_LAYOUT = {
-    board: { width: 600, height: 380 },
+    board: { width: 586, height: 367 },
     titleSkin: { x: 2.266, y: 121.974, width: 250, height: 60 },
     title: { x: 0, y: 124.974, width: 300, height: 52 },
     iconFrame: { x: -132.088, y: -10.589, width: 120, height: 120 },
@@ -96,15 +96,9 @@ export abstract class HomeFeatureItemDetail extends HomeFeatureItemDetailHost {
         const titleSkin = this.findNode('ItemDetailPopupTitleSkin', popup);
         if (titleSkin?.isValid) {
             if (board?.isValid && titleSkin.parent !== board) titleSkin.setParent(board);
-            titleSkin.active = true;
+            titleSkin.active = false;
             titleSkin.setPosition(0, 182, 0);
             (titleSkin.getComponent(UITransform) || titleSkin.addComponent(UITransform)).setContentSize(
-                HomeConfig.BAG_ITEM_DETAIL_TITLE_WIDTH,
-                HomeConfig.BAG_ITEM_DETAIL_TITLE_HEIGHT,
-            );
-            this.applyUiSkin(
-                titleSkin,
-                HomeConfig.UI_BAG_ITEM_DETAIL_TITLE_BG,
                 HomeConfig.BAG_ITEM_DETAIL_TITLE_WIDTH,
                 HomeConfig.BAG_ITEM_DETAIL_TITLE_HEIGHT,
             );
@@ -245,15 +239,9 @@ export abstract class HomeFeatureItemDetail extends HomeFeatureItemDetailHost {
         const titleSkin = board.getChildByName('BagIllustrationDetailPopupTitleSkin');
         if (titleSkin?.isValid) {
             const titleSkinLayout = BAG_ILLUSTRATION_DETAIL_LAYOUT.titleSkin;
-            titleSkin.active = true;
+            titleSkin.active = false;
             titleSkin.setPosition(titleSkinLayout.x, titleSkinLayout.y, 0);
             (titleSkin.getComponent(UITransform) || titleSkin.addComponent(UITransform)).setContentSize(titleSkinWidth, titleSkinLayout.height);
-            this.applyUiSkin(
-                titleSkin,
-                HomeConfig.UI_BAG_ITEM_DETAIL_TITLE_BG,
-                titleSkinWidth,
-                titleSkinLayout.height,
-            );
             titleSkin.setSiblingIndex(1);
         }
 
@@ -618,10 +606,9 @@ export abstract class HomeFeatureItemDetail extends HomeFeatureItemDetailHost {
         const titleSkin = this.findNode('ItemDetailPopupTitleSkin', popup);
         if (titleSkin?.isValid) {
             if (titleSkin.parent !== board) titleSkin.setParent(board);
-            titleSkin.active = true;
+            titleSkin.active = false;
             titleSkin.setPosition(0, 182, 0);
             (titleSkin.getComponent(UITransform) || titleSkin.addComponent(UITransform)).setContentSize(486, 84);
-            this.applyUiSkin(titleSkin, HomeConfig.UI_MARKET_DETAIL_TITLE_BG, 486, 84);
             titleSkin.setSiblingIndex(1);
         }
 

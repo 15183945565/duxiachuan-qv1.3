@@ -185,10 +185,9 @@ export abstract class HomeViewAdventure extends HomeViewRoleBag {
         const titleSkin = this.findNode('ConfirmPopupTitleSkin', popup);
         if (titleSkin?.isValid) {
             if (board?.isValid && titleSkin.parent !== board) titleSkin.setParent(board);
-            titleSkin.active = true;
+            titleSkin.active = false;
             titleSkin.setPosition(0, HomeConfig.SHARED_CONFIRM_TITLE_Y, 0);
             (titleSkin.getComponent(UITransform) || titleSkin.addComponent(UITransform)).setContentSize(HomeConfig.SHARED_CONFIRM_TITLE_WIDTH, HomeConfig.SHARED_CONFIRM_TITLE_HEIGHT);
-            this.applyUiSkinKeepingEditorSize(titleSkin, HomeConfig.UI_CONFIRM_TITLE_BG, HomeConfig.SHARED_CONFIRM_TITLE_WIDTH, HomeConfig.SHARED_CONFIRM_TITLE_HEIGHT);
             titleSkin.setSiblingIndex(1);
         }
 
@@ -266,9 +265,9 @@ export abstract class HomeViewAdventure extends HomeViewRoleBag {
             if (board?.isValid && close.parent !== board) close.setParent(board);
             close.active = false;
             close.setScale(0, 0, 1);
-            close.setPosition(251, 226, 0);
-            (close.getComponent(UITransform) || close.addComponent(UITransform)).setContentSize(70, 70);
-            this.applyUiSkinKeepingEditorSize(close, HomeConfig.UI_BTN_CLOSE, 70, 70);
+            close.setPosition(HomeConfig.SHARED_CONFIRM_CLOSE_X, HomeConfig.SHARED_CONFIRM_CLOSE_Y, 0);
+            (close.getComponent(UITransform) || close.addComponent(UITransform)).setContentSize(HomeConfig.SHARED_CONFIRM_CLOSE_SIZE, HomeConfig.SHARED_CONFIRM_CLOSE_SIZE);
+            this.applyUiSkinKeepingEditorSize(close, HomeConfig.UI_BTN_CLOSE, HomeConfig.SHARED_CONFIRM_CLOSE_SIZE, HomeConfig.SHARED_CONFIRM_CLOSE_SIZE);
             this.bindScaledClick(close, () => this.closeSharedFlowPopup(popup));
         }
     }
@@ -361,10 +360,9 @@ export abstract class HomeViewAdventure extends HomeViewRoleBag {
         const titleSkin = this.findNode('ConfirmPopupTitleSkin', popup);
         if (titleSkin?.isValid) {
             if (titleSkin.parent !== board) titleSkin.setParent(board);
-            titleSkin.active = true;
+            titleSkin.active = false;
             titleSkin.setPosition(0, HomeConfig.SHARED_CONFIRM_TITLE_Y, 0);
             (titleSkin.getComponent(UITransform) || titleSkin.addComponent(UITransform)).setContentSize(HomeConfig.SHARED_CONFIRM_TITLE_WIDTH, HomeConfig.SHARED_CONFIRM_TITLE_HEIGHT);
-            this.applyUiSkinKeepingEditorSize(titleSkin, HomeConfig.UI_CONFIRM_TITLE_BG, HomeConfig.SHARED_CONFIRM_TITLE_WIDTH, HomeConfig.SHARED_CONFIRM_TITLE_HEIGHT);
             titleSkin.setSiblingIndex(1);
         }
 
@@ -587,10 +585,9 @@ export abstract class HomeViewAdventure extends HomeViewRoleBag {
 
         const titleSkin = this.findNode('ConfirmPopupTitleSkin', popup);
         if (titleSkin?.isValid) {
-            titleSkin.active = true;
+            titleSkin.active = false;
             titleSkin.setPosition(0, HomeConfig.SHARED_CONFIRM_TITLE_Y, 0);
             (titleSkin.getComponent(UITransform) || titleSkin.addComponent(UITransform)).setContentSize(HomeConfig.SHARED_CONFIRM_TITLE_WIDTH, HomeConfig.SHARED_CONFIRM_TITLE_HEIGHT);
-            this.applyUiSkinKeepingEditorSize(titleSkin, HomeConfig.UI_CONFIRM_TITLE_BG, HomeConfig.SHARED_CONFIRM_TITLE_WIDTH, HomeConfig.SHARED_CONFIRM_TITLE_HEIGHT);
             titleSkin.setSiblingIndex(1);
         }
 

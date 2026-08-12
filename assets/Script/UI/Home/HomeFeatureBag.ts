@@ -769,7 +769,7 @@ export abstract class HomeFeatureBag extends HomeFeatureBagHost {
         const mask = viewport.addComponent(Mask);
         mask.type = Mask.Type.GRAPHICS_RECT;
     
-        const items = this.sortBagCatalogItems(view.itemSource.filter((item) => item.category === view.activeCategory));
+        const items = this.getBagGridDisplayItems(view);
         const minimumSlotRows = view.itemSource.length > 0 ? 6 : 7;
         const itemCount = Math.max(items.length, HomeConfig.BAG_GRID_COLS * minimumSlotRows);
         const rowCount = Math.ceil(itemCount / HomeConfig.BAG_GRID_COLS);
@@ -814,6 +814,19 @@ export abstract class HomeFeatureBag extends HomeFeatureBagHost {
     
             return a.id.localeCompare(b.id);
         });
+    }
+    protected getBagGridDisplayItems(view: BagCatalogView): BagIllustrationCatalogItem[] {
+        const sorted = this.sortBagCatalogItems(view.itemSource.filter((item) => item.category === view.activeCategory));
+        if (view !== this.bagCatalogView || view.activeCategory !== 'equipment') return sorted;
+
+        const expanded: BagIllustrationCatalogItem[] = [];
+        sorted.forEach((item) => {
+            const count = Math.max(0, this.getBagItemCount(item));
+            for (let index = 0; index < count; index++) {
+                expanded.push(item);
+            }
+        });
+        return expanded;
     }
     protected getBagGemSortOrder(item: BagIllustrationCatalogItem): number {
         if (item.category !== 'gem') return Number.MAX_SAFE_INTEGER;
@@ -898,20 +911,21 @@ export abstract class HomeFeatureBag extends HomeFeatureBagHost {
         this.createSkinnedNode('BagGridFrame', slot, HomeConfig.BAG_GRID_FRAME_SIZE, HomeConfig.BAG_GRID_FRAME_SIZE, 0, 0, framePath).setSiblingIndex(0);
     
         if (item) {
-            this.syncEquipmentFrameEffectForItem(
+            const effect = this.syncEquipmentFrameEffectForItem(
                 slot,
                 'BagGridEquipmentFrameEffect',
                 item,
                 HomeConfig.BAG_GRID_FRAME_SIZE,
                 HomeConfig.BAG_GRID_FRAME_SIZE,
-            )?.setSiblingIndex(3);
+            );
             this.createSkinnedNode('BagGridIcon', slot, HomeConfig.BAG_GRID_ICON_SIZE, HomeConfig.BAG_GRID_ICON_SIZE, 0, HomeConfig.BAG_GRID_ICON_OFFSET_Y, item.iconPath).setSiblingIndex(2);
+            effect?.setSiblingIndex(3);
             const equipmentLevel = this.getBagEquipmentCatalogLevel(item);
             if (equipmentLevel > 0) {
                 this.createBagGridEquipmentLevelLabel(slot, equipmentLevel);
             }
             const itemCount = this.getBagItemCount(item);
-            if (itemCount > 0 && !this.isBeastEquipmentCatalogItem(item)) {
+            if (itemCount > 0 && item.category !== 'equipment' && !this.isBeastEquipmentCatalogItem(item)) {
                 const countLabel = this.createLabel(
                     slot,
                     'BagGridItemCount',

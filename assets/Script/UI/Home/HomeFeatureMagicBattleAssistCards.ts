@@ -24,7 +24,8 @@ interface MagicMapAssistCardConfig {
 
 const MAGIC_MAP_ASSIST_ROOT_NAME = 'MagicMapAssistCardRoot';
 const MAGIC_MAP_ASSIST_POPUP_NAME = 'MagicMapAssistCardConfirmPopup';
-const MAGIC_MAP_ASSIST_POWER_BONUS_PERCENT = 20;
+const MAGIC_MAP_ASSIST_POWER_BONUS_PERCENT_PER_CARD = 10;
+const MAGIC_MAP_ASSIST_POWER_BONUS_MAX_STACK = 5;
 
 const MAGIC_MAP_ASSIST_CARDS: readonly MagicMapAssistCardConfig[] = [
     {
@@ -46,6 +47,7 @@ const MAGIC_MAP_ASSIST_CARDS: readonly MagicMapAssistCardConfig[] = [
 export abstract class HomeFeatureMagicBattleAssistCards extends HomeViewBase {
     protected magicBattleAssistProtected = false;
     protected magicBattleAssistPowerBonusPercent = 0;
+    protected magicBattleAssistPowerCardStacks = 0;
     protected magicMapAssistProtectStatusLabel: Label | null = null;
     protected magicMapAssistPowerStatusLabel: Label | null = null;
     protected magicBattleAssistProtectStatusLabel: Label | null = null;
@@ -78,6 +80,7 @@ export abstract class HomeFeatureMagicBattleAssistCards extends HomeViewBase {
     protected resetMagicBattleAssistEffects(): void {
         this.magicBattleAssistProtected = false;
         this.magicBattleAssistPowerBonusPercent = 0;
+        this.magicBattleAssistPowerCardStacks = 0;
         this.refreshMagicBattleAssistEffectLabels();
     }
 
@@ -257,15 +260,15 @@ export abstract class HomeFeatureMagicBattleAssistCards extends HomeViewBase {
         );
         this.ensureInputBlocker(board, HomeConfig.MAGIC_BATTLE_ASSIST_CONFIRM_POPUP_WIDTH, HomeConfig.MAGIC_BATTLE_ASSIST_CONFIRM_POPUP_HEIGHT);
 
-        this.getOrCreateMagicMapAssistSkin(
+        const titleSkin = this.getOrCreateMagicMapAssistNode(
             board,
             'MagicMapAssistCardConfirmTitleSkin',
             HomeConfig.MAGIC_BATTLE_ASSIST_CONFIRM_TITLE_WIDTH,
             HomeConfig.MAGIC_BATTLE_ASSIST_CONFIRM_TITLE_HEIGHT,
             0,
             HomeConfig.MAGIC_BATTLE_ASSIST_CONFIRM_TITLE_Y,
-            HomeConfig.UI_MAGIC_BATTLE_ASSIST_CONFIRM_TITLE_BG,
         );
+        titleSkin.active = false;
         const title = this.getOrCreateMagicMapAssistLabel(
             board,
             'MagicMapAssistCardConfirmTitle',
@@ -374,7 +377,11 @@ export abstract class HomeFeatureMagicBattleAssistCards extends HomeViewBase {
         const protectText = this.magicBattleAssistProtected
             ? '\u5f53\u524d\u5df2\u53d7\u4fdd\u62a4\uff0c\u4e0d\u4f1a\u88ab\u5176\u4ed6\u73a9\u5bb6\u51b3\u6597'
             : '\u5f53\u524d\u672a\u53d7\u4fdd\u62a4\uff0c\u53c2\u4e0e\u51b3\u6597';
-        const powerText = `\u5f53\u524d\u6218\u529b\u52a0\u6210\uff1a${this.magicBattleAssistPowerBonusPercent > 0 ? `${this.magicBattleAssistPowerBonusPercent}%` : '0'}`;
+        const powerStacks = Math.max(0, Math.min(MAGIC_MAP_ASSIST_POWER_BONUS_MAX_STACK, this.magicBattleAssistPowerCardStacks));
+        const remainingPowerStacks = Math.max(0, MAGIC_MAP_ASSIST_POWER_BONUS_MAX_STACK - powerStacks);
+        const powerText = this.magicBattleAssistPowerBonusPercent > 0
+            ? `\u5f53\u524d\u6218\u529b\u52a0\u6210\uff1a${this.magicBattleAssistPowerBonusPercent}%\uff08\u5269\u4f59\u53e0\u52a0\u6b21\u6570\uff1a${remainingPowerStacks}\u6b21\uff09`
+            : '\u5f53\u524d\u6218\u529b\u52a0\u6210\uff1a0';
         const protectColor = this.magicBattleAssistProtected
             ? new Color(74, 255, 92, 255)
             : new Color(255, 226, 170, 255);
@@ -419,8 +426,8 @@ export abstract class HomeFeatureMagicBattleAssistCards extends HomeViewBase {
             22,
             0,
             574,
-            620,
-            34,
+            720,
+            40,
             new Color(255, 226, 170, 255),
         );
         this.magicMapAssistProtectStatusLabel.node.setSiblingIndex((parent.children.length || 1) - 1);
@@ -447,8 +454,8 @@ export abstract class HomeFeatureMagicBattleAssistCards extends HomeViewBase {
             22,
             0,
             618,
-            620,
-            34,
+            720,
+            40,
             new Color(255, 226, 170, 255),
         );
         this.magicBattleAssistProtectStatusLabel.node.setSiblingIndex((this.magicMonsterBattlePanel.children.length || 1) - 1);
@@ -475,6 +482,26 @@ export abstract class HomeFeatureMagicBattleAssistCards extends HomeViewBase {
             }
         }
         this.applyUiSkinKeepingEditorSize(node, skinPath, width, height);
+        return node;
+    }
+
+    protected getOrCreateMagicMapAssistNode(
+        parent: Node,
+        name: string,
+        width: number,
+        height: number,
+        x: number,
+        y: number,
+    ): Node {
+        let node = parent.getChildByName(name);
+        if (!node) {
+            node = this.createNode(name, parent, width, height, x, y);
+        } else {
+            node.active = true;
+            node.setPosition(x, y, 0);
+            const transform = node.getComponent(UITransform) || node.addComponent(UITransform);
+            transform.setContentSize(width, height);
+        }
         return node;
     }
 
@@ -546,6 +573,12 @@ export abstract class HomeFeatureMagicBattleAssistCards extends HomeViewBase {
             return;
         }
 
+        if (cardId === 'power_card' && this.magicBattleAssistPowerCardStacks >= MAGIC_MAP_ASSIST_POWER_BONUS_MAX_STACK) {
+            this.showToast('\u6218\u529b\u5361\u53e0\u52a0\u6b21\u6570\u5df2\u6ee1');
+            this.closeMagicMapAssistCardConfirmPopup();
+            return;
+        }
+
         this.shopStore.inventory[cardId] = count - 1;
         this.setRoleInventoryCount(
             cardId === 'protect_card'
@@ -559,7 +592,8 @@ export abstract class HomeFeatureMagicBattleAssistCards extends HomeViewBase {
         if (cardId === 'protect_card') {
             this.magicBattleAssistProtected = true;
         } else {
-            this.magicBattleAssistPowerBonusPercent = MAGIC_MAP_ASSIST_POWER_BONUS_PERCENT;
+            this.magicBattleAssistPowerCardStacks += 1;
+            this.magicBattleAssistPowerBonusPercent = this.magicBattleAssistPowerCardStacks * MAGIC_MAP_ASSIST_POWER_BONUS_PERCENT_PER_CARD;
         }
         this.refreshMagicBattleAssistEffectLabels();
         this.closeMagicMapAssistCardConfirmPopup();

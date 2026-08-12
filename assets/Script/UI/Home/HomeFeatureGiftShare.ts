@@ -7,6 +7,7 @@ import {
     Overflow,
     Sprite,
     SpriteFrame,
+    sp,
     UITransform,
     VerticalTextAlignment,
 } from 'cc';
@@ -22,6 +23,12 @@ import { HomeViewBase } from './HomeViewBase';
  * 因此只通过原型组合安装行为，不增加 Cocos 组件或运行时继承层。
  */
 export abstract class HomeFeatureGiftShare extends HomeViewBase {
+    protected bindValueGiftPage(panel: Node): void {
+        this.ensureInputBlocker(panel);
+        this.buildValueGiftMaterialPack(panel);
+        this.playValueGiftMaterialEffects(panel);
+    }
+
     protected bindGiftPage(panel: Node): void {
         this.resetGiftTransferState();
         const editorRoot = panel.getChildByName('GiftTransferRoot');
@@ -157,6 +164,129 @@ export abstract class HomeFeatureGiftShare extends HomeViewBase {
         this.bindGiftEditBoxEvents();
         this.refreshGiftTargetPlayer();
         this.refreshGiftAmountSummary();
+    }
+
+    protected buildValueGiftMaterialPack(panel: Node): void {
+        let root = panel.getChildByName('ValueGiftMaterialPackRoot');
+        if (!root?.isValid) {
+            root = this.createNode('ValueGiftMaterialPackRoot', panel, 520, 360, 0, -145);
+        }
+        if (!root) return;
+
+        root.active = true;
+        root.setPosition(0, -145, 0);
+        root.setSiblingIndex((panel.children.length || 1) - 1);
+        (root.getComponent(UITransform) || root.addComponent(UITransform)).setContentSize(520, 360);
+        this.clearChildren(root);
+
+        HomeConfig.VALUE_GIFT_MATERIALS.forEach((material, index) => {
+            const x = index === 0 ? -130 : 130;
+            this.createValueGiftMaterialSlot(root, material, index + 1, x);
+        });
+
+        const buyButton = this.createSkinnedNode(
+            'ValueGiftMaterialBuyButton',
+            root,
+            162,
+            62,
+            0,
+            -120,
+            HomeConfig.UI_VALUE_GIFT_BUY_BUTTON_BG,
+        );
+        buyButton.setSiblingIndex(20);
+        this.createSkinnedNode('ValueGiftMaterialBuyYuanbaoIcon', buyButton, 34, 34, -34, 2, HomeConfig.UI_HOME_JIFEN_ICON).setSiblingIndex(1);
+        this.createGiftLabel(
+            buyButton,
+            'ValueGiftMaterialBuyPrice',
+            `${HomeConfig.VALUE_GIFT_BUY_BUTTON_PRICE}`,
+            26,
+            22,
+            2,
+            80,
+            40,
+            Color.WHITE,
+            2,
+        ).node.setSiblingIndex(2);
+        this.bindScaledClick(buyButton, () => this.openValueGiftMaterialBuyConfirm());
+    }
+
+    protected createValueGiftMaterialSlot(
+        parent: Node,
+        material: typeof HomeConfig.VALUE_GIFT_MATERIALS[number],
+        index: number,
+        x: number,
+    ): void {
+        const slot = this.createNode(`ValueGiftMaterialSlot_${index}`, parent, 190, 220, x, 40);
+        slot.setSiblingIndex(index);
+
+        const effectNode = this.createNode(`ValueGiftMaterialEffect_${index}`, slot, 230, 230, 0, 44);
+        effectNode.setSiblingIndex(0);
+        effectNode.setScale(1.28, 1.28, 1);
+        effectNode.addComponent(sp.Skeleton);
+
+        this.createSkinnedNode(`ValueGiftMaterialIcon_${index}`, slot, 78, 78, 0, 50, material.iconPath).setSiblingIndex(2);
+        this.createGiftLabel(
+            slot,
+            `ValueGiftMaterialAmount_${index}`,
+            `x${material.amount}`,
+            28,
+            0,
+            -46,
+            160,
+            44,
+            Color.WHITE,
+            3,
+        ).node.setSiblingIndex(3);
+    }
+
+    protected playValueGiftMaterialEffects(panel: Node): void {
+        const effectNodes = HomeConfig.VALUE_GIFT_MATERIALS
+            .map((_material, index) => this.findNode(`ValueGiftMaterialEffect_${index + 1}`, panel))
+            .filter((node): node is Node => !!node?.isValid);
+        if (effectNodes.length === 0) return;
+
+        void this.loadSkeletonAsset(HomeConfig.VALUE_GIFT_MATERIAL_EFFECT_SKEL_PATH)
+            .then((skeletonData) => {
+                effectNodes.forEach((node) => this.playValueGiftMaterialEffect(node, skeletonData));
+            })
+            .catch((err) => {
+                console.warn('[MainHomeView] value gift material effect load failed', err);
+            });
+    }
+
+    protected playValueGiftMaterialEffect(node: Node, skeletonData: sp.SkeletonData): void {
+        const skeleton = node.getComponent(sp.Skeleton) || node.addComponent(sp.Skeleton);
+        skeleton.skeletonData = skeletonData;
+        skeleton.node.active = true;
+        skeleton.timeScale = 1;
+        this.prepareSkeletonRenderer(skeleton);
+        try {
+            skeleton.clearTracks();
+            skeleton.setToSetupPose();
+            if (skeleton.findAnimation('idle')) {
+                skeleton.setAnimation(0, 'idle', true);
+            }
+            skeleton.updateAnimation(0);
+            skeleton.markForUpdateRenderData(true);
+        } catch (err) {
+            console.warn('[MainHomeView] value gift material effect play failed', err);
+        }
+    }
+
+    protected openValueGiftMaterialBuyConfirm(): void {
+        this.openSharedFlowPopup('ConfirmPopup', {
+            title: '\u7cfb\u7edf\u63d0\u793a',
+            message: `\u662f\u5426\u6d88\u8017${HomeConfig.VALUE_GIFT_CONFIRM_COST}\u5143\u5b9d\u8d2d\u4e70\u6b64\u793c\u5305`,
+            onConfirm: () => this.completeValueGiftMaterialBuy(),
+        });
+    }
+
+    protected completeValueGiftMaterialBuy(): void {
+        HomeConfig.VALUE_GIFT_MATERIALS.forEach((material) => {
+            this.addRoleInventory(material.itemId, material.amount);
+        });
+        this.refreshRoleInventoryViews(false);
+        this.showToast('\u793c\u5305\u8d2d\u4e70\u6210\u529f');
     }
 
     protected createGiftLabel(

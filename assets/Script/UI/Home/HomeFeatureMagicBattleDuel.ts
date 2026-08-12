@@ -404,20 +404,23 @@ export abstract class HomeFeatureMagicBattleDuel extends HomeFeatureMagicBattleD
             if (version !== this.magicBattleDuelVersion || this.magicBattleDuelTargetId !== targetId) return;
             round += 1;
             this.refreshMagicBattleDuelPopup(target, `${this.profile.name || '\u6211'}\u53d1\u8d77\u653b\u51fb`);
+            const damage = playerWins && round >= HomeConfig.MAGIC_BATTLE_DUEL_DURATION
+                ? this.magicBattleDuelTargetHp
+                : Math.min(this.magicBattleDuelTargetHp, playerDamage);
             this.playMagicBattleDuelStrike(
                 this.magicBattleDuelPlayerSkeleton,
                 this.magicBattleDuelTargetSkeleton,
                 true,
                 HomeConfig.BATTLE_ROLE_NORMAL_ATTACK_ANIMATIONS[this.profile.gender],
                 this.profile.gender,
+                () => {
+                    if (version !== this.magicBattleDuelVersion || this.magicBattleDuelTargetId !== targetId) return;
+                    this.magicBattleDuelTargetHp = Math.max(0, this.magicBattleDuelTargetHp - damage);
+                    this.refreshMagicBattleDuelPopup(target, `${target.name}\u53d7\u5230\u4f24\u5bb3`);
+                },
             );
-            const damage = playerWins && round >= HomeConfig.MAGIC_BATTLE_DUEL_DURATION
-                ? this.magicBattleDuelTargetHp
-                : Math.min(this.magicBattleDuelTargetHp, playerDamage);
-            this.magicBattleDuelTargetHp = Math.max(0, this.magicBattleDuelTargetHp - damage);
             this.scheduleOnce(() => {
                 if (version !== this.magicBattleDuelVersion || this.magicBattleDuelTargetId !== targetId) return;
-                this.refreshMagicBattleDuelPopup(target, `${target.name}\u53d7\u5230\u4f24\u5bb3`);
                 if (this.magicBattleDuelTargetHp <= 0 || (playerWins && round >= HomeConfig.MAGIC_BATTLE_DUEL_DURATION)) {
                     this.finishMagicBattleDuel(targetId, version);
                     return;
@@ -429,20 +432,23 @@ export abstract class HomeFeatureMagicBattleDuel extends HomeFeatureMagicBattleD
         const runTargetAttack = (): void => {
             if (version !== this.magicBattleDuelVersion || this.magicBattleDuelTargetId !== targetId) return;
             this.refreshMagicBattleDuelPopup(target, `${target.name}\u53d1\u8d77\u653b\u51fb`);
+            const damage = !playerWins && round >= HomeConfig.MAGIC_BATTLE_DUEL_DURATION
+                ? this.magicBattleDuelPlayerHp
+                : Math.min(this.magicBattleDuelPlayerHp, Math.ceil(targetDamage * (playerWins ? 0.45 : 1)));
             this.playMagicBattleDuelStrike(
                 this.magicBattleDuelTargetSkeleton,
                 this.magicBattleDuelPlayerSkeleton,
                 false,
                 target.attackAnimations || HomeConfig.BATTLE_ROLE_NORMAL_ATTACK_ANIMATIONS.male,
                 target.duelGender || 'male',
+                () => {
+                    if (version !== this.magicBattleDuelVersion || this.magicBattleDuelTargetId !== targetId) return;
+                    this.magicBattleDuelPlayerHp = Math.max(0, this.magicBattleDuelPlayerHp - damage);
+                    this.refreshMagicBattleDuelPopup(target, `${this.profile.name || '\u6211'}\u53d7\u5230\u4f24\u5bb3`);
+                },
             );
-            const damage = !playerWins && round >= HomeConfig.MAGIC_BATTLE_DUEL_DURATION
-                ? this.magicBattleDuelPlayerHp
-                : Math.min(this.magicBattleDuelPlayerHp, Math.ceil(targetDamage * (playerWins ? 0.45 : 1)));
-            this.magicBattleDuelPlayerHp = Math.max(0, this.magicBattleDuelPlayerHp - damage);
             this.scheduleOnce(() => {
                 if (version !== this.magicBattleDuelVersion || this.magicBattleDuelTargetId !== targetId) return;
-                this.refreshMagicBattleDuelPopup(target, `${this.profile.name || '\u6211'}\u53d7\u5230\u4f24\u5bb3`);
                 if (this.magicBattleDuelPlayerHp <= 0 || (!playerWins && round >= HomeConfig.MAGIC_BATTLE_DUEL_DURATION)) {
                     this.finishMagicBattleDuel(targetId, version);
                     return;
@@ -459,6 +465,7 @@ export abstract class HomeFeatureMagicBattleDuel extends HomeFeatureMagicBattleD
         attackerTowardRight: boolean,
         attackAnimations: readonly string[],
         attackerGender: RoleGender,
+        onFirstHit?: () => void,
     ): void {
         if (!attacker?.isValid || !attacker.skeletonData || !defender?.isValid || !defender.skeletonData) return;
         const attackerNode = attacker.node;
@@ -507,6 +514,7 @@ export abstract class HomeFeatureMagicBattleDuel extends HomeFeatureMagicBattleD
         );
 
         const minimumHitTime = Math.max(0, timeline.moveEndFrame / frameRate);
+        let firstHitHandled = false;
         hitTimes.forEach((hitTime) => {
             this.scheduleOnce(() => {
                 if (!this.magicBattleDuelPopup?.active) return;
@@ -519,6 +527,10 @@ export abstract class HomeFeatureMagicBattleDuel extends HomeFeatureMagicBattleD
                     HomeConfig.IDLE_ANIMATIONS,
                     1,
                 );
+                if (!firstHitHandled) {
+                    firstHitHandled = true;
+                    onFirstHit?.();
+                }
             }, Math.max(minimumHitTime, hitTime / Math.max(HomeConfig.BATTLE_ROLE_ATTACK_TIME_SCALE, 0.01)));
         });
     }

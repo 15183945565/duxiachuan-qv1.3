@@ -9953,8 +9953,8 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 725,
-      "height": 505
+      "width": 640,
+      "height": 442
     },
     "_anchorPoint": {
       "__type__": "cc.Vec2",
@@ -10034,7 +10034,7 @@
       "__id__": 393
     },
     "_children": [],
-    "_active": true,
+    "_active": false,
     "_components": [
       {
         "__id__": 401
@@ -11386,8 +11386,8 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 725,
-      "height": 505
+      "width": 640,
+      "height": 442
     },
     "_anchorPoint": {
       "__type__": "cc.Vec2",

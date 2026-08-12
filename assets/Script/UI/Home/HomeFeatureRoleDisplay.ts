@@ -52,6 +52,7 @@ export abstract class HomeFeatureRoleDisplay extends HomeViewBase {
             }
         }
         this.refreshRolePagePowerDigits(this.getRoleTotalPower());
+        this.refreshRolePageEquipmentInlineAttrs();
     }
     protected refreshRolePagePowerDigits(value: number): void {
         if (!this.rolePagePowerDigitRoot?.isValid) return;
@@ -76,6 +77,30 @@ export abstract class HomeFeatureRoleDisplay extends HomeViewBase {
             );
             digitNode.setSiblingIndex(index);
             cursorX += width + HomeConfig.ROLE_PAGE_POWER_DIGIT_SPACING;
+        });
+    }
+    protected refreshRolePageEquipmentInlineAttrs(): void {
+        const showInlineAttrs = !!this.rolePagePanel?.active && this.rolePageActiveTab === 'equipment';
+        if (this.rolePagePowerDetailButton?.isValid) {
+            this.rolePagePowerDetailButton.active = !showInlineAttrs;
+        }
+        if (!this.rolePageEquipmentInlineAttrRoot?.isValid) return;
+
+        this.rolePageEquipmentInlineAttrRoot.active = showInlineAttrs;
+        if (!showInlineAttrs) return;
+
+        const attrs = this.getRoleTotalAttrs();
+        const values = [
+            `${this.getRoleCurrentLevel()}`,
+            `${attrs.life}`,
+            `${attrs.attack}`,
+            `${attrs.defense}`,
+        ];
+        values.forEach((value, index) => {
+            const label = this.rolePageEquipmentInlineAttrRoot
+                ?.getChildByName(`RolePageEquipmentInlineAttrValue_${index}`)
+                ?.getComponent(Label);
+            if (label) label.string = value;
         });
     }
     protected getRolePowerDigitWidth(digit: string): number {

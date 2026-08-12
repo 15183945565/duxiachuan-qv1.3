@@ -527,8 +527,8 @@ export abstract class HomeFeatureMarketSell extends HomeFeatureMarketSellHost {
         board.active = true;
         board.setSiblingIndex(1);
         (board.getComponent(UITransform) || board.addComponent(UITransform)).setContentSize(HomeConfig.SHARED_CONFIRM_BOARD_WIDTH, HomeConfig.SHARED_CONFIRM_BOARD_HEIGHT);
-        const titleSkin = this.getOrCreateEditorSkinnedNode('MarketSellConfirmTitleSkin', board, HomeConfig.SHARED_CONFIRM_TITLE_WIDTH, HomeConfig.SHARED_CONFIRM_TITLE_HEIGHT, 0, HomeConfig.SHARED_CONFIRM_TITLE_Y, HomeConfig.UI_MARKET_DETAIL_TITLE_BG);
-        titleSkin.active = true;
+        const titleSkin = this.getOrCreateEditorNode('MarketSellConfirmTitleSkin', board, HomeConfig.SHARED_CONFIRM_TITLE_WIDTH, HomeConfig.SHARED_CONFIRM_TITLE_HEIGHT, 0, HomeConfig.SHARED_CONFIRM_TITLE_Y);
+        titleSkin.active = false;
         titleSkin.setPosition(0, HomeConfig.SHARED_CONFIRM_TITLE_Y, 0);
         (titleSkin.getComponent(UITransform) || titleSkin.addComponent(UITransform)).setContentSize(HomeConfig.SHARED_CONFIRM_TITLE_WIDTH, HomeConfig.SHARED_CONFIRM_TITLE_HEIGHT);
         titleSkin.setSiblingIndex(1);

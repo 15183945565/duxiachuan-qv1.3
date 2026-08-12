@@ -235,6 +235,8 @@ export abstract class HomeViewBase extends Component {
     protected rolePageNameLabel: Label | null = null;
     protected rolePagePowerFrame: Node | null = null;
     protected rolePagePowerDigitRoot: Node | null = null;
+    protected rolePagePowerDetailButton: Node | null = null;
+    protected rolePageEquipmentInlineAttrRoot: Node | null = null;
     protected rolePageRoleUsesEditorTransform = false;
     protected rolePagePowerUsesEditorTransform = false;
     protected rolePageNameUsesEditorTransform = false;
@@ -614,8 +616,7 @@ export abstract class HomeViewBase extends Component {
             const catalogIndex = Number(catalogIndexMatch[1]);
             if (catalogIndex >= 113 && catalogIndex <= 152) {
                 const levelByGroupOffset = [2, 3, 4, 5, 1];
-                const baseTier = levelByGroupOffset[(catalogIndex - 113) % 5] || 0;
-                return HomeConfig.getEquipmentStageStartLevelByTier(baseTier);
+                return levelByGroupOffset[(catalogIndex - 113) % 5] || 0;
             }
         }
 
@@ -882,6 +883,7 @@ export abstract class HomeViewBase extends Component {
     protected abstract isDuelJianghuInvestSwitchLocked(): boolean;
     protected abstract bindShowcasePage(panel: Node): void;
     protected abstract bindGiftPage(panel: Node): void;
+    protected abstract bindValueGiftPage(panel: Node): void;
     protected abstract claimGift(panel: Node, index: number): void;
     protected abstract claimAllGifts(panel: Node): void;
     protected abstract refreshGiftPage(panel: Node): void;
@@ -1038,6 +1040,7 @@ export abstract class HomeViewBase extends Component {
     protected abstract refreshRolePageRole(): void;
     protected abstract refreshRolePagePower(config: RoleAssetConfig): void;
     protected abstract refreshRolePagePowerDigits(value: number): void;
+    protected abstract refreshRolePageEquipmentInlineAttrs(): void;
     protected abstract getRolePowerDigitWidth(digit: string): number;
     protected abstract refreshRolePageNameLabel(config: RoleAssetConfig): void;
     protected abstract applyRolePageNameLabelStyle(label: Label): void;

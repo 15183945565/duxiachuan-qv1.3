@@ -284,10 +284,10 @@ export const MAGIC_MAP_REALM_MONSTER_SCALES: Record<number, { small: number; bos
         battleBoss: 0.46,
     },
     6: {
-        small: 0.19,
-        boss: 0.32,
-        battleSmall: 0.3,
-        battleBoss: 0.5,
+        small: 0.39,
+        boss: 0.5,
+        battleSmall: 0.62,
+        battleBoss: 0.68,
     },
     7: {
         small: 0.2,

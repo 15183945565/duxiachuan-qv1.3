@@ -710,10 +710,9 @@ export abstract class HomeFeatureMagicMap extends HomeFeatureMagicMapHost {
         const titleSkin = this.findNode('ConfirmPopupTitleSkin', popup);
         if (titleSkin?.isValid) {
             if (titleSkin.parent !== board) titleSkin.setParent(board);
-            titleSkin.active = true;
+            titleSkin.active = false;
             titleSkin.setPosition(0, HomeConfig.SHARED_CONFIRM_TITLE_Y, 0);
             (titleSkin.getComponent(UITransform) || titleSkin.addComponent(UITransform)).setContentSize(HomeConfig.SHARED_CONFIRM_TITLE_WIDTH, HomeConfig.SHARED_CONFIRM_TITLE_HEIGHT);
-            this.applyUiSkinKeepingEditorSize(titleSkin, HomeConfig.UI_CONFIRM_TITLE_BG, HomeConfig.SHARED_CONFIRM_TITLE_WIDTH, HomeConfig.SHARED_CONFIRM_TITLE_HEIGHT);
             titleSkin.setSiblingIndex(1);
         }
         const messageBg = this.findNode('ConfirmMessageBg', popup);
@@ -763,7 +762,7 @@ export abstract class HomeFeatureMagicMap extends HomeFeatureMagicMapHost {
             board,
             popup,
             'MagicMonsterRoomHpCaption',
-            'BOSS\u5269\u4f59\u8840\u91cf:',
+            monster.isBoss ? '\u9996\u9886\u5269\u4f59\u8840\u91cf:' : '\u5c0f\u5996\u5269\u4f59\u8840\u91cf:',
             25,
             -162,
             28,
@@ -828,9 +827,9 @@ export abstract class HomeFeatureMagicMap extends HomeFeatureMagicMapHost {
             if (close.parent !== board) close.setParent(board);
             close.active = true;
             close.setScale(1, 1, 1);
-            close.setPosition(306, 214, 0);
-            (close.getComponent(UITransform) || close.addComponent(UITransform)).setContentSize(62, 62);
-            this.applyUiSkinKeepingEditorSize(close, HomeConfig.UI_BTN_CLOSE, 62, 62);
+            close.setPosition(HomeConfig.SHARED_CONFIRM_CLOSE_X, HomeConfig.SHARED_CONFIRM_CLOSE_Y, 0);
+            (close.getComponent(UITransform) || close.addComponent(UITransform)).setContentSize(HomeConfig.SHARED_CONFIRM_CLOSE_SIZE, HomeConfig.SHARED_CONFIRM_CLOSE_SIZE);
+            this.applyUiSkinKeepingEditorSize(close, HomeConfig.UI_BTN_CLOSE, HomeConfig.SHARED_CONFIRM_CLOSE_SIZE, HomeConfig.SHARED_CONFIRM_CLOSE_SIZE);
             close.setSiblingIndex(10);
             this.bindScaledClick(close, () => {
                 this.closeSharedFlowPopup(popup);
@@ -877,6 +876,6 @@ export abstract class HomeFeatureMagicMap extends HomeFeatureMagicMapHost {
         if (monster.isBoss) return '\u9b54\u754c\u9996\u9886';
         const match = /^small-(\d+)$/.exec(monster.id);
         const index = match ? Number(match[1]) : Math.max(1, this.magicMapMonsters.filter((item) => !item.isBoss).indexOf(monster) + 1);
-        return `\u9ab7\u9ac5\u6218\u5c06${index}\u53f7`;
+        return `\u9b54\u754c\u5c0f\u5996${index}\u53f7`;
     }
 }

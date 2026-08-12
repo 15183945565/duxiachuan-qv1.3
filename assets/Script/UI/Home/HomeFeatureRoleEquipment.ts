@@ -137,8 +137,10 @@ export abstract class HomeFeatureRoleEquipment extends HomeFeatureRoleEquipmentH
         this.rolePagePowerFrame.setSiblingIndex(8);
         this.rolePagePowerDigitRoot = this.getOrCreateRolePageNode(this.rolePagePowerFrame, 'RolePagePowerDigitRoot', 180, HomeConfig.ROLE_PAGE_POWER_DIGIT_HEIGHT, HomeConfig.ROLE_PAGE_POWER_DIGIT_OFFSET_X, HomeConfig.ROLE_PAGE_POWER_DIGIT_OFFSET_Y).node;
         const powerDetailButton = this.getOrCreateRolePageSkinnedNode(this.rolePagePowerFrame, 'RolePagePowerDetailButton', HomeConfig.ROLE_PAGE_POWER_DETAIL_BUTTON_SIZE, HomeConfig.ROLE_PAGE_POWER_DETAIL_BUTTON_SIZE, HomeConfig.ROLE_PAGE_POWER_DETAIL_BUTTON_X, HomeConfig.ROLE_PAGE_POWER_DETAIL_BUTTON_Y, HomeConfig.UI_ROLE_POWER_DETAIL_BTN).node;
+        this.rolePagePowerDetailButton = powerDetailButton;
         powerDetailButton.setSiblingIndex(3);
         this.bindScaledClick(powerDetailButton, () => this.openRoleAttrDetailPanel());
+        this.buildRolePageEquipmentInlineAttrs();
         const nameLabelInfo = this.getOrCreateRolePageLabel(this.rolePagePanel, 'RolePageNameLabel', '', HomeConfig.ROLE_PAGE_NAME_LABEL_FONT_SIZE, 0, HomeConfig.ROLE_PAGE_NAME_LABEL_OFFSET_Y, HomeConfig.ROLE_PAGE_NAME_LABEL_WIDTH, HomeConfig.ROLE_PAGE_NAME_LABEL_HEIGHT, new Color(255, 246, 219, 255));
         this.rolePageNameLabel = nameLabelInfo.label;
         this.rolePageNameUsesEditorTransform = nameLabelInfo.existed;
@@ -148,6 +150,60 @@ export abstract class HomeFeatureRoleEquipment extends HomeFeatureRoleEquipmentH
         this.buildRoleAdvancePage();
         this.buildRoleStrengthenPage();
         this.createRolePageBottomTabs();
+    }
+    protected buildRolePageEquipmentInlineAttrs(): void {
+        if (!this.rolePagePanel?.isValid) return;
+
+        const rootInfo = this.getOrCreateRolePageNode(
+            this.rolePagePanel,
+            'RolePageEquipmentInlineAttrRoot',
+            HomeConfig.ROLE_PAGE_EQUIPMENT_INLINE_ATTR_WIDTH,
+            HomeConfig.ROLE_PAGE_EQUIPMENT_INLINE_ATTR_HEIGHT,
+            HomeConfig.ROLE_PAGE_EQUIPMENT_INLINE_ATTR_X,
+            HomeConfig.ROLE_PAGE_EQUIPMENT_INLINE_ATTR_Y,
+        );
+        const root = rootInfo.node;
+        this.rolePageEquipmentInlineAttrRoot = root;
+        root.active = this.rolePageActiveTab === 'equipment';
+        if (!rootInfo.existed) {
+            root.setPosition(HomeConfig.ROLE_PAGE_EQUIPMENT_INLINE_ATTR_X, HomeConfig.ROLE_PAGE_EQUIPMENT_INLINE_ATTR_Y, 0);
+        }
+        root.setSiblingIndex(9);
+
+        const names = ['\u7b49\u7ea7', '\u8840\u91cf', '\u653b\u51fb', '\u9632\u5fa1'];
+        names.forEach((name, index) => {
+            const y = -index * HomeConfig.ROLE_PAGE_EQUIPMENT_INLINE_ATTR_ROW_GAP;
+            const nameLabel = this.getOrCreateRolePageLabel(
+                root,
+                `RolePageEquipmentInlineAttrName_${index}`,
+                name,
+                HomeConfig.ROLE_PAGE_EQUIPMENT_INLINE_ATTR_FONT_SIZE,
+                HomeConfig.ROLE_PAGE_EQUIPMENT_INLINE_ATTR_LABEL_X,
+                y,
+                HomeConfig.ROLE_PAGE_EQUIPMENT_INLINE_ATTR_LABEL_WIDTH,
+                HomeConfig.ROLE_PAGE_EQUIPMENT_INLINE_ATTR_TEXT_HEIGHT,
+                Color.BLACK,
+            ).label;
+            nameLabel.horizontalAlign = HorizontalTextAlignment.CENTER;
+            this.applyRoleAttrLabelStyle(nameLabel, 1);
+            nameLabel.node.setSiblingIndex(index * 2);
+
+            const valueLabel = this.getOrCreateRolePageLabel(
+                root,
+                `RolePageEquipmentInlineAttrValue_${index}`,
+                '',
+                HomeConfig.ROLE_PAGE_EQUIPMENT_INLINE_ATTR_FONT_SIZE,
+                HomeConfig.ROLE_PAGE_EQUIPMENT_INLINE_ATTR_VALUE_X,
+                y,
+                HomeConfig.ROLE_PAGE_EQUIPMENT_INLINE_ATTR_VALUE_WIDTH,
+                HomeConfig.ROLE_PAGE_EQUIPMENT_INLINE_ATTR_TEXT_HEIGHT,
+                Color.BLACK,
+            ).label;
+            valueLabel.horizontalAlign = HorizontalTextAlignment.CENTER;
+            this.applyRoleAttrLabelStyle(valueLabel, 1);
+            valueLabel.node.setSiblingIndex(index * 2 + 1);
+        });
+        this.refreshRolePageEquipmentInlineAttrs();
     }
     protected getOrCreateRolePageNode(parent: Node, name: string, width: number, height: number, x: number, y: number): { node: Node; existed: boolean } {
         const existing = parent.getChildByName(name);
@@ -439,7 +495,16 @@ export abstract class HomeFeatureRoleEquipment extends HomeFeatureRoleEquipmentH
         return tierTextMap.find(([text]) => name.includes(text))?.[1] || 1;
     }
     protected getEquipmentLevel(item?: RoleEquipmentRuntimeItem | BagIllustrationCatalogItem | null): number {
-        return (item as RoleEquipmentRuntimeItem | null)?.displayLevel || this.getEquipmentBaseTier(item);
+        const displayLevel = (item as RoleEquipmentRuntimeItem | null)?.displayLevel;
+        if (displayLevel) return displayLevel;
+
+        const idLevelMatch = item?.category === 'equipment' ? /^equipment_[a-z]+_lv(\d{3})$/.exec(item.id) : null;
+        if (idLevelMatch) return Number(idLevelMatch[1]);
+
+        const nameLevelMatch = item?.category === 'equipment' ? /^(\d+)\u7ea7/.exec(this.getCatalogDisplayName(item)) : null;
+        if (nameLevelMatch) return Number(nameLevelMatch[1]);
+
+        return this.getEquipmentBaseTier(item);
     }
     protected getEquipmentLevelBySlot(config: RoleEquipmentSlotConfig): number {
         const runtimeLevel = this.roleEquipmentLevels.get(config.id);
@@ -581,7 +646,7 @@ export abstract class HomeFeatureRoleEquipment extends HomeFeatureRoleEquipmentH
             this.closeRoleEquipDetailPopup();
         }, this);
 
-        const board = this.getOrCreateRoleEquipSkin(popup, 'RoleEquipDetailBoard', HomeConfig.ROLE_EQUIP_DETAIL_WIDTH, HomeConfig.ROLE_EQUIP_DETAIL_HEIGHT, 0, 0, HomeConfig.UI_CONFIRM_POPUP_BG, true);
+        const board = this.getOrCreateRoleEquipSkin(popup, 'RoleEquipDetailBoard', HomeConfig.ROLE_EQUIP_DETAIL_WIDTH, HomeConfig.ROLE_EQUIP_DETAIL_HEIGHT, 0, 0, HomeConfig.UI_BAG_ITEM_DETAIL_ATTR_BG, true);
         board.setSiblingIndex(1);
         board.off(Node.EventType.TOUCH_START);
         board.off(Node.EventType.TOUCH_END);
@@ -592,7 +657,9 @@ export abstract class HomeFeatureRoleEquipment extends HomeFeatureRoleEquipmentH
             event.propagationStopped = true;
         }, this);
 
-        this.getOrCreateRoleEquipSkin(board, 'RoleEquipDetailTitleSkin', HomeConfig.BAG_ITEM_DETAIL_TITLE_WIDTH, HomeConfig.BAG_ITEM_DETAIL_TITLE_HEIGHT, 0, 182, HomeConfig.UI_CONFIRM_TITLE_BG, true).setSiblingIndex(1);
+        const titleSkin = this.getOrCreateRoleEquipChild(board, 'RoleEquipDetailTitleSkin', HomeConfig.BAG_ITEM_DETAIL_TITLE_WIDTH, HomeConfig.BAG_ITEM_DETAIL_TITLE_HEIGHT, 0, 182, true);
+        titleSkin.active = false;
+        titleSkin.setSiblingIndex(1);
         this.getOrCreateRoleEquipLabel(board, 'RoleEquipDetailTitle', '\u88c5\u5907\u8be6\u60c5', 30, 0, 186, 260, 42, new Color(126, 74, 36, 255), true).node.setSiblingIndex(2);
         return popup;
     }

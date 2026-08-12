@@ -490,7 +490,6 @@ export abstract class HomeFeatureBeastCardPresentation extends HomeFeatureBeastC
         this.openSharedFlowPopup('ConfirmPopup', {
             title: '\u7cfb\u7edf\u63d0\u793a',
             message: `\u662f\u5426\u6d88\u80171\u5f20${config.cardLabel}\u6fc0\u6d3b${config.beastName}\u517d\u8109`,
-            variant: 'beastStrengthenConfirm',
             onConfirm: () => {
                 if (!this.consumeRoleInventory(config.itemId, 1)) {
                     this.showToast(`${config.beastCardLabel}\u4e0d\u8db3`);

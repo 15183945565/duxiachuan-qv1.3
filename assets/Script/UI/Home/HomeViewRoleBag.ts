@@ -269,6 +269,7 @@ export abstract class HomeViewRoleBag extends HomeViewBase {
         if (this.rolePageStrengthenRoot?.isValid) {
             this.rolePageStrengthenRoot.active = tab === 'forge';
         }
+        this.refreshRolePageEquipmentInlineAttrs();
         if (tab === 'equipment' || tab === 'forge') {
             if (tab === 'forge') {
                 this.resetRoleStrengthenSelection();
@@ -315,6 +316,7 @@ export abstract class HomeViewRoleBag extends HomeViewBase {
         panel.setSiblingIndex((panel.parent?.children.length || 1) - 1);
         this.bindEditorFeaturePage(panel);
         if (panelName === 'ValueGiftPanel') {
+            this.bindValueGiftPage(panel);
             this.playValueGiftCaishenAnimation(panel);
         }
         this.refreshBottomEntryChrome();

@@ -22106,7 +22106,7 @@
       "__id__": 887
     },
     "_children": [],
-    "_active": true,
+    "_active": false,
     "_components": [
       {
         "__id__": 889
@@ -25841,8 +25841,8 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 725,
-      "height": 505
+      "width": 640,
+      "height": 442
     },
     "_anchorPoint": {
       "__type__": "cc.Vec2",
