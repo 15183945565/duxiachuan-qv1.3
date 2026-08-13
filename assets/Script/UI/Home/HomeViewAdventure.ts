@@ -120,6 +120,7 @@ export abstract class HomeViewAdventure extends HomeViewRoleBag {
             magicBattleDuelTargetHp: 0,
             magicBattleDuelVersion: 0,
             magicBattleDuelTargetId: '',
+            magicBattleRoomPreviewActors: [],
             beastStrengthenTitleLabel: null,
             beastStrengthenYuanbaoLabel: null,
             beastCardYuanbaoRateValueLabel: null,

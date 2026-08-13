@@ -410,6 +410,10 @@ export abstract class HomeViewBase extends Component {
     protected magicBattleMonsterSkeleton: sp.Skeleton | null = null;
     protected magicBattleHitEffectSkeleton: sp.Skeleton | null = null;
     protected magicBattleHitEffectSkeletonData: sp.SkeletonData | null = null;
+    protected readonly magicBattleRoomPreviewActors: Array<{ anchor: Node; skeleton: sp.Skeleton; homePosition: Vec3; gender: RoleGender; attackPhase: number }> = [];
+    protected magicBattleRoomPreviewSoundCooldown = 0;
+    protected magicBattleRoomPreviewHurtCooldown = 0;
+    protected magicBattleRoomPreviewHitEffectCooldown = 0;
     protected magicBattleEnemyNameLabel: Label | null = null;
     protected magicBattleEnemyHpLabel: Label | null = null;
     protected magicBattleHintLabel: Label | null = null;
@@ -1104,6 +1108,7 @@ export abstract class HomeViewBase extends Component {
     protected abstract createNoticeArticleTemplate(parent: Node): Node;
     protected abstract createNoticeArticleFromTemplate(notice: NoticeData, index: number, height: number): Node;
     protected abstract calculateNoticeArticleHeight(notice: NoticeData): number;
+    protected abstract toggleNoticeArticle(noticeId: string): void;
     protected abstract estimateNoticeTextHeight(text: string, width: number, fontSize: number, lineHeight: number): number;
     protected abstract clearNoticeArticleRuntimeChildren(): void;
     protected abstract setupNoticeScrollView(scrollNode: Node, content: Node): void;

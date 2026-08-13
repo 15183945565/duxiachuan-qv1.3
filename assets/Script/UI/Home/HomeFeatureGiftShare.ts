@@ -7,8 +7,12 @@ import {
     Overflow,
     Sprite,
     SpriteFrame,
+    Tween,
+    UIOpacity,
     sp,
+    tween,
     UITransform,
+    Vec3,
     VerticalTextAlignment,
 } from 'cc';
 import { applySimKaiFont } from '../Common/UIFont';
@@ -174,19 +178,16 @@ export abstract class HomeFeatureGiftShare extends HomeViewBase {
         if (!root) return;
 
         root.active = true;
-        root.setPosition(0, -145, 0);
         root.setSiblingIndex((panel.children.length || 1) - 1);
-        (root.getComponent(UITransform) || root.addComponent(UITransform)).setContentSize(520, 360);
-        this.clearChildren(root);
 
         HomeConfig.VALUE_GIFT_MATERIALS.forEach((material, index) => {
             const x = index === 0 ? -130 : 130;
             this.createValueGiftMaterialSlot(root, material, index + 1, x);
         });
 
-        const buyButton = this.createSkinnedNode(
-            'ValueGiftMaterialBuyButton',
+        const buyButton = this.getOrCreateValueGiftSkinnedNode(
             root,
+            'ValueGiftMaterialBuyButton',
             162,
             62,
             0,
@@ -194,8 +195,8 @@ export abstract class HomeFeatureGiftShare extends HomeViewBase {
             HomeConfig.UI_VALUE_GIFT_BUY_BUTTON_BG,
         );
         buyButton.setSiblingIndex(20);
-        this.createSkinnedNode('ValueGiftMaterialBuyYuanbaoIcon', buyButton, 34, 34, -34, 2, HomeConfig.UI_HOME_JIFEN_ICON).setSiblingIndex(1);
-        this.createGiftLabel(
+        this.getOrCreateValueGiftSkinnedNode(buyButton, 'ValueGiftMaterialBuyYuanbaoIcon', 34, 34, -34, 2, HomeConfig.UI_HOME_JIFEN_ICON).setSiblingIndex(1);
+        this.getOrCreateValueGiftLabel(
             buyButton,
             'ValueGiftMaterialBuyPrice',
             `${HomeConfig.VALUE_GIFT_BUY_BUTTON_PRICE}`,
@@ -216,16 +217,26 @@ export abstract class HomeFeatureGiftShare extends HomeViewBase {
         index: number,
         x: number,
     ): void {
-        const slot = this.createNode(`ValueGiftMaterialSlot_${index}`, parent, 190, 220, x, 40);
+        const slotName = `ValueGiftMaterialSlot_${index}`;
+        let slot = parent.getChildByName(slotName);
+        if (!slot?.isValid) {
+            slot = this.createNode(slotName, parent, 190, 220, x, 40);
+        }
+        slot.active = true;
         slot.setSiblingIndex(index);
 
-        const effectNode = this.createNode(`ValueGiftMaterialEffect_${index}`, slot, 230, 230, 0, 44);
+        const effectName = `ValueGiftMaterialEffect_${index}`;
+        let effectNode = slot.getChildByName(effectName);
+        if (!effectNode?.isValid) {
+            effectNode = this.createNode(effectName, slot, 230, 230, 0, 44);
+            effectNode.setScale(1.28, 1.28, 1);
+        }
+        effectNode.active = true;
         effectNode.setSiblingIndex(0);
-        effectNode.setScale(1.28, 1.28, 1);
         effectNode.addComponent(sp.Skeleton);
 
-        this.createSkinnedNode(`ValueGiftMaterialIcon_${index}`, slot, 78, 78, 0, 50, material.iconPath).setSiblingIndex(2);
-        this.createGiftLabel(
+        this.getOrCreateValueGiftSkinnedNode(slot, `ValueGiftMaterialIcon_${index}`, 78, 78, 0, 50, material.iconPath).setSiblingIndex(2);
+        this.getOrCreateValueGiftLabel(
             slot,
             `ValueGiftMaterialAmount_${index}`,
             `x${material.amount}`,
@@ -237,6 +248,61 @@ export abstract class HomeFeatureGiftShare extends HomeViewBase {
             Color.WHITE,
             3,
         ).node.setSiblingIndex(3);
+    }
+
+    protected getOrCreateValueGiftSkinnedNode(
+        parent: Node,
+        name: string,
+        fallbackWidth: number,
+        fallbackHeight: number,
+        fallbackX: number,
+        fallbackY: number,
+        skinPath: string,
+    ): Node {
+        let node = parent.getChildByName(name);
+        if (!node?.isValid) {
+            node = this.createSkinnedNode(name, parent, fallbackWidth, fallbackHeight, fallbackX, fallbackY, skinPath);
+        } else {
+            node.active = true;
+            this.applyUiSkinKeepingEditorSize(node, skinPath, fallbackWidth, fallbackHeight);
+        }
+        return node;
+    }
+
+    protected getOrCreateValueGiftLabel(
+        parent: Node,
+        name: string,
+        text: string,
+        fontSize: number,
+        fallbackX: number,
+        fallbackY: number,
+        fallbackWidth: number,
+        fallbackHeight: number,
+        color: Color,
+        outlineWidth = 0,
+        align: HorizontalTextAlignment = HorizontalTextAlignment.CENTER,
+    ): Label {
+        let labelNode = parent.getChildByName(name);
+        if (!labelNode?.isValid) {
+            return this.createGiftLabel(parent, name, text, fontSize, fallbackX, fallbackY, fallbackWidth, fallbackHeight, color, outlineWidth, align);
+        }
+
+        labelNode.active = true;
+        const transform = labelNode.getComponent(UITransform) || labelNode.addComponent(UITransform);
+        const label = labelNode.getComponent(Label) || labelNode.addComponent(Label);
+        applySimKaiFont(label);
+        label.string = text;
+        label.fontSize = fontSize;
+        label.lineHeight = Math.max(transform.contentSize.height || fallbackHeight, fontSize + 8);
+        label.horizontalAlign = align;
+        label.verticalAlign = VerticalTextAlignment.CENTER;
+        label.overflow = Overflow.CLAMP;
+        label.enableWrapText = false;
+        label.color = color;
+        label.enableOutline = outlineWidth > 0;
+        label.outlineColor = new Color(62, 37, 22, 255);
+        label.outlineWidth = outlineWidth;
+        return label;
     }
 
     protected playValueGiftMaterialEffects(panel: Node): void {
@@ -286,7 +352,140 @@ export abstract class HomeFeatureGiftShare extends HomeViewBase {
             this.addRoleInventory(material.itemId, material.amount);
         });
         this.refreshRoleInventoryViews(false);
+        const panel = this.pageRoot?.getChildByName('ValueGiftPanel') || this.findNode('ValueGiftPanel');
+        if (panel?.isValid) {
+            this.closeEditorFeaturePage(panel);
+        }
+        this.refreshBottomEntryChrome();
+        this.playValueGiftMaterialCollectFly();
         this.showToast('\u793c\u5305\u8d2d\u4e70\u6210\u529f');
+    }
+
+    protected playValueGiftMaterialCollectFly(): void {
+        const flyLayer = this.guideRoot || this.uiHudLayer || this.uiMainLayer || this.node;
+        if (!flyLayer?.isValid) return;
+        const target = this.getValueGiftCollectTargetPosition(flyLayer);
+
+        HomeConfig.VALUE_GIFT_MATERIALS.forEach((material, materialIndex) => {
+            void this.loadSpriteFrameAsset(material.iconPath)
+                .then((spriteFrame) => {
+                    const origin = this.getValueGiftCollectCenterOrigin(materialIndex);
+                    this.spawnValueGiftCollectIcons(flyLayer, origin, target, spriteFrame, materialIndex);
+                })
+                .catch((err) => {
+                    console.warn('[MainHomeView] value gift collect icon load failed', err);
+                });
+        });
+    }
+
+    protected getValueGiftCollectTargetPosition(flyLayer: Node): Vec3 {
+        const layerTransform = flyLayer.getComponent(UITransform) || flyLayer.addComponent(UITransform);
+        const targetNode = this.findNode('TabBag', this.uiMainLayer || this.node)
+            || this.findNode('BagTabBag', this.pageRoot || this.node);
+        if (targetNode?.isValid) {
+            return layerTransform.convertToNodeSpaceAR(targetNode.getWorldPosition(new Vec3()));
+        }
+        return new Vec3(
+            HomeConfig.VALUE_GIFT_COLLECT_TARGET_FALLBACK_X,
+            HomeConfig.VALUE_GIFT_COLLECT_TARGET_FALLBACK_Y,
+            0,
+        );
+    }
+
+    protected getValueGiftCollectCenterOrigin(materialIndex: number): Vec3 {
+        const materialCount = Math.max(1, HomeConfig.VALUE_GIFT_MATERIALS.length);
+        const offsetIndex = materialIndex - (materialCount - 1) / 2;
+        return new Vec3(
+            HomeConfig.VALUE_GIFT_COLLECT_CENTER_X + offsetIndex * HomeConfig.VALUE_GIFT_COLLECT_CENTER_MATERIAL_OFFSET_X,
+            HomeConfig.VALUE_GIFT_COLLECT_CENTER_Y,
+            0,
+        );
+    }
+
+    protected spawnValueGiftCollectIcons(
+        flyLayer: Node,
+        origin: Vec3,
+        target: Vec3,
+        spriteFrame: SpriteFrame,
+        materialIndex: number,
+    ): void {
+        for (let index = 0; index < HomeConfig.VALUE_GIFT_COLLECT_ICON_COUNT_PER_MATERIAL; index += 1) {
+            const spreadX = (Math.random() * 2 - 1) * HomeConfig.VALUE_GIFT_COLLECT_START_SPREAD_X;
+            const spreadY = (Math.random() * 2 - 1) * HomeConfig.VALUE_GIFT_COLLECT_START_SPREAD_Y;
+            const start = new Vec3(origin.x + spreadX, origin.y + spreadY, 0);
+            const control = new Vec3(
+                (start.x + target.x) / 2 + (Math.random() * 2 - 1) * 90,
+                Math.max(start.y, target.y) + HomeConfig.VALUE_GIFT_COLLECT_ARC_HEIGHT + Math.random() * 80,
+                0,
+            );
+            const duration = HomeConfig.VALUE_GIFT_COLLECT_DURATION_MIN
+                + Math.random() * (HomeConfig.VALUE_GIFT_COLLECT_DURATION_MAX - HomeConfig.VALUE_GIFT_COLLECT_DURATION_MIN);
+            const appearDelay = (index + materialIndex * 3) * HomeConfig.VALUE_GIFT_COLLECT_APPEAR_DELAY_STEP;
+            const flyDelay = appearDelay
+                + HomeConfig.VALUE_GIFT_COLLECT_HOLD_DURATION
+                + index * HomeConfig.VALUE_GIFT_COLLECT_DELAY_STEP;
+            const icon = this.createValueGiftCollectIcon(flyLayer, spriteFrame, materialIndex, index, start);
+            const opacity = icon.getComponent(UIOpacity) || icon.addComponent(UIOpacity);
+            const state = { t: 0 };
+            const initialScale = 0.92 + Math.random() * 0.18;
+            icon.setScale(initialScale, initialScale, 1);
+            opacity.opacity = 0;
+            Tween.stopAllByTarget(icon);
+            Tween.stopAllByTarget(opacity);
+            Tween.stopAllByTarget(state);
+
+            tween(opacity)
+                .delay(appearDelay)
+                .to(0.1, { opacity: 255 })
+                .delay(Math.max(0.05, flyDelay - appearDelay + duration - 0.2))
+                .to(0.14, { opacity: 0 })
+                .start();
+            tween(icon)
+                .delay(flyDelay)
+                .to(duration, { scale: new Vec3(0.38, 0.38, 1) }, { easing: 'quadIn' })
+                .call(() => {
+                    if (icon.isValid) icon.destroy();
+                })
+                .start();
+            tween(state)
+                .delay(flyDelay)
+                .to(duration, { t: 1 }, {
+                    easing: 'quadIn',
+                    onUpdate: () => {
+                        if (!icon.isValid) return;
+                        const oneMinus = 1 - state.t;
+                        icon.setPosition(
+                            oneMinus * oneMinus * start.x + 2 * oneMinus * state.t * control.x + state.t * state.t * target.x,
+                            oneMinus * oneMinus * start.y + 2 * oneMinus * state.t * control.y + state.t * state.t * target.y,
+                            0,
+                        );
+                    },
+                })
+                .start();
+        }
+    }
+
+    protected createValueGiftCollectIcon(
+        parent: Node,
+        spriteFrame: SpriteFrame,
+        materialIndex: number,
+        index: number,
+        position: Vec3,
+    ): Node {
+        const icon = this.createNode(
+            `ValueGiftCollectFlyIcon_${materialIndex + 1}_${index + 1}`,
+            parent,
+            HomeConfig.VALUE_GIFT_COLLECT_ICON_SIZE,
+            HomeConfig.VALUE_GIFT_COLLECT_ICON_SIZE,
+            position.x,
+            position.y,
+        );
+        const sprite = icon.addComponent(Sprite);
+        sprite.type = Sprite.Type.SIMPLE;
+        sprite.sizeMode = Sprite.SizeMode.CUSTOM;
+        sprite.spriteFrame = spriteFrame;
+        icon.setSiblingIndex((parent.children.length || 1) - 1);
+        return icon;
     }
 
     protected createGiftLabel(

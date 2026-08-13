@@ -95,7 +95,7 @@ export abstract class HomeFeatureMagicBattleDamage extends HomeFeatureMagicBattl
             HomeConfig.MAGIC_BATTLE_DAMAGE_INFO_BG_HEIGHT,
             0,
             HomeConfig.MAGIC_BATTLE_DAMAGE_INFO_BG_Y,
-            HomeConfig.UI_MAGIC_DUEL_CARD_BG,
+            HomeConfig.UI_MAGIC_DAMAGE_INFO_BG,
         ).node;
         infoBg.setSiblingIndex(0);
 

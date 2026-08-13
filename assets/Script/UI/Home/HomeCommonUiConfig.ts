@@ -2,6 +2,8 @@ import { COMMON_UI_ROOT, CONFIRM_UI_ROOT, MAIL_UI_ROOT, NOTICE_UI_ROOT, RANK_UI_
 
 export const UI_FRAME_NOTICE = `${NOTICE_UI_ROOT}/notice_board_bg`;
 export const UI_FRAME_NOTICE_CONTENT = `${NOTICE_UI_ROOT}/notice_content_bg`;
+export const UI_NOTICE_TITLE_BG = `${NOTICE_UI_ROOT}/notice_title_bg`;
+export const UI_NOTICE_DROPDOWN_BTN = `${NOTICE_UI_ROOT}/notice_dropdown_btn`;
 export const UI_NOTICE_BTN_CLOSE = `${NOTICE_UI_ROOT}/notice_btn_close`;
 export const UI_GLOBAL_UNREAD_DOT = `${COMMON_UI_ROOT}/unread_notice_dot`;
 export const GLOBAL_UNREAD_DOT_WIDTH = 35;

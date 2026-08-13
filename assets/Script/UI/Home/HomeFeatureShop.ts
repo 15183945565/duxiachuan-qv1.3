@@ -6,6 +6,7 @@ import {
     Mask,
     Node,
     Sprite,
+    SpriteFrame,
     UITransform,
     VerticalTextAlignment,
     sp,
@@ -27,17 +28,51 @@ export abstract class HomeFeatureShop extends HomeViewBase {
     protected shopActiveTab: ShopMallTab = 'yuanbao';
 
     protected createSlicedSkinnedNode(name: string, parent: Node, width: number, height: number, x: number, y: number, skinPath: string): Node {
-        const node = this.createSkinnedNode(name, parent, width, height, x, y, skinPath);
-        const sprite = node.getComponent(Sprite) || node.addComponent(Sprite);
-        if (!sprite.spriteFrame) sprite.enabled = false;
-        sprite.type = Sprite.Type.SLICED;
+        const node = this.createNode(name, parent, width, height, x, y);
+        this.applySlicedUiSkin(node, skinPath, width, height);
         return node;
     }
     protected applySlicedUiSkin(node: Node, skinPath: string, width: number, height: number): void {
-        this.applyUiSkin(node, skinPath, width, height);
-        const sprite = node.getComponent(Sprite) || node.addComponent(Sprite);
-        if (!sprite.spriteFrame) sprite.enabled = false;
-        sprite.type = Sprite.Type.SLICED;
+        const applyVersion = ++this.skinApplyVersion;
+        this.skinApplyVersions.set(node, applyVersion);
+        const pendingSprite = node.getComponent(Sprite) || node.addComponent(Sprite);
+        if (!pendingSprite.spriteFrame) pendingSprite.enabled = false;
+        pendingSprite.type = Sprite.Type.SLICED;
+
+        const apply = (): Promise<void> => this.loadSpriteFrameAsset(skinPath)
+            .then((spriteFrame) => {
+                if (!node.isValid) return;
+                if (this.skinApplyVersions.get(node) !== applyVersion) return;
+                this.applyNoticeContentSliceInsets(spriteFrame, skinPath);
+                this.applySpriteFrameToNode(node, spriteFrame, width, height);
+                const sprite = node.getComponent(Sprite) || node.addComponent(Sprite);
+                sprite.type = Sprite.Type.SLICED;
+                sprite.sizeMode = Sprite.SizeMode.CUSTOM;
+                sprite.enabled = true;
+            });
+
+        if (this.resBundle) {
+            void apply()
+                .catch((err) => {
+                    console.warn('[MainHomeView] sliced ui skin load failed', skinPath, err);
+                });
+            return;
+        }
+
+        void this.acquireHomeSharedBundle()
+            .then(() => apply())
+            .catch((err) => {
+                console.warn('[MainHomeView] sliced ui skin load failed', skinPath, err);
+            });
+    }
+
+    protected applyNoticeContentSliceInsets(spriteFrame: SpriteFrame, skinPath: string): void {
+        if (skinPath !== HomeConfig.UI_FRAME_NOTICE_CONTENT) return;
+
+        spriteFrame.insetTop = 52;
+        spriteFrame.insetBottom = 52;
+        spriteFrame.insetLeft = 16;
+        spriteFrame.insetRight = 16;
     }
     protected openShopPanel(tab: ShopMallTab = 'yuanbao'): void {
         this.ensureShopStore();

@@ -36,26 +36,26 @@ export abstract class HomeFeatureNotice extends HomeViewBase {
 
         this.noticeData = this.createDefaultNotices();
         this.selectedNoticeId = this.noticeData[0]?.id || '';
-        this.noticeExpanded = true;
+        this.noticeExpanded = false;
     }
 
     protected createDefaultNotices(): NoticeData[] {
         return [
             {
-                id: 'world_boss_update',
-                title: '\u4e16\u754c Boss \u7248\u672c\u66f4\u65b0\u516c\u544a',
-                time: '2026\u5e746\u670812\u65e5',
+                id: 'duxia_open_notice',
+                title: '\u72ec\u4fa0\u4f20\u6700\u65b0\u516c\u544a',
+                time: '2026\u5e748\u670813\u65e5',
                 type: 'notice',
-                collapseContent: '\u4e16\u754c Boss \u6b63\u5f0f\u4e0a\u7ebf\uff0c\u6d77\u91cf\u6750\u6599\u5956\u52b1\u7b49\u4f60\u6765\u62ff\uff01',
-                content: '1. \u4e16\u754c Boss \u6b63\u5f0f\u4e0a\u7ebf\uff0c\u6d77\u91cf\u6750\u6599\u5956\u52b1\u7b49\u4f60\u6765\u62ff\uff01\n2. \u65b0\u589e\u201c\u53cc\u9a84\u793c\u5305\u201d\uff0c\u52a9\u529b\u7b49\u7ea7\u4e0e\u6218\u529b\u53cc\u91cd\u98de\u5347\uff01\n3. \u5546\u57ce\u963f\u62c9\u739b\u4e0b\u67b6\uff0c\u5947\u73cd\u9601\u963f\u62c9\u739b\u5b98\u65b9\u56de\u6536\u6b65\u79fb\u9664\uff0c\u540e\u7eed\u5c06\u6539\u4e3a\u73a9\u5bb6\u81ea\u7531\u4ea4\u6613\u3002\n4. \u65b0\u589e\u5c0f\u6e38\u620f\u5c71\u6d77\u5947\u9047\uff0c\u7075\u5854\u64c2\u53f0\u6302\u80dc\u699c\u3002\n5. \u521d\u4f4e\u79d8\u5883\u65b0\u589e\u89d2\u8272\u7b49\u7ea7\u9650\u5236\u4e0e\u653b\u51fb\u529b\u9650\u5236\u3002\n\n\u611f\u8c22\u5404\u4f4d\u9053\u53cb\u7684\u652f\u6301\u4e0e\u53cd\u9988\uff0c\u795d\u5927\u5bb6\u6e38\u620f\u6109\u5feb\uff01\n\n\u300a\u4ed9\u9014\u7eaa\u300b\u8fd0\u8425\u56e2\u961f\n2026\u5e746\u670812\u65e5',
+                collapseContent: '\u4eb2\u7231\u7684\u4fa0\u5ba2\u4eec......\u9b54\u754c\u3001\u517d\u8109\u4e0e\u793c\u5305\u5df2\u5f00\u653e\u4f53\u9a8c\u3002',
+                content: '\u4eb2\u7231\u7684\u4fa0\u5ba2\u4eec\uff0c\u72ec\u4fa0\u4f20\u8fd1\u671f\u5df2\u5f00\u653e\u591a\u4e2a\u65b0\u529f\u80fd\uff0c\u6b22\u8fce\u5927\u5bb6\u8fdb\u5165\u6c5f\u6e56\u4f53\u9a8c\u3002\n\n1. \u9b54\u754c\u73a9\u6cd5\u5df2\u5f00\u653e\u4e00\u91cd\u81f3\u4e5d\u91cd\u5c42\u6570\u6311\u6218\uff0c\u4e0d\u540c\u9b54\u754c\u5c06\u6709\u5bf9\u5e94\u7684\u5996\u602a\u4e0e\u653b\u51fb\u529b\u9650\u5236\u3002\n2. \u9b54\u754c\u623f\u95f4\u652f\u6301\u591a\u4eba\u540c\u5c4f\u4f53\u9a8c\u7684\u57fa\u7840\u8868\u73b0\uff0c\u73a9\u5bb6\u53ef\u901a\u8fc7\u4fdd\u62a4\u5361\u548c\u6218\u529b\u5361\u83b7\u5f97\u5bf9\u5e94\u6548\u679c\u3002\n3. \u5f02\u517d\u517d\u8109\u5df2\u52a0\u5165\u6fc0\u6d3b\u3001\u4ea7\u51fa\u8bb0\u5f55\u4e0e\u5f3a\u5316\u9875\u9762\uff0c\u5f02\u517d\u5361\u751f\u6548\u540e\u624d\u4f1a\u663e\u793a\u6b63\u5e38\u52a8\u753b\u3002\n4. \u90ae\u4ef6\u3001\u80cc\u5305\u3001\u56fe\u9274\u548c\u5546\u94fa\u7684\u591a\u5904\u754c\u9762\u5df2\u8fdb\u884c\u89c6\u89c9\u6574\u7406\uff0c\u540e\u7eed\u4f1a\u7ee7\u7eed\u6839\u636e\u5b9e\u673a\u6548\u679c\u8c03\u6574\u3002\n\n\u611f\u8c22\u5404\u4f4d\u4fa0\u5ba2\u7684\u652f\u6301\u548c\u53cd\u9988\uff0c\u6211\u4eec\u4f1a\u6301\u7eed\u628a\u6c5f\u6e56\u6253\u78e8\u5f97\u66f4\u7a33\u3001\u66f4\u597d\u73a9\u3002',
             },
             {
-                id: 'system_update',
-                title: '\u66f4\u65b0\u516c\u544a',
-                time: '2026\u5e746\u670812\u65e5',
+                id: 'experience_adjust_notice',
+                title: '\u4f53\u9a8c\u8c03\u6574\u8bf4\u660e',
+                time: '2026\u5e748\u670813\u65e5',
                 type: 'notice',
-                collapseContent: '\u672c\u6b21\u66f4\u65b0\u4fee\u590d\u82e5\u5e72\u95ee\u9898\uff0c\u5e76\u8c03\u6574\u90e8\u5206\u524d\u7aef\u8868\u73b0\u3002',
-                content: '\u672c\u6b21\u66f4\u65b0\u5185\u5bb9\n\n1. \u5c0f\u52a9\u624b\u5355\u4e2a\u7269\u54c1\u53d1\u5e03\u4e0a\u9650\u8c03\u6574\u4e3a 5 \u5355\uff0c\u5e76\u7edf\u4e00\u4e0b\u67b6\u5168\u670d\u5df2\u53d1\u5e03\u7684\u5c0f\u52a9\u624b\u8ba2\u5355\u3002\n2. 20 \u7ea7\u79d8\u5883\u623f\u95f4\u6570\u91cf\u4e0a\u8c03\u81f3 2 \u4e2a\u3002\n3. \u4f18\u5316\u90ae\u4ef6\u9886\u53d6\u903b\u8f91\uff0c\u63d0\u5347\u9886\u53d6\u7a33\u5b9a\u6027\u3002\n4. \u4f18\u5316\u79d8\u5883\u5012\u8ba1\u65f6\u88ab Boss \u8840\u6761\u906e\u6321\u7684\u95ee\u9898\u3002\n5. \u4e16\u754c Boss \u65b0\u589e\u602a\u7269\u5185\u5bb9\uff08\u7a33\u5b9a\u6027\u6d4b\u8bd5\u4e2d\uff09\u3002',
+                collapseContent: '\u4eb2\u7231\u7684\u4fa0\u5ba2\u4eec......\u672c\u6b21\u4e3b\u8981\u8c03\u6574\u754c\u9762\u4e0e\u6218\u6597\u8868\u73b0\u3002',
+                content: '\u4eb2\u7231\u7684\u4fa0\u5ba2\u4eec\uff0c\u4e3a\u4e86\u8ba9\u6e38\u620f\u6d41\u7a0b\u66f4\u6e05\u6670\uff0c\u6211\u4eec\u5bf9\u4ee5\u4e0b\u4f53\u9a8c\u8fdb\u884c\u4e86\u8c03\u6574\u3002\n\n1. \u8d85\u503c\u793c\u5305\u8d2d\u4e70\u540e\u5c06\u6709\u6750\u6599\u98de\u5165\u80cc\u5305\u7684\u6536\u83b7\u8868\u73b0\uff0c\u7ed3\u7b97\u611f\u66f4\u660e\u786e\u3002\n2. \u9b54\u754c\u6311\u6218\u5185\u7684\u602a\u7269\u5f85\u673a\u3001\u53d7\u51fb\u3001\u8840\u91cf\u53d8\u5316\u548c\u51b3\u6597\u8868\u73b0\u5df2\u505a\u9636\u6bb5\u6027\u6574\u7406\u3002\n3. \u80cc\u5305\u88c5\u5907\u5df2\u6309\u7b49\u7ea7\u9636\u6bb5\u663e\u793a\u5bf9\u5e94\u56fe\u6807\u548c\u7279\u6548\u6846\uff0c\u540e\u7eed\u63a5\u5165\u771f\u5b9e\u6570\u636e\u540e\u4f1a\u7ee7\u7eed\u5bf9\u9f50\u3002\n4. \u516c\u544a\u9875\u5df2\u6539\u4e3a\u53ef\u5c55\u5f00\u5f0f\u663e\u793a\uff0c\u5c55\u5f00\u540e\u53ef\u67e5\u770b\u5b8c\u6574\u5185\u5bb9\u3002',
             },
         ];
     }
@@ -245,30 +245,37 @@ export abstract class HomeFeatureNotice extends HomeViewBase {
         const contentTransform = this.noticeScrollContent.getComponent(UITransform) || this.noticeScrollContent.addComponent(UITransform);
         contentTransform.setContentSize(contentTransform.contentSize.width || 596, contentHeight);
 
-        let cursorY = contentHeight / 2 - topPadding;
+        const templateTransform = this.noticeArticleTemplate?.getComponent(UITransform);
+        const templateHeight = templateTransform?.contentSize.height || 120;
+        const templateBaseX = this.noticeArticleTemplate?.position.x || 0;
+        const templateBaseY = this.noticeArticleTemplate?.position.y || (contentHeight / 2 - topPadding - templateHeight / 2);
+        let cursorTopY = templateBaseY + templateHeight / 2;
         notices.forEach((notice, index) => {
             const height = sectionHeights[index];
             const article = this.createNoticeArticleFromTemplate(notice, index, height);
-            article.setPosition(0, cursorY - height / 2, 0);
-            cursorY -= height + gap;
+            article.setPosition(templateBaseX, cursorTopY - height / 2, 0);
+            cursorTopY -= height + gap;
         });
 
         this.noticeScrollView?.scrollToTop(0.01);
     }
 
     protected createNoticeArticleTemplate(parent: Node): Node {
-        const template = this.createNode('NoticeArticleTemplate', parent, 590, 224, 0, 0);
+        const template = this.createNode('NoticeArticleTemplate', parent, 616, 120, 0, 387);
         template.active = false;
-        this.createSlicedSkinnedNode('NoticeArticleBg', template, 590, 224, 0, 0, HomeConfig.UI_FRAME_NOTICE_CONTENT).setSiblingIndex(0);
-        const title = this.createLabel(template, 'NoticeArticleTitle', '\u4e16\u754c Boss \u7248\u672c\u66f4\u65b0\u516c\u544a', 24, 0, 76, 500, 40, new Color(255, 250, 226, 255));
+        this.createSlicedSkinnedNode('NoticeArticleBg', template, 616, 120, 0, 0, HomeConfig.UI_FRAME_NOTICE_CONTENT).setSiblingIndex(0);
+        this.createSkinnedNode('NoticeArticleTitleBg', template, 460, 42, -38, 33, HomeConfig.UI_NOTICE_TITLE_BG).setSiblingIndex(1);
+        const title = this.createLabel(template, 'NoticeArticleTitle', '\u72ec\u4fa0\u4f20\u6700\u65b0\u516c\u544a', 23, -38, 35, 410, 38, new Color(96, 58, 28, 255));
         title.enableOutline = true;
-        title.outlineColor = new Color(37, 71, 72, 255);
+        title.outlineColor = new Color(255, 246, 212, 255);
         title.outlineWidth = 2;
-        const content = this.createLabel(template, 'NoticeArticleContent', '', 24, 0, -22, 520, 120, new Color(104, 62, 36, 255));
+        const content = this.createLabel(template, 'NoticeArticleContent', '', 22, -6, -24, 510, 54, new Color(104, 62, 36, 255));
+        content.lineHeight = 30;
         content.horizontalAlign = HorizontalTextAlignment.LEFT;
         content.verticalAlign = VerticalTextAlignment.TOP;
         content.enableWrapText = true;
         content.overflow = Overflow.RESIZE_HEIGHT;
+        this.createSkinnedNode('NoticeArticleToggle', template, 76, 76, 264, 26, HomeConfig.UI_NOTICE_DROPDOWN_BTN).setSiblingIndex(4);
         return template;
     }
 
@@ -286,7 +293,23 @@ export abstract class HomeFeatureNotice extends HomeViewBase {
         }
 
         const articleTransform = article.getComponent(UITransform) || article.addComponent(UITransform);
-        const width = articleTransform.contentSize.width || 590;
+        const expanded = this.noticeExpanded && this.selectedNoticeId === notice.id;
+        const templateTransform = this.noticeArticleTemplate?.getComponent(UITransform);
+        const templateHeight = templateTransform?.contentSize.height || 120;
+        const width = templateTransform?.contentSize.width || 616;
+        const getTemplateChild = (name: string): Node | null => this.noticeArticleTemplate?.getChildByName(name) || null;
+        const getTemplateChildX = (name: string, fallback: number): number => getTemplateChild(name)?.position.x ?? fallback;
+        const getTemplateCenterTopOffset = (name: string, fallback: number): number => {
+            const child = getTemplateChild(name);
+            return child ? templateHeight / 2 - child.position.y : fallback;
+        };
+        const getTemplateTopEdgeOffset = (name: string, fallback: number): number => {
+            const child = getTemplateChild(name);
+            if (!child) return fallback;
+
+            const childHeight = child.getComponent(UITransform)?.contentSize.height || 0;
+            return templateHeight / 2 - (child.position.y + childHeight / 2);
+        };
         articleTransform.setContentSize(width, height);
 
         const bg = article.getChildByName('NoticeArticleBg');
@@ -294,27 +317,57 @@ export abstract class HomeFeatureNotice extends HomeViewBase {
             this.applySlicedUiSkin(bg, HomeConfig.UI_FRAME_NOTICE_CONTENT, width, height);
         }
 
+        let titleBg = article.getChildByName('NoticeArticleTitleBg');
+        if (!titleBg) {
+            titleBg = this.createSkinnedNode('NoticeArticleTitleBg', article, 460, 42, getTemplateChildX('NoticeArticleTitleBg', -38), height / 2 - getTemplateCenterTopOffset('NoticeArticleTitleBg', 30), HomeConfig.UI_NOTICE_TITLE_BG);
+        }
+        if (titleBg) {
+            this.applyUiSkin(titleBg, HomeConfig.UI_NOTICE_TITLE_BG, 460, 42);
+            titleBg.setPosition(getTemplateChildX('NoticeArticleTitleBg', -38), height / 2 - getTemplateCenterTopOffset('NoticeArticleTitleBg', 30), 0);
+            titleBg.setSiblingIndex(1);
+        }
+
         const titleLabel = article.getChildByName('NoticeArticleTitle')?.getComponent(Label);
         if (titleLabel) {
             titleLabel.string = notice.title;
-            titleLabel.node.setPosition(0, height / 2 - 38, 0);
+            titleLabel.fontSize = 23;
+            titleLabel.lineHeight = 30;
+            titleLabel.color = new Color(96, 58, 28, 255);
+            titleLabel.node.setPosition(getTemplateChildX('NoticeArticleTitle', -38), height / 2 - getTemplateCenterTopOffset('NoticeArticleTitle', 28), 0);
             applySimKaiFont(titleLabel);
         }
 
         const contentLabel = article.getChildByName('NoticeArticleContent')?.getComponent(Label);
         if (contentLabel) {
-            const text = notice.content;
-            const textWidth = contentLabel.node.getComponent(UITransform)?.contentSize.width || 520;
-            const textHeight = this.estimateNoticeTextHeight(text, textWidth, contentLabel.fontSize || 24, contentLabel.lineHeight || 34);
+            const text = expanded ? notice.content : notice.collapseContent;
+            const textWidth = 510;
+            contentLabel.fontSize = 22;
+            contentLabel.lineHeight = 30;
+            const textHeight = expanded
+                ? this.estimateNoticeTextHeight(text, textWidth, contentLabel.fontSize || 22, contentLabel.lineHeight || 30)
+                : 30;
             const contentTransform = contentLabel.node.getComponent(UITransform) || contentLabel.node.addComponent(UITransform);
             contentTransform.setContentSize(textWidth, textHeight);
             contentLabel.string = text;
             contentLabel.horizontalAlign = HorizontalTextAlignment.LEFT;
             contentLabel.verticalAlign = VerticalTextAlignment.TOP;
-            contentLabel.enableWrapText = true;
-            contentLabel.overflow = Overflow.RESIZE_HEIGHT;
-            contentLabel.node.setPosition(0, height / 2 - 82 - textHeight / 2, 0);
+            contentLabel.enableWrapText = expanded;
+            contentLabel.overflow = expanded ? Overflow.RESIZE_HEIGHT : Overflow.CLAMP;
+            contentLabel.node.setPosition(getTemplateChildX('NoticeArticleContent', -10), height / 2 - getTemplateTopEdgeOffset('NoticeArticleContent', 82) - textHeight / 2, 0);
             applySimKaiFont(contentLabel);
+        }
+
+        let toggle = article.getChildByName('NoticeArticleToggle');
+        if (!toggle) {
+            toggle = this.createSkinnedNode('NoticeArticleToggle', article, 76, 76, getTemplateChildX('NoticeArticleToggle', 264), height / 2 - getTemplateCenterTopOffset('NoticeArticleToggle', 35), HomeConfig.UI_NOTICE_DROPDOWN_BTN);
+        }
+        if (toggle) {
+            this.applyUiSkin(toggle, HomeConfig.UI_NOTICE_DROPDOWN_BTN, 76, 76);
+            toggle.active = true;
+            toggle.setPosition(getTemplateChildX('NoticeArticleToggle', 264), height / 2 - getTemplateCenterTopOffset('NoticeArticleToggle', 35), 0);
+            toggle.setRotationFromEuler(0, 0, expanded ? 180 : 0);
+            toggle.setSiblingIndex(5);
+            this.bindScaledClick(toggle, () => this.toggleNoticeArticle(notice.id));
         }
 
         article.setSiblingIndex(index + 1);
@@ -323,13 +376,22 @@ export abstract class HomeFeatureNotice extends HomeViewBase {
 
     protected calculateNoticeArticleHeight(notice: NoticeData): number {
         const templateText = this.noticeArticleTemplate?.getChildByName('NoticeArticleContent');
-        const textTransform = templateText?.getComponent(UITransform);
         const textLabel = templateText?.getComponent(Label);
-        const textWidth = textTransform?.contentSize.width || 520;
+        const textWidth = 510;
         const fontSize = textLabel?.fontSize || 24;
-        const lineHeight = textLabel?.lineHeight || 34;
+        const lineHeight = 30;
+        if (!(this.noticeExpanded && this.selectedNoticeId === notice.id)) {
+            return 120;
+        }
         const textHeight = this.estimateNoticeTextHeight(notice.content, textWidth, fontSize, lineHeight);
-        return Math.max(224, 112 + textHeight);
+        return Math.max(174, 112 + textHeight);
+    }
+
+    protected toggleNoticeArticle(noticeId: string): void {
+        const expanding = this.selectedNoticeId !== noticeId || !this.noticeExpanded;
+        this.selectedNoticeId = noticeId;
+        this.noticeExpanded = expanding;
+        this.refreshNoticePanel();
     }
 
     protected estimateNoticeTextHeight(text: string, width: number, fontSize: number, lineHeight: number): number {
