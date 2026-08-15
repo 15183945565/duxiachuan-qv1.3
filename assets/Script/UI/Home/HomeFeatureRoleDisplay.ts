@@ -80,28 +80,12 @@ export abstract class HomeFeatureRoleDisplay extends HomeViewBase {
         });
     }
     protected refreshRolePageEquipmentInlineAttrs(): void {
-        const showInlineAttrs = !!this.rolePagePanel?.active && this.rolePageActiveTab === 'equipment';
         if (this.rolePagePowerDetailButton?.isValid) {
-            this.rolePagePowerDetailButton.active = !showInlineAttrs;
+            this.rolePagePowerDetailButton.active = !!this.rolePagePanel?.active;
         }
         if (!this.rolePageEquipmentInlineAttrRoot?.isValid) return;
 
-        this.rolePageEquipmentInlineAttrRoot.active = showInlineAttrs;
-        if (!showInlineAttrs) return;
-
-        const attrs = this.getRoleTotalAttrs();
-        const values = [
-            `${this.getRoleCurrentLevel()}`,
-            `${attrs.life}`,
-            `${attrs.attack}`,
-            `${attrs.defense}`,
-        ];
-        values.forEach((value, index) => {
-            const label = this.rolePageEquipmentInlineAttrRoot
-                ?.getChildByName(`RolePageEquipmentInlineAttrValue_${index}`)
-                ?.getComponent(Label);
-            if (label) label.string = value;
-        });
+        this.rolePageEquipmentInlineAttrRoot.active = false;
     }
     protected getRolePowerDigitWidth(digit: string): number {
         return digit === '1' ? 14 : digit === '2' || digit === '4' ? 21 : digit === '3' || digit === '6' || digit === '7' ? 19 : 20;

@@ -236,7 +236,7 @@ export abstract class HomeFeatureProfileShell extends HomeViewBase {
         skin('ProfileAvatarFrame', HomeConfig.UI_HOME_PROFILE_FRAME, 104, 104);
         skin('ProfileAvatarIcon', this.getHomeAvatarSkin(), 92, 92);
         this.hideProfileNameBar(board);
-        skin('ProfileEditButton', HomeConfig.UI_PROFILE_BTN_EDIT, 32, 32);
+        skin('ProfileEditButton', HomeConfig.UI_PROFILE_BTN_EDIT, 34, 34);
         skin('ProfileCopyButton', HomeConfig.UI_PROFILE_BTN_COPY, 34, 34);
 
         [
@@ -247,7 +247,7 @@ export abstract class HomeFeatureProfileShell extends HomeViewBase {
             { name: 'ProfileBillButton', path: HomeConfig.UI_PROFILE_BTN_BILL },
             { name: 'ProfileStreamerButton', path: HomeConfig.UI_PROFILE_BTN_STREAMER },
         ].forEach((item) => {
-            skin(item.name, item.path, 82, 82);
+            skin(item.name, item.path, 92, 93);
         });
 
         if (root !== board) {
@@ -277,16 +277,16 @@ export abstract class HomeFeatureProfileShell extends HomeViewBase {
         const nameBarSprite = nameBar.getComponent(Sprite);
         if (nameBarSprite) nameBarSprite.enabled = false;
         nameBar.setSiblingIndex(0);
-        this.profilePopupNameLabel = this.createLabel(header, 'ProfileNameLabel', this.getProfileNicknameText(), 25, -84, 64, 220, 44, Color.WHITE);
+        this.profilePopupNameLabel = this.createLabel(header, 'ProfileNameLabel', this.getProfileNicknameText(), 25, -86.2, 60.16, 210.786, 44, Color.WHITE);
         this.applyProfileNicknameLabelStyle(this.profilePopupNameLabel);
 
-        const editButton = this.createSkinnedNode('ProfileEditButton', header, 32, 32, 118, 36, HomeConfig.UI_PROFILE_BTN_EDIT);
+        const editButton = this.createSkinnedNode('ProfileEditButton', header, 34, 34, 13.547, 60.16, HomeConfig.UI_PROFILE_BTN_EDIT);
         this.bindScaledClick(editButton, () => this.showToast('\u6539\u540d\u529f\u80fd\u9884\u7559'));
 
-        this.profilePopupUidLabel = this.createLabel(header, 'ProfileUidLabel', `UID: ${HomeConfig.DEFAULT_UID}`, 25, -26, -10, 260, 36, Color.WHITE);
+        this.profilePopupUidLabel = this.createLabel(header, 'ProfileUidLabel', `UID: ${HomeConfig.DEFAULT_UID}`, 25, 249.518, 60.16, 209.078, 45.58, Color.WHITE);
         this.applyProfileTextOutline(this.profilePopupUidLabel, 2);
 
-        const copyButton = this.createSkinnedNode('ProfileCopyButton', header, 34, 34, 118, -12, HomeConfig.UI_PROFILE_BTN_COPY);
+        const copyButton = this.createSkinnedNode('ProfileCopyButton', header, 34, 34, 374.203, 60.16, HomeConfig.UI_PROFILE_BTN_COPY);
         this.bindScaledClick(copyButton, () => this.copyProfileUid());
         this.ensureProfileAvatarFrameButton(board);
     }
@@ -322,18 +322,18 @@ export abstract class HomeFeatureProfileShell extends HomeViewBase {
     }
     protected buildProfileActionButtons(board: Node): void {
         const actions = [
-            { name: 'ProfileCustomerButton', icon: HomeConfig.UI_PROFILE_BTN_CUSTOMER, x: -235, y: -72, message: '' },
-            { name: 'ProfileFriendButton', icon: HomeConfig.UI_PROFILE_BTN_FRIEND, x: -85, y: -72, message: '\u9053\u53cb\u529f\u80fd\u9884\u7559' },
-            { name: 'ProfileSettingsButton', icon: HomeConfig.UI_PROFILE_BTN_SETTINGS, x: 65, y: -72, message: '\u8bbe\u7f6e\u529f\u80fd\u9884\u7559' },
-            { name: 'ProfileRealNameButton', icon: HomeConfig.UI_PROFILE_BTN_REALNAME, x: 215, y: -72, message: '\u5b9e\u540d\u529f\u80fd\u9884\u7559' },
-            { name: 'ProfileBillButton', icon: HomeConfig.UI_PROFILE_BTN_BILL, x: -235, y: -168, message: '\u8d26\u5355\u529f\u80fd\u9884\u7559' },
-            { name: 'ProfileStreamerButton', icon: HomeConfig.UI_PROFILE_BTN_STREAMER, x: -85, y: -168, message: '\u4e3b\u64ad\u529f\u80fd\u9884\u7559' },
+            { name: 'ProfileCustomerButton', icon: HomeConfig.UI_PROFILE_BTN_CUSTOMER, x: 0, y: 21.921, message: '' },
+            { name: 'ProfileRealNameButton', icon: HomeConfig.UI_PROFILE_BTN_REALNAME, x: 100.134, y: 21.921, message: '\u5b9e\u540d\u529f\u80fd\u9884\u7559' },
+            { name: 'ProfileFriendButton', icon: HomeConfig.UI_PROFILE_BTN_FRIEND, x: 200.267, y: 21.921, message: '\u9053\u53cb\u529f\u80fd\u9884\u7559' },
+            { name: 'ProfileSettingsButton', icon: HomeConfig.UI_PROFILE_BTN_SETTINGS, x: 3.609, y: -76, message: '\u8bbe\u7f6e\u529f\u80fd\u9884\u7559' },
+            { name: 'ProfileStreamerButton', icon: HomeConfig.UI_PROFILE_BTN_STREAMER, x: 101.589, y: -76, message: '\u4e3b\u64ad\u529f\u80fd\u9884\u7559' },
+            { name: 'ProfileBillButton', icon: HomeConfig.UI_PROFILE_BTN_BILL, x: 199.569, y: -76, message: '\u8d26\u5355\u529f\u80fd\u9884\u7559' },
         ];
 
         actions.forEach((action) => {
             const slot = this.createNode(`${action.name}Slot`, board, 92, 92, action.x, action.y);
             slot.setSiblingIndex(3);
-            const button = this.createSkinnedNode(action.name, slot, 82, 82, 0, 0, action.icon);
+            const button = this.createSkinnedNode(action.name, slot, 92, 93, 0, 0, action.icon);
             button.setSiblingIndex(0);
             this.bindScaledClick(button, () => {
                 if (action.name === 'ProfileCustomerButton') {
@@ -360,6 +360,7 @@ export abstract class HomeFeatureProfileShell extends HomeViewBase {
         if (this.profilePopupNameLabel?.isValid) {
             this.profilePopupNameLabel.string = this.getProfileNicknameText();
             this.applyProfileNicknameLabelStyle(this.profilePopupNameLabel);
+            this.syncProfileEditButtonPosition();
         }
         if (this.profilePopupUidLabel?.isValid) {
             this.profilePopupUidLabel.string = `UID: ${HomeConfig.DEFAULT_UID}`;
@@ -386,8 +387,10 @@ export abstract class HomeFeatureProfileShell extends HomeViewBase {
     protected applyProfileNicknameLabelStyle(label: Label): void {
         const node = label.node;
         node.active = true;
-        node.setPosition(-84, 64, 0);
-        (node.getComponent(UITransform) || node.addComponent(UITransform)).setContentSize(220, 44);
+        const transform = node.getComponent(UITransform) || node.addComponent(UITransform);
+        if (transform.contentSize.width <= 1 || transform.contentSize.height <= 1) {
+            transform.setContentSize(210.786, 44);
+        }
         label.string = this.getProfileNicknameText();
         label.fontSize = 25;
         label.lineHeight = 33;
@@ -398,6 +401,56 @@ export abstract class HomeFeatureProfileShell extends HomeViewBase {
         label.enableWrapText = false;
         applySimKaiFont(label);
         this.applyProfileTextOutline(label, 2);
+    }
+    protected syncProfileEditButtonPosition(): void {
+        const label = this.profilePopupNameLabel;
+        if (!label?.isValid) return;
+        const labelNode = label.node;
+        const header = labelNode.parent;
+        if (!header?.isValid) return;
+        const editButton = header.getChildByName('ProfileEditButton');
+        if (!editButton?.isValid) return;
+
+        const labelTransform = labelNode.getComponent(UITransform);
+        const buttonTransform = editButton.getComponent(UITransform);
+        if (!labelTransform || !buttonTransform) return;
+
+        const labelPos = labelNode.position;
+        const labelWidth = labelTransform.contentSize.width;
+        const labelLeft = labelPos.x - labelWidth * labelTransform.anchorPoint.x;
+        const labelRight = labelLeft + labelWidth;
+        const visibleTextWidth = Math.min(labelWidth, this.estimateProfileNicknameTextWidth(label.string, label.fontSize));
+        let textRight = labelRight;
+        if (label.horizontalAlign === HorizontalTextAlignment.LEFT) {
+            textRight = labelLeft + visibleTextWidth;
+        } else if (label.horizontalAlign === HorizontalTextAlignment.CENTER) {
+            textRight = labelLeft + (labelWidth + visibleTextWidth) / 2;
+        }
+
+        const gap = 8;
+        const buttonHalfWidth = buttonTransform.contentSize.width / 2;
+        let nextX = textRight + gap + buttonHalfWidth;
+        const uidLabel = header.getChildByName('ProfileUidLabel');
+        const uidTransform = uidLabel?.getComponent(UITransform);
+        if (uidLabel?.isValid && uidTransform) {
+            const uidLeft = uidLabel.position.x - uidTransform.contentSize.width * uidTransform.anchorPoint.x;
+            nextX = Math.min(nextX, uidLeft - gap - buttonHalfWidth);
+        }
+        editButton.setPosition(nextX, editButton.position.y, editButton.position.z);
+    }
+    protected estimateProfileNicknameTextWidth(text: string, fontSize: number): number {
+        let units = 0;
+        for (const char of text) {
+            const code = char.charCodeAt(0);
+            if (code <= 0x20) {
+                units += 0.35;
+            } else if (code < 0x7f) {
+                units += /[A-Z0-9]/.test(char) ? 0.62 : 0.55;
+            } else {
+                units += 1;
+            }
+        }
+        return units * fontSize;
     }
     protected copyProfileUid(): void {
         const clipboard = (globalThis as unknown as { navigator?: { clipboard?: { writeText?: (text: string) => Promise<void> } } }).navigator?.clipboard;

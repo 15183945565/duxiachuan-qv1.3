@@ -528,9 +528,10 @@ export abstract class HomeFeatureMarketSell extends HomeFeatureMarketSellHost {
         board.setSiblingIndex(1);
         (board.getComponent(UITransform) || board.addComponent(UITransform)).setContentSize(HomeConfig.SHARED_CONFIRM_BOARD_WIDTH, HomeConfig.SHARED_CONFIRM_BOARD_HEIGHT);
         const titleSkin = this.getOrCreateEditorNode('MarketSellConfirmTitleSkin', board, HomeConfig.SHARED_CONFIRM_TITLE_WIDTH, HomeConfig.SHARED_CONFIRM_TITLE_HEIGHT, 0, HomeConfig.SHARED_CONFIRM_TITLE_Y);
-        titleSkin.active = false;
+        titleSkin.active = true;
         titleSkin.setPosition(0, HomeConfig.SHARED_CONFIRM_TITLE_Y, 0);
         (titleSkin.getComponent(UITransform) || titleSkin.addComponent(UITransform)).setContentSize(HomeConfig.SHARED_CONFIRM_TITLE_WIDTH, HomeConfig.SHARED_CONFIRM_TITLE_HEIGHT);
+        this.applyUiSkinKeepingEditorSize(titleSkin, HomeConfig.UI_CONFIRM_TITLE_BG, HomeConfig.SHARED_CONFIRM_TITLE_WIDTH, HomeConfig.SHARED_CONFIRM_TITLE_HEIGHT);
         titleSkin.setSiblingIndex(1);
         const title = this.getOrCreateEditorLabel(board, 'MarketSellConfirmTitle', this.getCatalogDisplayName(item), HomeConfig.SHARED_CONFIRM_TITLE_FONT_SIZE, 0, HomeConfig.SHARED_CONFIRM_TITLE_Y, HomeConfig.SHARED_CONFIRM_TITLE_LABEL_WIDTH, HomeConfig.SHARED_CONFIRM_TITLE_LABEL_HEIGHT, new Color(126, 74, 36, 255));
         title.node.active = true;

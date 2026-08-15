@@ -11,6 +11,8 @@ import {
 import * as HomeConfig from './HomeConfig';
 import { HomeViewBase } from './HomeViewBase';
 
+type BattleMonsterHurtRuntimeNode = Node & { __battleMonsterHurtSequenceId?: number };
+
 /**
  * Owns Battle combat scene setup, waves, attacks and floating damage numbers.
  */
@@ -481,7 +483,6 @@ export abstract class HomeFeatureBattleCombat extends HomeViewBase {
         if (!this.battleCombatLayer?.active || this.battleWaveEnding) return;
     
         const wave = this.battleCurrentWave;
-        const hurtSequenceId = ++this.battleMonsterHurtSequenceId;
         const activeTargets: Array<{ skeleton: sp.Skeleton; node: Node; index: number }> = [];
     
         this.battleMonsterSkeletons.forEach((skeleton, index) => {
@@ -495,15 +496,19 @@ export abstract class HomeFeatureBattleCombat extends HomeViewBase {
         }
 
         activeTargets.forEach(({ skeleton, node: monsterNode, index }) => {
+            const runtimeNode = monsterNode as BattleMonsterHurtRuntimeNode;
+            const hurtSequenceId = (runtimeNode.__battleMonsterHurtSequenceId || 0) + 1;
+            runtimeNode.__battleMonsterHurtSequenceId = hurtSequenceId;
+            const hurtDuration = isSkill ? 0.24 : 0.18;
     
             this.playBattleMonsterAnimation(skeleton, HomeConfig.BATTLE_MONSTER_HURT_ANIMATIONS, false, isSkill ? 0.52 : 0.36);
             this.spawnBattleDamageNumber(monsterNode, index);
             this.scheduleOnce(() => {
-                if (hurtSequenceId !== this.battleMonsterHurtSequenceId) return;
+                if (runtimeNode.__battleMonsterHurtSequenceId !== hurtSequenceId) return;
                 if (!this.battleCombatLayer?.active || wave !== this.battleCurrentWave || this.battleWaveEnding) return;
                 if (!skeleton.isValid || !skeleton.skeletonData || !monsterNode.isValid || !monsterNode.active) return;
                 this.playSkeletonAnimation(skeleton, HomeConfig.BATTLE_MONSTER_IDLE_ANIMATIONS, true);
-            }, (isSkill ? 0.52 : 0.36) + index * 0.025);
+            }, hurtDuration + index * 0.025);
         });
     }
     protected playBattleMonsterHitEffect(): void {

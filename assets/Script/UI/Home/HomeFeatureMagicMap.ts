@@ -710,9 +710,10 @@ export abstract class HomeFeatureMagicMap extends HomeFeatureMagicMapHost {
         const titleSkin = this.findNode('ConfirmPopupTitleSkin', popup);
         if (titleSkin?.isValid) {
             if (titleSkin.parent !== board) titleSkin.setParent(board);
-            titleSkin.active = false;
+            titleSkin.active = true;
             titleSkin.setPosition(0, HomeConfig.SHARED_CONFIRM_TITLE_Y, 0);
             (titleSkin.getComponent(UITransform) || titleSkin.addComponent(UITransform)).setContentSize(HomeConfig.SHARED_CONFIRM_TITLE_WIDTH, HomeConfig.SHARED_CONFIRM_TITLE_HEIGHT);
+            this.applyUiSkinKeepingEditorSize(titleSkin, HomeConfig.UI_CONFIRM_TITLE_BG, HomeConfig.SHARED_CONFIRM_TITLE_WIDTH, HomeConfig.SHARED_CONFIRM_TITLE_HEIGHT);
             titleSkin.setSiblingIndex(1);
         }
         const messageBg = this.findNode('ConfirmMessageBg', popup);

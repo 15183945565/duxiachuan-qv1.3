@@ -1,4 +1,4 @@
-import { PROFILE_UI_ROOT, VIEW_HEIGHT, VIEW_WIDTH } from './HomeBaseConfig';
+import { DEFAULT_UID, PROFILE_UI_ROOT, VIEW_HEIGHT, VIEW_WIDTH } from './HomeBaseConfig';
 
 export const UI_PROFILE_POPUP_BG = `${PROFILE_UI_ROOT}/profile_popup_bg`;
 export const UI_PROFILE_BTN_CUSTOMER = `${PROFILE_UI_ROOT}/profile_btn_customer`;
@@ -17,12 +17,40 @@ export const UI_PROFILE_DAOYOU_TITLE_BG = `${PROFILE_DAOYOU_UI_ROOT}/profile_dao
 export const UI_PROFILE_DAOYOU_TAB_ACTIVE = `${PROFILE_DAOYOU_UI_ROOT}/profile_daoyou_tab_active`;
 export const UI_PROFILE_DAOYOU_TAB_INACTIVE = `${PROFILE_DAOYOU_UI_ROOT}/profile_daoyou_tab_inactive`;
 export const UI_PROFILE_DAOYOU_ROW_BG = `${PROFILE_DAOYOU_UI_ROOT}/profile_daoyou_row_bg`;
+export const UI_PROFILE_DAOYOU_MY_CHIEF_BUTTON = `${PROFILE_DAOYOU_UI_ROOT}/profile_daoyou_my_chief`;
+export const UI_PROFILE_DAOYOU_CHIEF_INPUT_BG = `${PROFILE_DAOYOU_UI_ROOT}/profile_daoyou_chief_input_bg`;
+export const UI_PROFILE_DAOYOU_CHIEF_CLOSE = `${PROFILE_DAOYOU_UI_ROOT}/profile_daoyou_chief_close`;
+export const UI_PROFILE_DAOYOU_CHIEF_BUTTON_BG = `${PROFILE_DAOYOU_UI_ROOT}/profile_daoyou_chief_button_bg`;
 export const PROFILE_DAOYOU_BOARD_WIDTH = 701;
 export const PROFILE_DAOYOU_BOARD_HEIGHT = 835;
 export const PROFILE_DAOYOU_SCROLL_WIDTH = VIEW_WIDTH;
 export const PROFILE_DAOYOU_SCROLL_HEIGHT = PROFILE_DAOYOU_BOARD_HEIGHT;
 export const PROFILE_DAOYOU_ROW_WIDTH = 609;
 export const PROFILE_DAOYOU_ROW_HEIGHT = 113;
+export const PROFILE_DAOYOU_MY_CHIEF_BUTTON_WIDTH = 75;
+export const PROFILE_DAOYOU_MY_CHIEF_BUTTON_HEIGHT = 76;
+export const PROFILE_DAOYOU_MY_CHIEF_BUTTON_X = 286;
+export const PROFILE_DAOYOU_MY_CHIEF_BUTTON_Y = 632;
+export const PROFILE_DAOYOU_MY_CHIEF_STORAGE_KEY = 'duxiachuan.profile.daoyou.myChief.v1';
+export const PROFILE_DAOYOU_MY_CHIEF_DEFAULT = {
+    uid: DEFAULT_UID,
+    name: '\u5192\u65e0\u5c18',
+    level: 20,
+} as const;
+export const PROFILE_DAOYOU_MY_CHIEF_POPUP_WIDTH = 640;
+export const PROFILE_DAOYOU_MY_CHIEF_POPUP_HEIGHT = 442;
+export const PROFILE_DAOYOU_MY_CHIEF_POPUP_Y = 20;
+export const PROFILE_DAOYOU_MY_CHIEF_TITLE_Y = 162;
+export const PROFILE_DAOYOU_MY_CHIEF_CLOSE_X = 285;
+export const PROFILE_DAOYOU_MY_CHIEF_CLOSE_Y = 172;
+export const PROFILE_DAOYOU_MY_CHIEF_SEARCH_Y = 70;
+export const PROFILE_DAOYOU_MY_CHIEF_INPUT_WIDTH = 330;
+export const PROFILE_DAOYOU_MY_CHIEF_INPUT_HEIGHT = 46;
+export const PROFILE_DAOYOU_MY_CHIEF_INPUT_X = -84;
+export const PROFILE_DAOYOU_MY_CHIEF_SEARCH_BUTTON_X = 188;
+export const PROFILE_DAOYOU_MY_CHIEF_RESULT_Y = -14;
+export const PROFILE_DAOYOU_MY_CHIEF_PROMPT_Y = -78;
+export const PROFILE_DAOYOU_MY_CHIEF_CONFIRM_BUTTON_Y = -150;
 export const PROFILE_DAOYOU_TABS = [
     { id: 'chief', label: '\u9996\u5e2d\u9053\u53cb', countPrefix: '\u9996\u5e2d\u9053\u53cb\u5171' },
     { id: 'generation', label: '\u4e00\u4ee3\u9053\u53cb', countPrefix: '\u4e00\u4ee3\u9053\u53cb\u5171' },

@@ -164,7 +164,7 @@ export abstract class HomeFeatureRoleEquipment extends HomeFeatureRoleEquipmentH
         );
         const root = rootInfo.node;
         this.rolePageEquipmentInlineAttrRoot = root;
-        root.active = this.rolePageActiveTab === 'equipment';
+        root.active = false;
         if (!rootInfo.existed) {
             root.setPosition(HomeConfig.ROLE_PAGE_EQUIPMENT_INLINE_ATTR_X, HomeConfig.ROLE_PAGE_EQUIPMENT_INLINE_ATTR_Y, 0);
         }

@@ -143,15 +143,16 @@ export abstract class HomeFeatureBattleChallenge extends HomeFeatureBattleChalle
             HomeConfig.UI_CONFIRM_POPUP_BG,
         ).node.setSiblingIndex(0);
 
-        const titleSkin = this.getOrCreateBattleNode(
+        const titleSkin = this.getOrCreateBattleSkinnedNode(
             board,
             'BattleTargetChallengeTitleSkin',
             HomeConfig.SHARED_CONFIRM_TITLE_WIDTH,
             HomeConfig.SHARED_CONFIRM_TITLE_HEIGHT,
             0,
             HomeConfig.SHARED_CONFIRM_TITLE_Y,
+            HomeConfig.UI_CONFIRM_TITLE_BG,
         ).node;
-        titleSkin.active = false;
+        titleSkin.active = true;
         titleSkin.setSiblingIndex(1);
 
         const title = this.getOrCreateBattleLabel(

@@ -129,7 +129,7 @@ export abstract class HomeFeatureMagicBattle extends HomeFeatureMagicBattleHost 
             this.ensureMagicBattleHitEffect();
             this.refreshMagicBattleHp();
     
-            this.magicBattleAttackTimer = HomeConfig.MAGIC_BATTLE_ATTACK_START_DELAY;
+            this.magicBattleAttackTimer = this.getMagicBattleInitialAttackCycleDelay();
             this.magicBattleResultTimer = this.isMagicBattleRoomPreviewEnabled()
                 ? HomeConfig.MAGIC_BATTLE_ROOM_PREVIEW_RESULT_DELAY
                 : HomeConfig.MAGIC_MONSTER_BATTLE_RESULT_DELAY;
@@ -331,6 +331,28 @@ export abstract class HomeFeatureMagicBattle extends HomeFeatureMagicBattleHost 
         }
         this.raiseMagicBattleActorLayers();
     }
+    protected getMagicBattleEffectiveHitDelay(gender: RoleGender, hitIndex: number): number {
+        const timeline = HomeConfig.MAGIC_BATTLE_ATTACK_TIMELINES[gender];
+        const hitTimes = HomeConfig.BATTLE_ROLE_NORMAL_ATTACK_HIT_TIMES[gender];
+        const frameRate = HomeConfig.BATTLE_ROLE_ATTACK_FRAME_RATE;
+        const timeScale = Math.max(HomeConfig.MAGIC_BATTLE_ROLE_ATTACK_TIME_SCALE, 0.01);
+        const hitTime = hitTimes[hitIndex] ?? hitTimes[0] ?? 0;
+        const arrivalTime = timeline.moveEndFrame / frameRate;
+        return Math.max(hitTime, arrivalTime) / timeScale;
+    }
+    protected getMagicBattleEffectiveFirstHitDelay(gender: RoleGender): number {
+        return this.getMagicBattleEffectiveHitDelay(gender, 0);
+    }
+    protected getMagicBattleCycleHitDelay(): number {
+        const genders: RoleGender[] = ['male', 'female'];
+        return Math.max(...genders.map((gender) => this.getMagicBattleEffectiveFirstHitDelay(gender)));
+    }
+    protected getMagicBattleActorAttackStartDelay(gender: RoleGender): number {
+        return Math.max(0, this.getMagicBattleCycleHitDelay() - this.getMagicBattleEffectiveFirstHitDelay(gender));
+    }
+    protected getMagicBattleInitialAttackCycleDelay(): number {
+        return Math.max(0.05, HomeConfig.MAGIC_BATTLE_ATTACK_START_DELAY - this.getMagicBattleCycleHitDelay());
+    }
     protected startMagicBattleAttackCycle(): void {
         if (this.magicBattleEnemyHp <= 0) {
             this.magicBattleAttackTimer = HomeConfig.MAGIC_MONSTER_BATTLE_ATTACK_GAP;
@@ -346,28 +368,34 @@ export abstract class HomeFeatureMagicBattle extends HomeFeatureMagicBattleHost 
         const sequenceId = ++this.magicBattleAttackSequenceId;
         const timeline = HomeConfig.MAGIC_BATTLE_ATTACK_TIMELINES[this.profile.gender];
         const frameRate = HomeConfig.BATTLE_ROLE_ATTACK_FRAME_RATE;
+        const timeScale = Math.max(HomeConfig.MAGIC_BATTLE_ROLE_ATTACK_TIME_SCALE, 0.01);
         const homePosition = this.getMagicBattlePlayerSlotPosition(HomeConfig.MAGIC_BATTLE_LOCAL_PLAYER_SLOT_INDEX);
         const attackPosition = this.getMagicBattleRoleAttackPosition(homePosition);
+        const attackStartDelay = this.getMagicBattleActorAttackStartDelay(this.profile.gender);
         roleAnchor.setPosition(homePosition);
         Tween.stopAllByTarget(roleAnchor);
         this.raiseMagicBattleActorLayers();
-        this.playMagicBattleOneShot(
-            this.magicBattleRoleSkeleton,
-            HomeConfig.BATTLE_ROLE_NORMAL_ATTACK_ANIMATIONS[this.profile.gender],
-            HomeConfig.IDLE_ANIMATIONS,
-            HomeConfig.BATTLE_ROLE_ATTACK_TIME_SCALE,
-        );
-        this.scheduleMagicBattleRoleMove(sequenceId, roleAnchor, attackPosition, timeline.moveStartFrame, timeline.moveEndFrame);
-        this.scheduleMagicBattleRoleMove(sequenceId, roleAnchor, homePosition, timeline.returnStartFrame, timeline.returnEndFrame);
+        this.scheduleOnce(() => {
+            if (!this.isMagicBattleAttackSequenceValid(sequenceId) || !roleAnchor.isValid) return;
+            this.playMagicBattleOneShot(
+                this.magicBattleRoleSkeleton,
+                HomeConfig.BATTLE_ROLE_NORMAL_ATTACK_ANIMATIONS[this.profile.gender],
+                HomeConfig.IDLE_ANIMATIONS,
+                timeScale,
+            );
+        }, attackStartDelay);
+        this.scheduleMagicBattleRoleMove(sequenceId, roleAnchor, attackPosition, timeline.moveStartFrame, timeline.moveEndFrame, attackStartDelay, timeScale);
+        this.scheduleMagicBattleRoleMove(sequenceId, roleAnchor, homePosition, timeline.returnStartFrame, timeline.returnEndFrame, attackStartDelay, timeScale);
         this.startMagicBattleRoomPreviewAttackCycle(sequenceId);
 
-        const minimumHitTime = timeline.moveEndFrame / frameRate;
         const hitTimes = HomeConfig.BATTLE_ROLE_NORMAL_ATTACK_HIT_TIMES[this.profile.gender];
-        hitTimes.forEach((hitTime, index) => {
+        const hitCount = Math.max(1, hitTimes.length);
+        for (let hitIndex = 0; hitIndex < hitCount; hitIndex += 1) {
+            if (hitIndex > 0) continue;
             this.scheduleOnce(() => {
-                this.playMagicBattleAttackHit(sequenceId, index, hitTimes.length);
-            }, Math.max(minimumHitTime, hitTime / Math.max(HomeConfig.BATTLE_ROLE_ATTACK_TIME_SCALE, 0.01)));
-        });
+                this.playMagicBattleAttackHit(sequenceId);
+            }, attackStartDelay + this.getMagicBattleEffectiveHitDelay(this.profile.gender, hitIndex));
+        }
 
         this.scheduleOnce(() => {
             if (!this.isMagicBattleAttackSequenceValid(sequenceId) || !roleAnchor.isValid) return;
@@ -376,30 +404,25 @@ export abstract class HomeFeatureMagicBattle extends HomeFeatureMagicBattleHost 
             if (this.magicBattleRoleSkeleton?.isValid && this.magicBattleRoleSkeleton.skeletonData) {
                 this.playSkeletonAnimation(this.magicBattleRoleSkeleton, HomeConfig.IDLE_ANIMATIONS, true);
             }
-        }, Math.max(0, timeline.endFrame / frameRate));
+        }, Math.max(0, attackStartDelay + timeline.endFrame / frameRate / timeScale));
 
-        const previewDelay = this.isMagicBattleRoomPreviewEnabled()
-            ? HomeConfig.MAGIC_BATTLE_ROOM_PREVIEW_ATTACK_DELAY_MAX
-            : 0;
         this.magicBattleAttackTimer = Math.max(
             0.1,
-            timeline.endFrame / frameRate + previewDelay + HomeConfig.MAGIC_MONSTER_BATTLE_ATTACK_GAP,
+            HomeConfig.MAGIC_BATTLE_ATTACK_INTERVAL,
         );
     }
     protected startMagicBattleRoomPreviewAttackCycle(sequenceId: number): void {
         if (!this.magicBattleRoomPreviewActors.length) return;
         this.magicBattleRoomPreviewActors.forEach((actor) => {
-            const { anchor, skeleton, homePosition, gender, attackPhase } = actor;
+            const { anchor, skeleton, homePosition, gender } = actor;
             if (!anchor?.isValid || !skeleton?.isValid || !skeleton.skeletonData) return;
             if (Math.random() > HomeConfig.MAGIC_BATTLE_ROOM_PREVIEW_ATTACK_RATE) return;
 
             const timeline = HomeConfig.MAGIC_BATTLE_ATTACK_TIMELINES[gender];
             const frameRate = HomeConfig.BATTLE_ROLE_ATTACK_FRAME_RATE;
+            const timeScale = Math.max(HomeConfig.MAGIC_BATTLE_ROLE_ATTACK_TIME_SCALE, 0.01);
             const attackPosition = this.getMagicBattleRoleAttackPosition(homePosition);
-            const delay = Math.max(
-                0,
-                attackPhase + (Math.random() * 2 - 1) * HomeConfig.MAGIC_BATTLE_ROOM_PREVIEW_ATTACK_PHASE_JITTER,
-            );
+            const delay = this.getMagicBattleActorAttackStartDelay(gender);
             Tween.stopAllByTarget(anchor);
             anchor.setPosition(homePosition);
             this.scheduleOnce(() => {
@@ -408,17 +431,19 @@ export abstract class HomeFeatureMagicBattle extends HomeFeatureMagicBattleHost 
                     skeleton,
                     HomeConfig.BATTLE_ROLE_NORMAL_ATTACK_ANIMATIONS[gender],
                     HomeConfig.IDLE_ANIMATIONS,
-                    HomeConfig.BATTLE_ROLE_ATTACK_TIME_SCALE,
+                    timeScale,
                 );
             }, delay);
-            this.scheduleMagicBattleRoleMove(sequenceId, anchor, attackPosition, timeline.moveStartFrame, timeline.moveEndFrame, delay);
-            this.scheduleMagicBattleRoleMove(sequenceId, anchor, homePosition, timeline.returnStartFrame, timeline.returnEndFrame, delay);
-            const minimumHitTime = timeline.moveEndFrame / frameRate;
+            this.scheduleMagicBattleRoleMove(sequenceId, anchor, attackPosition, timeline.moveStartFrame, timeline.moveEndFrame, delay, timeScale);
+            this.scheduleMagicBattleRoleMove(sequenceId, anchor, homePosition, timeline.returnStartFrame, timeline.returnEndFrame, delay, timeScale);
             const hitTimes = HomeConfig.BATTLE_ROLE_NORMAL_ATTACK_HIT_TIMES[gender];
-            const hitTime = hitTimes[Math.floor(Math.random() * Math.max(1, hitTimes.length))] || minimumHitTime;
-            this.scheduleOnce(() => {
-                this.playMagicBattleRoomPreviewAttackHit(sequenceId);
-            }, delay + Math.max(minimumHitTime, hitTime / Math.max(HomeConfig.BATTLE_ROLE_ATTACK_TIME_SCALE, 0.01)));
+            const hitCount = Math.max(1, hitTimes.length);
+            for (let hitIndex = 0; hitIndex < hitCount; hitIndex += 1) {
+                if (hitIndex > 0) continue;
+                this.scheduleOnce(() => {
+                    this.playMagicBattleRoomPreviewAttackHit(sequenceId);
+                }, delay + this.getMagicBattleEffectiveHitDelay(gender, hitIndex));
+            }
             this.scheduleOnce(() => {
                 if (!this.isMagicBattleAttackSequenceValid(sequenceId) || !anchor.isValid) return;
                 Tween.stopAllByTarget(anchor);
@@ -426,7 +451,7 @@ export abstract class HomeFeatureMagicBattle extends HomeFeatureMagicBattleHost 
                 if (skeleton.isValid && skeleton.skeletonData) {
                     this.playSkeletonAnimation(skeleton, HomeConfig.IDLE_ANIMATIONS, true);
                 }
-            }, Math.max(0, timeline.endFrame / frameRate + delay));
+            }, Math.max(0, delay + timeline.endFrame / frameRate / timeScale));
         });
     }
     protected scheduleMagicBattleRoleMove(
@@ -436,10 +461,12 @@ export abstract class HomeFeatureMagicBattle extends HomeFeatureMagicBattleHost 
         startFrame: number,
         endFrame: number,
         extraDelay = 0,
+        timeScale = HomeConfig.MAGIC_BATTLE_ROLE_ATTACK_TIME_SCALE,
     ): void {
         const frameRate = HomeConfig.BATTLE_ROLE_ATTACK_FRAME_RATE;
-        const delay = Math.max(0, startFrame / frameRate + extraDelay);
-        const duration = Math.max(0, (endFrame - startFrame) / frameRate);
+        const speed = Math.max(timeScale, 0.01);
+        const delay = Math.max(0, startFrame / frameRate / speed + extraDelay);
+        const duration = Math.max(0, (endFrame - startFrame) / frameRate / speed);
         this.scheduleOnce(() => {
             if (!this.isMagicBattleAttackSequenceValid(sequenceId) || !roleAnchor.isValid) return;
             Tween.stopAllByTarget(roleAnchor);
@@ -466,17 +493,16 @@ export abstract class HomeFeatureMagicBattle extends HomeFeatureMagicBattleHost 
         this.magicBattleRoomPreviewHurtCooldown = Math.max(0, this.magicBattleRoomPreviewHurtCooldown - deltaTime);
         this.magicBattleRoomPreviewHitEffectCooldown = Math.max(0, this.magicBattleRoomPreviewHitEffectCooldown - deltaTime);
     }
-    protected playMagicBattleAttackHit(sequenceId: number, hitIndex: number, hitCount: number): void {
+    protected playMagicBattleAttackHit(sequenceId: number): void {
         if (!this.isMagicBattleAttackSequenceValid(sequenceId)) return;
         if (this.magicBattleEnemyHp <= 0) return;
 
         this.playBattleAttackSound();
         this.playMagicBattleMonsterHurt();
-        const totalDamage = this.getMagicBattleAttackCycleDamage();
-        const count = Math.max(1, hitCount);
-        const sliceStart = Math.floor((totalDamage * hitIndex) / count);
-        const sliceEnd = Math.floor((totalDamage * (hitIndex + 1)) / count);
-        const damage = Math.max(1, sliceEnd - sliceStart);
+        this.magicBattleRoomPreviewSoundCooldown = Math.max(this.magicBattleRoomPreviewSoundCooldown, HomeConfig.MAGIC_BATTLE_ROOM_PREVIEW_SOUND_COOLDOWN);
+        this.magicBattleRoomPreviewHurtCooldown = Math.max(this.magicBattleRoomPreviewHurtCooldown, HomeConfig.MAGIC_BATTLE_ROOM_PREVIEW_HURT_COOLDOWN);
+        this.magicBattleRoomPreviewHitEffectCooldown = Math.max(this.magicBattleRoomPreviewHitEffectCooldown, HomeConfig.MAGIC_BATTLE_ROOM_PREVIEW_HIT_EFFECT_COOLDOWN);
+        const damage = Math.max(1, this.getMagicBattleAttackCycleDamage());
         const appliedDamage = Math.min(this.magicBattleEnemyHp, damage);
         this.magicBattleEnemyHp = Math.max(0, this.magicBattleEnemyHp - appliedDamage);
         this.applyMagicBattlePlayerDamage(appliedDamage);

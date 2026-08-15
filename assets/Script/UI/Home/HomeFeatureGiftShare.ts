@@ -441,8 +441,7 @@ export abstract class HomeFeatureGiftShare extends HomeViewBase {
                 .to(0.14, { opacity: 0 })
                 .start();
             tween(icon)
-                .delay(flyDelay)
-                .to(duration, { scale: new Vec3(0.38, 0.38, 1) }, { easing: 'quadIn' })
+                .delay(flyDelay + duration)
                 .call(() => {
                     if (icon.isValid) icon.destroy();
                 })

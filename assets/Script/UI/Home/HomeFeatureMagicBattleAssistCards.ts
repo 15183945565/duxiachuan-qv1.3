@@ -260,15 +260,16 @@ export abstract class HomeFeatureMagicBattleAssistCards extends HomeViewBase {
         );
         this.ensureInputBlocker(board, HomeConfig.MAGIC_BATTLE_ASSIST_CONFIRM_POPUP_WIDTH, HomeConfig.MAGIC_BATTLE_ASSIST_CONFIRM_POPUP_HEIGHT);
 
-        const titleSkin = this.getOrCreateMagicMapAssistNode(
+        const titleSkin = this.getOrCreateMagicMapAssistSkin(
             board,
             'MagicMapAssistCardConfirmTitleSkin',
             HomeConfig.MAGIC_BATTLE_ASSIST_CONFIRM_TITLE_WIDTH,
             HomeConfig.MAGIC_BATTLE_ASSIST_CONFIRM_TITLE_HEIGHT,
             0,
             HomeConfig.MAGIC_BATTLE_ASSIST_CONFIRM_TITLE_Y,
+            HomeConfig.UI_CONFIRM_TITLE_BG,
         );
-        titleSkin.active = false;
+        titleSkin.active = true;
         const title = this.getOrCreateMagicMapAssistLabel(
             board,
             'MagicMapAssistCardConfirmTitle',

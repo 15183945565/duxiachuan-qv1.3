@@ -391,7 +391,9 @@ export const MAGIC_BATTLE_HIT_EFFECT_OFFSET = new Vec3(-45, 70, 0);
 export const MAGIC_BATTLE_HIT_EFFECT_WIDTH = 640;
 export const MAGIC_BATTLE_HIT_EFFECT_HEIGHT = 420;
 export const MAGIC_BATTLE_HIT_EFFECT_SCALE = 0.68;
-export const MAGIC_BATTLE_ATTACK_START_DELAY = 0.35;
+export const MAGIC_BATTLE_ATTACK_START_DELAY = 1;
+export const MAGIC_BATTLE_ATTACK_INTERVAL = 1;
+export const MAGIC_BATTLE_ROLE_ATTACK_TIME_SCALE = 1.45;
 export const MAGIC_BATTLE_ATTACK_TIMELINES: Record<RoleGender, {
     moveStartFrame: number;
     moveEndFrame: number;

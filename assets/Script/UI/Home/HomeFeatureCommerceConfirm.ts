@@ -165,7 +165,7 @@ export abstract class HomeFeatureCommerceConfirm extends HomeFeatureCommerceConf
         );
         board.setSiblingIndex(1);
 
-        const titleSkin = this.getOrCreateConfirmChild(
+        const titleSkin = this.getOrCreateConfirmSkin(
             board,
             popup,
             'ConfirmPopupTitleSkin',
@@ -173,8 +173,9 @@ export abstract class HomeFeatureCommerceConfirm extends HomeFeatureCommerceConf
             HomeConfig.SHARED_CONFIRM_TITLE_HEIGHT,
             0,
             HomeConfig.SHARED_CONFIRM_TITLE_Y,
+            HomeConfig.UI_CONFIRM_TITLE_BG,
         );
-        titleSkin.active = false;
+        titleSkin.active = true;
         titleSkin.setSiblingIndex(1);
 
         const title = this.getOrCreateConfirmLabel(

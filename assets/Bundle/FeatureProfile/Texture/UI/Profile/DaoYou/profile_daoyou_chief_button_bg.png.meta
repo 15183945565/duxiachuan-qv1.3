@@ -2,7 +2,7 @@
   "ver": "1.0.27",
   "importer": "image",
   "imported": true,
-  "uuid": "308a4817-a6c2-49c1-87ab-792f6a011732",
+  "uuid": "7b8575a8-dab3-4533-92d2-61fc4cad3254",
   "files": [
     ".json",
     ".png"
@@ -10,8 +10,8 @@
   "subMetas": {
     "6c48a": {
       "importer": "texture",
-      "uuid": "308a4817-a6c2-49c1-87ab-792f6a011732@6c48a",
-      "displayName": "profile_btn_friend",
+      "uuid": "7b8575a8-dab3-4533-92d2-61fc4cad3254@6c48a",
+      "displayName": "profile_daoyou_chief_button_bg",
       "id": "6c48a",
       "name": "texture",
       "userData": {
@@ -22,7 +22,7 @@
         "mipfilter": "none",
         "anisotropy": 0,
         "isUuid": true,
-        "imageUuidOrDatabaseUri": "308a4817-a6c2-49c1-87ab-792f6a011732",
+        "imageUuidOrDatabaseUri": "7b8575a8-dab3-4533-92d2-61fc4cad3254",
         "visible": false,
         "premultiplyAlpha": false
       },
@@ -35,22 +35,22 @@
     },
     "f9941": {
       "importer": "sprite-frame",
-      "uuid": "308a4817-a6c2-49c1-87ab-792f6a011732@f9941",
-      "displayName": "profile_btn_friend",
+      "uuid": "7b8575a8-dab3-4533-92d2-61fc4cad3254@f9941",
+      "displayName": "profile_daoyou_chief_button_bg",
       "id": "f9941",
       "name": "spriteFrame",
       "userData": {
-        "width": 75,
-        "height": 76,
-        "rawWidth": 75,
-        "rawHeight": 76,
+        "width": 162,
+        "height": 62,
+        "rawWidth": 162,
+        "rawHeight": 62,
         "trimType": "none",
         "trimThreshold": 1,
         "rotated": false,
         "offsetX": 0,
         "offsetY": 0,
         "isUuid": true,
-        "imageUuidOrDatabaseUri": "308a4817-a6c2-49c1-87ab-792f6a011732@6c48a",
+        "imageUuidOrDatabaseUri": "7b8575a8-dab3-4533-92d2-61fc4cad3254@6c48a",
         "packable": true,
         "pixelsToUnit": 100,
         "pivotX": 0.5,
@@ -64,17 +64,17 @@
         "meshType": 0,
         "vertices": {
           "rawPosition": [
-            -37.5,
-            -38,
+            -81,
+            -31,
             0,
-            37.5,
-            -38,
+            81,
+            -31,
             0,
-            -37.5,
-            38,
+            -81,
+            31,
             0,
-            37.5,
-            38,
+            81,
+            31,
             0
           ],
           "indexes": [
@@ -87,12 +87,12 @@
           ],
           "uv": [
             0,
-            76,
-            75,
-            76,
+            62,
+            162,
+            62,
             0,
             0,
-            75,
+            162,
             0
           ],
           "nuv": [
@@ -106,13 +106,13 @@
             1
           ],
           "minPos": [
-            -37.5,
-            -38,
+            -81,
+            -31,
             0
           ],
           "maxPos": [
-            37.5,
-            38,
+            81,
+            31,
             0
           ]
         },
@@ -128,8 +128,8 @@
   },
   "userData": {
     "type": "sprite-frame",
-    "redirect": "308a4817-a6c2-49c1-87ab-792f6a011732@6c48a",
-    "hasAlpha": true,
-    "fixAlphaTransparencyArtifacts": false
+    "redirect": "7b8575a8-dab3-4533-92d2-61fc4cad3254@6c48a",
+    "fixAlphaTransparencyArtifacts": false,
+    "hasAlpha": true
   }
 }
