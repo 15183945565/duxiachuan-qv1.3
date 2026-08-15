@@ -137,9 +137,9 @@ export abstract class HomeFeatureRoleDisplay extends HomeViewBase {
             outlineColor?: Color;
             outlineWidth?: number;
         };
-        outlinedLabel.enableOutline = true;
-        outlinedLabel.outlineColor = new Color(35, 22, 14, 255);
-        outlinedLabel.outlineWidth = outlineWidth;
+        outlinedLabel.enableOutline = outlineWidth > 0;
+        outlinedLabel.outlineColor = new Color(255, 242, 204, 255);
+        outlinedLabel.outlineWidth = outlineWidth > 0 ? Math.max(1, outlineWidth - 1) : 0;
     }
     protected applyBattleEntryTextStyle(label: Label, outlineWidth: number): void {
         label.lineHeight = label.fontSize + 8;

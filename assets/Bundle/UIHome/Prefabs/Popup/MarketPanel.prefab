@@ -463,7 +463,7 @@
     "_lpos": {
       "__type__": "cc.Vec3",
       "x": 0,
-      "y": 0,
+      "y": 5.368000000000001,
       "z": 0
     },
     "_lrot": {
@@ -503,8 +503,8 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 700,
-      "height": 1250
+      "width": 707.5,
+      "height": 1180.2680000000003
     },
     "_anchorPoint": {
       "__type__": "cc.Vec2",
@@ -844,7 +844,7 @@
     "_isUnderline": false,
     "_underlineHeight": 2,
     "_cacheMode": 0,
-    "_enableOutline": true,
+    "_enableOutline": false,
     "_outlineColor": {
       "__type__": "cc.Color",
       "r": 255,
@@ -852,7 +852,7 @@
       "b": 230,
       "a": 255
     },
-    "_outlineWidth": 1,
+    "_outlineWidth": 0,
     "_enableShadow": false,
     "_shadowColor": {
       "__type__": "cc.Color",
@@ -1143,7 +1143,7 @@
     "_isUnderline": false,
     "_underlineHeight": 2,
     "_cacheMode": 0,
-    "_enableOutline": true,
+    "_enableOutline": false,
     "_outlineColor": {
       "__type__": "cc.Color",
       "r": 255,
@@ -1151,7 +1151,7 @@
       "b": 230,
       "a": 255
     },
-    "_outlineWidth": 1,
+    "_outlineWidth": 0,
     "_enableShadow": false,
     "_shadowColor": {
       "__type__": "cc.Color",
@@ -1442,7 +1442,7 @@
     "_isUnderline": false,
     "_underlineHeight": 2,
     "_cacheMode": 0,
-    "_enableOutline": true,
+    "_enableOutline": false,
     "_outlineColor": {
       "__type__": "cc.Color",
       "r": 255,
@@ -1450,7 +1450,7 @@
       "b": 230,
       "a": 255
     },
-    "_outlineWidth": 1,
+    "_outlineWidth": 0,
     "_enableShadow": false,
     "_shadowColor": {
       "__type__": "cc.Color",
@@ -3939,7 +3939,7 @@
     "_lpos": {
       "__type__": "cc.Vec3",
       "x": 0,
-      "y": -74,
+      "y": -95.0795,
       "z": 0
     },
     "_lrot": {
@@ -4008,7 +4008,7 @@
     "_lpos": {
       "__type__": "cc.Vec3",
       "x": 0,
-      "y": 0,
+      "y": 18.440500000000043,
       "z": 0
     },
     "_lrot": {
@@ -13674,7 +13674,7 @@
     "_contentSize": {
       "__type__": "cc.Size",
       "width": 650,
-      "height": 930
+      "height": 972.159
     },
     "_anchorPoint": {
       "__type__": "cc.Vec2",
@@ -13931,7 +13931,7 @@
     },
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": 0,
+      "x": 4.637499999999974,
       "y": -708,
       "z": 0
     },
@@ -13981,7 +13981,7 @@
     },
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": 202,
+      "x": 174.3395,
       "y": 0,
       "z": 0
     },
@@ -14117,7 +14117,7 @@
     },
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": 320,
+      "x": 292.3395,
       "y": 0,
       "z": 0
     },
@@ -14244,7 +14244,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 750,
+      "width": 659.275,
       "height": 116
     },
     "_anchorPoint": {
@@ -14485,7 +14485,7 @@
     "_string": "???",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
-    "_actualFontSize": 22,
+    "_actualFontSize": 23,
     "_fontSize": 22,
     "_fontFamily": "Microsoft YaHei",
     "_lineHeight": 28,
@@ -14784,7 +14784,7 @@
     "_string": "??",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
-    "_actualFontSize": 22,
+    "_actualFontSize": 23,
     "_fontSize": 22,
     "_fontFamily": "Microsoft YaHei",
     "_lineHeight": 28,
@@ -15083,7 +15083,7 @@
     "_string": "??",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
-    "_actualFontSize": 22,
+    "_actualFontSize": 23,
     "_fontSize": 22,
     "_fontFamily": "Microsoft YaHei",
     "_lineHeight": 28,
@@ -15574,7 +15574,7 @@
     "_string": "??????",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
-    "_actualFontSize": 32,
+    "_actualFontSize": 33,
     "_fontSize": 32,
     "_fontFamily": "Microsoft YaHei",
     "_lineHeight": 40,
@@ -16285,7 +16285,7 @@
     "_string": "12",
     "_horizontalAlign": 2,
     "_verticalAlign": 1,
-    "_actualFontSize": 20,
+    "_actualFontSize": 18,
     "_fontSize": 20,
     "_fontFamily": "Microsoft YaHei",
     "_lineHeight": 28,
@@ -16444,7 +16444,7 @@
     "_string": "????",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
-    "_actualFontSize": 18,
+    "_actualFontSize": 19,
     "_fontSize": 18,
     "_fontFamily": "Microsoft YaHei",
     "_lineHeight": 26,
@@ -16976,7 +16976,7 @@
     "_string": "12",
     "_horizontalAlign": 2,
     "_verticalAlign": 1,
-    "_actualFontSize": 20,
+    "_actualFontSize": 18,
     "_fontSize": 20,
     "_fontFamily": "Microsoft YaHei",
     "_lineHeight": 28,
@@ -17135,7 +17135,7 @@
     "_string": "?????",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
-    "_actualFontSize": 18,
+    "_actualFontSize": 19,
     "_fontSize": 18,
     "_fontFamily": "Microsoft YaHei",
     "_lineHeight": 26,
@@ -17667,7 +17667,7 @@
     "_string": "12",
     "_horizontalAlign": 2,
     "_verticalAlign": 1,
-    "_actualFontSize": 20,
+    "_actualFontSize": 18,
     "_fontSize": 20,
     "_fontFamily": "Microsoft YaHei",
     "_lineHeight": 28,
@@ -17826,7 +17826,7 @@
     "_string": "?????",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
-    "_actualFontSize": 18,
+    "_actualFontSize": 19,
     "_fontSize": 18,
     "_fontFamily": "Microsoft YaHei",
     "_lineHeight": 26,
@@ -18358,7 +18358,7 @@
     "_string": "12",
     "_horizontalAlign": 2,
     "_verticalAlign": 1,
-    "_actualFontSize": 20,
+    "_actualFontSize": 18,
     "_fontSize": 20,
     "_fontFamily": "Microsoft YaHei",
     "_lineHeight": 28,
@@ -18517,7 +18517,7 @@
     "_string": "?????",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
-    "_actualFontSize": 18,
+    "_actualFontSize": 19,
     "_fontSize": 18,
     "_fontFamily": "Microsoft YaHei",
     "_lineHeight": 26,
@@ -19049,7 +19049,7 @@
     "_string": "12",
     "_horizontalAlign": 2,
     "_verticalAlign": 1,
-    "_actualFontSize": 20,
+    "_actualFontSize": 18,
     "_fontSize": 20,
     "_fontFamily": "Microsoft YaHei",
     "_lineHeight": 28,
@@ -19208,7 +19208,7 @@
     "_string": "????",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
-    "_actualFontSize": 18,
+    "_actualFontSize": 19,
     "_fontSize": 18,
     "_fontFamily": "Microsoft YaHei",
     "_lineHeight": 26,
@@ -19740,7 +19740,7 @@
     "_string": "12",
     "_horizontalAlign": 2,
     "_verticalAlign": 1,
-    "_actualFontSize": 20,
+    "_actualFontSize": 18,
     "_fontSize": 20,
     "_fontFamily": "Microsoft YaHei",
     "_lineHeight": 28,
@@ -19899,7 +19899,7 @@
     "_string": "????",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
-    "_actualFontSize": 18,
+    "_actualFontSize": 19,
     "_fontSize": 18,
     "_fontFamily": "Microsoft YaHei",
     "_lineHeight": 26,
@@ -20431,7 +20431,7 @@
     "_string": "12",
     "_horizontalAlign": 2,
     "_verticalAlign": 1,
-    "_actualFontSize": 20,
+    "_actualFontSize": 18,
     "_fontSize": 20,
     "_fontFamily": "Microsoft YaHei",
     "_lineHeight": 28,
@@ -20590,7 +20590,7 @@
     "_string": "????",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
-    "_actualFontSize": 18,
+    "_actualFontSize": 19,
     "_fontSize": 18,
     "_fontFamily": "Microsoft YaHei",
     "_lineHeight": 26,
@@ -21122,7 +21122,7 @@
     "_string": "12",
     "_horizontalAlign": 2,
     "_verticalAlign": 1,
-    "_actualFontSize": 20,
+    "_actualFontSize": 18,
     "_fontSize": 20,
     "_fontFamily": "Microsoft YaHei",
     "_lineHeight": 28,
@@ -21281,7 +21281,7 @@
     "_string": "????",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
-    "_actualFontSize": 18,
+    "_actualFontSize": 19,
     "_fontSize": 18,
     "_fontFamily": "Microsoft YaHei",
     "_lineHeight": 26,
@@ -22336,7 +22336,7 @@
     "_string": "二级突破珠",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
-    "_actualFontSize": 30,
+    "_actualFontSize": 31,
     "_fontSize": 30,
     "_fontFamily": "Microsoft YaHei",
     "_lineHeight": 38,
@@ -25386,7 +25386,7 @@
     "_string": "取消",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
-    "_actualFontSize": 31,
+    "_actualFontSize": 32,
     "_fontSize": 31,
     "_fontFamily": "Microsoft YaHei",
     "_lineHeight": 38,
@@ -25685,7 +25685,7 @@
     "_string": "确定",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
-    "_actualFontSize": 31,
+    "_actualFontSize": 32,
     "_fontSize": 31,
     "_fontFamily": "Microsoft YaHei",
     "_lineHeight": 38,
@@ -26027,7 +26027,6 @@
       "__id__": 0
     },
     "fileId": "TAJQ6hRwgphXXlMxOv6nAA",
-    "instance": null,
-    "targetOverrides": null
+    "instance": null
   }
 ]

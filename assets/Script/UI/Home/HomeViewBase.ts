@@ -929,7 +929,7 @@ export abstract class HomeViewBase extends Component {
     protected abstract sortBagCatalogItems(items: BagIllustrationCatalogItem[]): BagIllustrationCatalogItem[];
     protected abstract getBagItemIconIndex(item: BagIllustrationCatalogItem): number;
     protected abstract getBagGridLayout(view: BagCatalogView): { height: number; y: number };
-    protected abstract createBagGridItem(parent: Node, index: number, item: BagIllustrationCatalogItem | undefined, x: number, y: number): void;
+    protected abstract createBagGridItem(parent: Node, index: number, item: BagIllustrationCatalogItem | undefined, x: number, y: number, showInventoryCount?: boolean): void;
     protected abstract bindGridItemTap(node: Node, onTap: () => void): void;
     protected abstract bindBagGridScroll(node: Node, content: Node, maxScrollY: number): void;
     protected abstract createBagBottomTabs(): void;

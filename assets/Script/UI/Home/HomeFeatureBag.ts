@@ -5,6 +5,7 @@ import {
     Label,
     Mask,
     Node,
+    ScrollView,
     Sprite,
     UIOpacity,
     UITransform,
@@ -66,6 +67,16 @@ abstract class HomeFeatureBagHost extends HomeViewBase {
  * 背包运行时状态仍由 Base 与 RoleBag 初始化器持有；本模块只负责页面行为和渲染。
  */
 export abstract class HomeFeatureBag extends HomeFeatureBagHost {
+    protected getBagGridScrollInertiaCallbacks(): WeakMap<Node, (dt: number) => void> {
+        const host = this as HomeFeatureBag & {
+            __bagGridScrollInertiaCallbacks?: WeakMap<Node, (dt: number) => void>;
+        };
+        if (!host.__bagGridScrollInertiaCallbacks) {
+            host.__bagGridScrollInertiaCallbacks = new WeakMap<Node, (dt: number) => void>();
+        }
+        return host.__bagGridScrollInertiaCallbacks;
+    }
+
     protected openBagPanel(): void {
         this.buildBagPanel();
         if (!this.bagPanel) return;
@@ -122,7 +133,7 @@ export abstract class HomeFeatureBag extends HomeFeatureBagHost {
     protected createBagMaterialBoard(): void {
         if (!this.bagPanel) return;
     
-        this.bagCatalogView = this.createBagCatalogView(this.bagPanel, 'BagMaterialBoard', HomeConfig.BAG_MATERIAL_BOARD_Y, 'material', this.getRoleSeededBagItems(), 'BagGridViewport');
+        this.bagCatalogView = this.createBagCatalogView(this.bagPanel, 'BagMaterialBoard', HomeConfig.BAG_MATERIAL_BOARD_Y, 'equipment', this.getRoleSeededBagItems(), 'BagGridViewport');
         this.bagCatalogView.board.setSiblingIndex(2);
         this.ensureBagModeFrames();
     }
@@ -280,8 +291,7 @@ export abstract class HomeFeatureBag extends HomeFeatureBagHost {
     }
     protected getBagDecomposeItems(): BagIllustrationCatalogItem[] {
         return BAG_ILLUSTRATION_CATALOG.filter((item) => (
-            item.category === 'equipment'
-            && !this.isBeastVeinEquipment(item)
+            this.isBagDecomposeEligibleItem(item)
             && this.getRoleInventoryCount(item.id) > 0
         ));
     }
@@ -289,6 +299,10 @@ export abstract class HomeFeatureBag extends HomeFeatureBagHost {
         if (item.category !== 'equipment') return;
         if (this.isBeastVeinEquipment(item)) {
             this.showToast('\u517d\u8109\u88c5\u5907\u4e0d\u53ef\u5206\u89e3');
+            return;
+        }
+        if (!this.isBagDecomposeEligibleItem(item)) {
+            this.showToast('\u53ea\u80fd\u5206\u89e3\u4e00\u7ea7\u88c5\u5907');
             return;
         }
         if (this.getRoleInventoryCount(item.id) <= 0) {
@@ -299,7 +313,7 @@ export abstract class HomeFeatureBag extends HomeFeatureBagHost {
         this.refreshBagDecomposeSlots();
     }
     protected getBagDecomposeResult(item: BagIllustrationCatalogItem): BagDecomposeResult | null {
-        if (this.isBeastVeinEquipment(item)) return null;
+        if (!this.isBagDecomposeEligibleItem(item)) return null;
         const statType = this.getBagEquipmentStatType(item);
         const materialIdByStat: Record<RoleEquipmentStatType, string> = {
             attack: 'material_099',
@@ -314,6 +328,11 @@ export abstract class HomeFeatureBag extends HomeFeatureBagHost {
             count: this.getEquipmentLevel(item),
             statType,
         };
+    }
+    protected isBagDecomposeEligibleItem(item: BagIllustrationCatalogItem): boolean {
+        return item.category === 'equipment'
+            && !this.isBeastVeinEquipment(item)
+            && this.getBagEquipmentCatalogLevel(item) === 1;
     }
     protected getBagEquipmentStatType(item: BagIllustrationCatalogItem): RoleEquipmentStatType {
         const slotId = this.getBagEquipmentSlotId(item);
@@ -635,7 +654,8 @@ export abstract class HomeFeatureBag extends HomeFeatureBagHost {
         if (this.bagIllustrationButton) this.bagIllustrationButton.active = this.bagPageActiveTab === 'bag';
         if (this.bagCatalogView) {
             this.bagCatalogView.itemSource = this.getRoleSeededBagItems();
-            this.bagCatalogView.activeCategory = 'material';
+            this.bagCatalogView.activeCategory = 'equipment';
+            this.resetBagGridScrollPosition(this.bagCatalogView);
             const categoryRoot = this.bagCatalogView.board.getChildByName(`${this.bagCatalogView.board.name}CategoryTabs`);
             if (categoryRoot) categoryRoot.active = this.bagPageActiveTab === 'bag';
             this.refreshBagCategoryTabs(this.bagCatalogView);
@@ -728,11 +748,11 @@ export abstract class HomeFeatureBag extends HomeFeatureBagHost {
     
             let label = tab.getChildByName('BagCategoryTabLabel')?.getComponent(Label) || null;
             if (!label) {
-                label = this.createLabel(tab, 'BagCategoryTabLabel', config.title, 25, 0, 0, HomeConfig.BAG_CATEGORY_TAB_WIDTH, HomeConfig.BAG_CATEGORY_TAB_HEIGHT, new Color(69, 43, 23, 255));
+                label = this.createLabel(tab, 'BagCategoryTabLabel', config.title, 25, 0, 0, HomeConfig.BAG_CATEGORY_TAB_WIDTH, HomeConfig.BAG_CATEGORY_TAB_HEIGHT, new Color(38, 24, 12, 255));
             }
             label.string = config.title;
             label.node.setSiblingIndex(2);
-            this.applyBagLabelStyle(label, 2);
+            this.applyBagLabelStyle(label, 0);
     
             view.tabs.set(config.category, tab);
             this.bindScaledClick(tab, () => this.switchBagCatalogCategory(view, config.category));
@@ -740,6 +760,7 @@ export abstract class HomeFeatureBag extends HomeFeatureBagHost {
     }
     protected switchBagCatalogCategory(view: BagCatalogView, category: BagIllustrationCategory): void {
         view.activeCategory = category;
+        this.resetBagGridScrollPosition(view);
         this.refreshBagCategoryTabs(view);
         this.refreshBagCatalogGrid(view);
     }
@@ -752,33 +773,51 @@ export abstract class HomeFeatureBag extends HomeFeatureBagHost {
             this.applyUiSkinKeepingEditorSize(tab, selected ? HomeConfig.UI_BAG_CATEGORY_TAB_ACTIVE : HomeConfig.UI_BAG_CATEGORY_TAB_NORMAL, HomeConfig.BAG_CATEGORY_TAB_WIDTH, HomeConfig.BAG_CATEGORY_TAB_HEIGHT);
             const label = tab.getChildByName('BagCategoryTabLabel')?.getComponent(Label);
             if (label) {
-                label.color = selected ? new Color(94, 50, 20, 255) : new Color(64, 52, 37, 255);
+                label.color = selected ? new Color(48, 26, 10, 255) : new Color(38, 24, 12, 255);
             }
         });
     }
     protected refreshBagCatalogGrid(view: BagCatalogView): void {
-        const oldViewport = view.board.getChildByName(view.viewportName);
-        if (oldViewport) {
-            oldViewport.removeFromParent();
-            oldViewport.destroy();
-        }
-    
         const layout = this.getBagGridLayout(view);
-        const viewport = this.createNode(view.viewportName, view.board, HomeConfig.BAG_GRID_VIEWPORT_WIDTH, layout.height, HomeConfig.BAG_GRID_VIEWPORT_X, layout.y);
+        const editorViewport = view.board.getChildByName(view.viewportName);
+        const viewport = editorViewport || this.createNode(view.viewportName, view.board, HomeConfig.BAG_GRID_VIEWPORT_WIDTH, layout.height, HomeConfig.BAG_GRID_VIEWPORT_X, layout.y);
+        viewport.active = true;
+        if (!editorViewport) {
+            viewport.setPosition(HomeConfig.BAG_GRID_VIEWPORT_X, layout.y, 0);
+            (viewport.getComponent(UITransform) || viewport.addComponent(UITransform)).setContentSize(HomeConfig.BAG_GRID_VIEWPORT_WIDTH, layout.height);
+        }
         viewport.setSiblingIndex(20);
-        const mask = viewport.addComponent(Mask);
+        const mask = viewport.getComponent(Mask) || viewport.addComponent(Mask);
         mask.type = Mask.Type.GRAPHICS_RECT;
+        const viewportTransform = viewport.getComponent(UITransform) || viewport.addComponent(UITransform);
+        const viewportSize = viewportTransform.contentSize;
+        const viewportWidth = viewportSize.width || HomeConfig.BAG_GRID_VIEWPORT_WIDTH;
+        const viewportHeight = viewportSize.height || layout.height;
     
         const items = this.getBagGridDisplayItems(view);
         const minimumSlotRows = view.itemSource.length > 0 ? 6 : 7;
         const itemCount = Math.max(items.length, HomeConfig.BAG_GRID_COLS * minimumSlotRows);
         const rowCount = Math.ceil(itemCount / HomeConfig.BAG_GRID_COLS);
         const contentHeight = rowCount * HomeConfig.BAG_GRID_CELL_SIZE + Math.max(0, rowCount - 1) * HomeConfig.BAG_GRID_CELL_GAP_Y;
-        const maxScrollY = Math.max(0, contentHeight - layout.height + 24);
-        const content = this.createNode(`${view.viewportName}Content`, viewport, HomeConfig.BAG_GRID_VIEWPORT_WIDTH, contentHeight, 0, 0);
+        const edgeInsetY = 18;
+        const maxScrollY = Math.max(0, contentHeight + edgeInsetY * 2 - viewportHeight);
+        const contentName = `${view.viewportName}Content`;
+        const editorContent = viewport.getChildByName(contentName);
+        const content = editorContent || this.createNode(contentName, viewport, viewportWidth, contentHeight, 0, 0);
+        content.active = true;
+        (content.getComponent(UITransform) || content.addComponent(UITransform)).setContentSize(viewportWidth, contentHeight);
+        if (!editorContent) {
+            content.setPosition(0, 0, 0);
+        } else {
+            const safeY = this.clamp(content.position.y || 0, 0, maxScrollY);
+            content.setPosition(0, safeY, 0);
+        }
+        content.children.forEach((child) => {
+            if (/^BagGridSlot_\d+$/.test(child.name)) child.active = false;
+        });
     
         const startX = -((HomeConfig.BAG_GRID_COLS - 1) * (HomeConfig.BAG_GRID_CELL_SIZE + HomeConfig.BAG_GRID_CELL_GAP_X)) / 2;
-        const startY = layout.height / 2 - HomeConfig.BAG_GRID_CELL_SIZE / 2 - 18;
+        const startY = viewportHeight / 2 - HomeConfig.BAG_GRID_CELL_SIZE / 2 - 18;
         for (let index = 0; index < itemCount; index++) {
             const col = index % HomeConfig.BAG_GRID_COLS;
             const row = Math.floor(index / HomeConfig.BAG_GRID_COLS);
@@ -788,11 +827,11 @@ export abstract class HomeFeatureBag extends HomeFeatureBagHost {
                 items[index],
                 startX + col * (HomeConfig.BAG_GRID_CELL_SIZE + HomeConfig.BAG_GRID_CELL_GAP_X),
                 startY - row * (HomeConfig.BAG_GRID_CELL_SIZE + HomeConfig.BAG_GRID_CELL_GAP_Y),
+                !this.bagIllustrationMode && view.viewportName !== 'BagIllustrationGridViewport',
             );
         }
-    
+
         this.bindBagGridScroll(viewport, content, maxScrollY);
-        this.bindBagGridScroll(content, content, maxScrollY);
     }
     protected sortBagCatalogItems(items: BagIllustrationCatalogItem[]): BagIllustrationCatalogItem[] {
         return [...items].sort((a, b) => {
@@ -904,8 +943,23 @@ export abstract class HomeFeatureBag extends HomeFeatureBagHost {
         }
         return { height: HomeConfig.BAG_GRID_VIEWPORT_HEIGHT, y: HomeConfig.BAG_GRID_VIEWPORT_Y };
     }
-    protected createBagGridItem(parent: Node, index: number, item: BagIllustrationCatalogItem | undefined, x: number, y: number): void {
-        const slot = this.createNode(`BagGridSlot_${index + 1}`, parent, HomeConfig.BAG_GRID_CELL_SIZE, HomeConfig.BAG_GRID_CELL_SIZE, x, y);
+    protected createBagGridItem(parent: Node, index: number, item: BagIllustrationCatalogItem | undefined, x: number, y: number, showInventoryCount = true): void {
+        const slotName = `BagGridSlot_${index + 1}`;
+        const editorSlot = parent.getChildByName(slotName);
+        const slot = editorSlot || this.createNode(slotName, parent, HomeConfig.BAG_GRID_CELL_SIZE, HomeConfig.BAG_GRID_CELL_SIZE, x, y);
+        slot.active = true;
+        (slot.getComponent(UITransform) || slot.addComponent(UITransform)).setContentSize(HomeConfig.BAG_GRID_CELL_SIZE, HomeConfig.BAG_GRID_CELL_SIZE);
+        if (!editorSlot) {
+            slot.setPosition(x, y, 0);
+        }
+        [...slot.children].forEach((child) => {
+            child.removeFromParent();
+            child.destroy();
+        });
+        slot.off(Node.EventType.TOUCH_START);
+        slot.off(Node.EventType.TOUCH_MOVE);
+        slot.off(Node.EventType.TOUCH_END);
+        slot.off(Node.EventType.TOUCH_CANCEL);
         slot.setSiblingIndex(index + 1);
         const framePath = item?.framePath || `${HomeConfig.BAG_UI_ROOT}/ItemFrames/item_frame_lv1`;
         this.createSkinnedNode('BagGridFrame', slot, HomeConfig.BAG_GRID_FRAME_SIZE, HomeConfig.BAG_GRID_FRAME_SIZE, 0, 0, framePath).setSiblingIndex(0);
@@ -918,14 +972,15 @@ export abstract class HomeFeatureBag extends HomeFeatureBagHost {
                 HomeConfig.BAG_GRID_FRAME_SIZE,
                 HomeConfig.BAG_GRID_FRAME_SIZE,
             );
-            this.createSkinnedNode('BagGridIcon', slot, HomeConfig.BAG_GRID_ICON_SIZE, HomeConfig.BAG_GRID_ICON_SIZE, 0, HomeConfig.BAG_GRID_ICON_OFFSET_Y, item.iconPath).setSiblingIndex(2);
+            const iconLayout = this.getBagGridIconLayout(item);
+            this.createSkinnedNode('BagGridIcon', slot, iconLayout.size, iconLayout.size, iconLayout.x, iconLayout.y, item.iconPath).setSiblingIndex(2);
             effect?.setSiblingIndex(3);
             const equipmentLevel = this.getBagEquipmentCatalogLevel(item);
             if (equipmentLevel > 0) {
                 this.createBagGridEquipmentLevelLabel(slot, equipmentLevel);
             }
             const itemCount = this.getBagItemCount(item);
-            if (itemCount > 0 && item.category !== 'equipment' && !this.isBeastEquipmentCatalogItem(item)) {
+            if (showInventoryCount && itemCount > 0 && item.category !== 'equipment' && !this.isBeastEquipmentCatalogItem(item)) {
                 const countLabel = this.createLabel(
                     slot,
                     'BagGridItemCount',
@@ -980,6 +1035,18 @@ export abstract class HomeFeatureBag extends HomeFeatureBagHost {
         const equippedLevel = this.getEquipmentLevel(equipped);
         return itemLevel > 0 && equippedLevel > 0 && itemLevel === equippedLevel;
     }
+    protected getBagGridIconLayout(item: BagIllustrationCatalogItem): { size: number; x: number; y: number } {
+        if (!this.isBeastEquipmentCatalogItem(item)) {
+            return { size: HomeConfig.BAG_GRID_ICON_SIZE, x: 0, y: HomeConfig.BAG_GRID_ICON_OFFSET_Y };
+        }
+
+        const offset = HomeConfig.BEAST_STRENGTHEN_EQUIP_ICON_SOURCE_OFFSETS[item.id];
+        return {
+            size: HomeConfig.BAG_GRID_ICON_SIZE,
+            x: offset ? offset.x * HomeConfig.BAG_GRID_ICON_SIZE / HomeConfig.BEAST_STRENGTHEN_EQUIP_ICON_SOURCE_WIDTH : 0,
+            y: offset ? offset.y * HomeConfig.BAG_GRID_ICON_SIZE / HomeConfig.BEAST_STRENGTHEN_EQUIP_ICON_SOURCE_HEIGHT : 0,
+        };
+    }
     protected isBeastEquipmentCatalogItem(item: BagIllustrationCatalogItem): boolean {
         if (item.category !== 'equipment') return false;
         const name = this.getCatalogDisplayName(item);
@@ -993,7 +1060,7 @@ export abstract class HomeFeatureBag extends HomeFeatureBagHost {
             slot,
             'BagGridEquipmentLevel',
             `lv.${level}`,
-            20,
+            HomeConfig.BAG_GRID_COUNT_FONT_SIZE,
             HomeConfig.BAG_GRID_COUNT_X,
             HomeConfig.BAG_GRID_COUNT_Y,
             HomeConfig.BAG_GRID_COUNT_WIDTH,
@@ -1031,29 +1098,93 @@ export abstract class HomeFeatureBag extends HomeFeatureBagHost {
         }, this);
     }
     protected bindBagGridScroll(node: Node, content: Node, maxScrollY: number): void {
-        let dragStartY = 0;
-        let contentStartY = 0;
         node.off(Node.EventType.TOUCH_START);
         node.off(Node.EventType.TOUCH_MOVE);
         node.off(Node.EventType.TOUCH_END);
         node.off(Node.EventType.TOUCH_CANCEL);
+        const previousScroll = node.getComponent(ScrollView);
+        if (previousScroll) previousScroll.enabled = false;
+        const inertiaCallbacks = this.getBagGridScrollInertiaCallbacks();
+
+        let dragStartY = 0;
+        let contentStartY = 0;
+        let lastTouchY = 0;
+        let lastTouchTime = 0;
+        let velocityY = 0;
+
+        const stopInertia = () => {
+            const callback = inertiaCallbacks.get(node);
+            if (callback) {
+                this.unschedule(callback);
+                inertiaCallbacks.delete(node);
+            }
+        };
+        const clampContentY = (value: number): number => {
+            const clampedY = this.clamp(value, 0, maxScrollY);
+            content.setPosition(0, clampedY, 0);
+            return clampedY;
+        };
+        const startInertia = () => {
+            stopInertia();
+            if (maxScrollY <= 0 || Math.abs(velocityY) < 40) return;
+
+            const inertiaCallback = (dt: number) => {
+                velocityY *= Math.pow(0.08, dt);
+                const currentY = content.position.y || 0;
+                const nextY = currentY + velocityY * dt;
+                const clampedY = clampContentY(nextY);
+                if (clampedY !== nextY || Math.abs(velocityY) < 12) {
+                    stopInertia();
+                }
+            };
+            inertiaCallbacks.set(node, inertiaCallback);
+            this.schedule(inertiaCallback, 0);
+        };
+
+        clampContentY(content.position.y || 0);
         node.on(Node.EventType.TOUCH_START, (event: EventTouch) => {
             event.propagationStopped = true;
+            stopInertia();
             dragStartY = event.getUILocation().y;
             contentStartY = content.position.y || 0;
+            lastTouchY = dragStartY;
+            lastTouchTime = Date.now();
+            velocityY = 0;
         }, this);
         node.on(Node.EventType.TOUCH_MOVE, (event: EventTouch) => {
             event.propagationStopped = true;
-            const dragOffsetY = event.getUILocation().y - dragStartY;
-            const nextY = this.clamp(contentStartY + dragOffsetY, 0, maxScrollY);
-            content.setPosition(0, nextY, 0);
+            if (maxScrollY <= 0) {
+                clampContentY(0);
+                return;
+            }
+
+            const touchY = event.getUILocation().y;
+            const now = Date.now();
+            const dt = Math.max(0.016, (now - lastTouchTime) / 1000);
+            velocityY = (touchY - lastTouchY) / dt;
+            lastTouchY = touchY;
+            lastTouchTime = now;
+            clampContentY(contentStartY + touchY - dragStartY);
         }, this);
         node.on(Node.EventType.TOUCH_END, (event: EventTouch) => {
             event.propagationStopped = true;
+            startInertia();
         }, this);
         node.on(Node.EventType.TOUCH_CANCEL, (event: EventTouch) => {
             event.propagationStopped = true;
+            startInertia();
         }, this);
+    }
+    protected resetBagGridScrollPosition(view: BagCatalogView): void {
+        const viewport = view.board.getChildByName(view.viewportName);
+        const content = viewport?.getChildByName(`${view.viewportName}Content`);
+        if (content?.isValid) content.setPosition(0, 0, 0);
+        const inertiaCallbacks = this.getBagGridScrollInertiaCallbacks();
+        const callback = viewport ? inertiaCallbacks.get(viewport) : null;
+        if (callback) {
+            this.unschedule(callback);
+            inertiaCallbacks.delete(viewport as Node);
+        }
     }
     protected createBagBottomTabs(): void {
         if (!this.bagPanel) return;
@@ -1122,14 +1253,21 @@ export abstract class HomeFeatureBag extends HomeFeatureBagHost {
             if (lockedCategory) {
                 this.bagCatalogView.activeCategory = lockedCategory;
             } else {
-                this.bagCatalogView.activeCategory = 'material';
+                this.bagCatalogView.activeCategory = 'equipment';
             }
+            this.resetBagGridScrollPosition(this.bagCatalogView);
             const categoryRoot = this.bagCatalogView.board.getChildByName(`${this.bagCatalogView.board.name}CategoryTabs`);
             if (categoryRoot) categoryRoot.active = tab === 'bag';
             if (this.bagDecomposeModeFrame?.isValid) this.bagDecomposeModeFrame.active = tab === 'decompose';
             if (this.bagSynthModeFrame?.isValid) this.bagSynthModeFrame.active = tab === 'synth';
             if (tab === 'decompose') {
-                if (this.bagDecomposeSelectedItem && this.getRoleInventoryCount(this.bagDecomposeSelectedItem.id) <= 0) {
+                if (
+                    this.bagDecomposeSelectedItem
+                    && (
+                        !this.isBagDecomposeEligibleItem(this.bagDecomposeSelectedItem)
+                        || this.getRoleInventoryCount(this.bagDecomposeSelectedItem.id) <= 0
+                    )
+                ) {
                     this.bagDecomposeSelectedItem = null;
                 }
                 this.refreshBagDecomposeSlots();

@@ -5,6 +5,7 @@ import {
     Label,
     Mask,
     Node,
+    Overflow,
     UITransform,
     Vec3,
 } from 'cc';
@@ -56,8 +57,10 @@ export abstract class HomeFeatureMarketShell extends HomeViewBase {
         if (this.marketPanel.parent !== popupParent) {
             this.marketPanel.setParent(popupParent);
         }
-        this.marketPanel.setPosition(0, 0, 0);
-        (this.marketPanel.getComponent(UITransform) || this.marketPanel.addComponent(UITransform)).setContentSize(HomeConfig.VIEW_WIDTH, HomeConfig.VIEW_HEIGHT);
+        if (!editorPanel) {
+            this.marketPanel.setPosition(0, 0, 0);
+            (this.marketPanel.getComponent(UITransform) || this.marketPanel.addComponent(UITransform)).setContentSize(HomeConfig.VIEW_WIDTH, HomeConfig.VIEW_HEIGHT);
+        }
         this.marketPanel.active = false;
         this.marketPanel.off(Node.EventType.TOUCH_END);
         this.marketPanel.on(Node.EventType.TOUCH_END, (event: EventTouch) => {
@@ -85,14 +88,18 @@ export abstract class HomeFeatureMarketShell extends HomeViewBase {
             tab.active = true;
             const label = this.getOrCreateEditorLabel(tab, 'MarketTabLabel', this.getMarketTabTitle(config.tab), 27, 0, 0, HomeConfig.MARKET_TAB_WIDTH - 18, HomeConfig.MARKET_TAB_HEIGHT - 12, new Color(79, 55, 35, 255));
             label.node.active = true;
-            this.applyMarketTextStyle(label, 1);
+            this.applyMarketTextStyle(label, 0);
+            this.applyMarketTabLabelSingleLine(tab, label);
             this.marketTabNodes[config.tab] = tab;
             this.bindScaledClick(tab, () => this.switchMarketTab(config.tab));
         });
     
+        const editorFilterRoot = this.marketPanel.getChildByName('MarketFilterRoot');
         this.marketFilterRoot = this.getOrCreateEditorNode('MarketFilterRoot', this.marketPanel, HomeConfig.MARKET_FILTER_ROOT_WIDTH, HomeConfig.MARKET_FILTER_ROOT_HEIGHT, 0, HomeConfig.MARKET_FILTER_Y);
         this.marketFilterRoot.active = true;
-        (this.marketFilterRoot.getComponent(UITransform) || this.marketFilterRoot.addComponent(UITransform)).setContentSize(HomeConfig.MARKET_FILTER_ROOT_WIDTH, HomeConfig.MARKET_FILTER_ROOT_HEIGHT);
+        if (!editorFilterRoot?.isValid) {
+            (this.marketFilterRoot.getComponent(UITransform) || this.marketFilterRoot.addComponent(UITransform)).setContentSize(HomeConfig.MARKET_FILTER_ROOT_WIDTH, HomeConfig.MARKET_FILTER_ROOT_HEIGHT);
+        }
 
         const primaryFilter = this.createMarketFilterSelect(
             'MarketCategoryFilter',
@@ -127,27 +134,39 @@ export abstract class HomeFeatureMarketShell extends HomeViewBase {
         );
         this.marketTertiaryFilterLabel = tertiaryFilter.getChildByName('MarketTertiaryLabel')?.getComponent(Label) || null;
 
+        const editorRefresh = this.marketFilterRoot.getChildByName('MarketRefreshButton');
         const refresh = this.getOrCreateEditorSkinnedNode('MarketRefreshButton', this.marketFilterRoot, HomeConfig.MARKET_FILTER_REFRESH_SIZE, HomeConfig.MARKET_FILTER_CONTROL_HEIGHT, HomeConfig.MARKET_FILTER_REFRESH_X, HomeConfig.MARKET_FILTER_TOP_ROW_Y, HomeConfig.UI_MARKET_FILTER_BG);
         refresh.active = true;
-        refresh.setPosition(HomeConfig.MARKET_FILTER_REFRESH_X, HomeConfig.MARKET_FILTER_TOP_ROW_Y, 0);
-        (refresh.getComponent(UITransform) || refresh.addComponent(UITransform)).setContentSize(HomeConfig.MARKET_FILTER_REFRESH_SIZE, HomeConfig.MARKET_FILTER_CONTROL_HEIGHT);
+        if (!editorRefresh?.isValid) {
+            refresh.setPosition(HomeConfig.MARKET_FILTER_REFRESH_X, HomeConfig.MARKET_FILTER_TOP_ROW_Y, 0);
+            (refresh.getComponent(UITransform) || refresh.addComponent(UITransform)).setContentSize(HomeConfig.MARKET_FILTER_REFRESH_SIZE, HomeConfig.MARKET_FILTER_CONTROL_HEIGHT);
+        }
+        const editorRefreshLabel = refresh.getChildByName('MarketRefreshLabel');
         const refreshLabel = this.getOrCreateEditorLabel(refresh, 'MarketRefreshLabel', '\u5237\u65b0', 20, -10, 0, 42, HomeConfig.MARKET_FILTER_CONTROL_HEIGHT, new Color(81, 59, 41, 255));
         refreshLabel.node.active = true;
-        refreshLabel.node.setPosition(-10, 0, 0);
+        if (!editorRefreshLabel?.isValid) {
+            refreshLabel.node.setPosition(-10, 0, 0);
+        }
         refreshLabel.horizontalAlign = HorizontalTextAlignment.CENTER;
         this.applyMarketFilterTextStyle(refreshLabel);
+        const editorRefreshIcon = refresh.getChildByName('MarketRefreshIcon');
         const refreshIcon = this.getOrCreateEditorSkinnedNode('MarketRefreshIcon', refresh, HomeConfig.MARKET_FILTER_REFRESH_ICON_SIZE, HomeConfig.MARKET_FILTER_REFRESH_ICON_SIZE, 23, 0, HomeConfig.UI_MARKET_REFRESH);
         refreshIcon.active = true;
-        refreshIcon.setPosition(23, 0, 0);
+        if (!editorRefreshIcon?.isValid) {
+            refreshIcon.setPosition(23, 0, 0);
+        }
         this.bindScaledClick(refresh, () => {
             this.closeMarketFilterDropdown();
             this.refreshMarketList();
             this.showToast('\u96c6\u5e02\u5df2\u5237\u65b0');
         });
     
+        const editorSort = this.marketFilterRoot.getChildByName('MarketSortFilter');
         const sort = this.getOrCreateEditorSkinnedNode('MarketSortFilter', this.marketFilterRoot, HomeConfig.MARKET_FILTER_SORT_WIDTH, HomeConfig.MARKET_FILTER_CONTROL_HEIGHT, HomeConfig.MARKET_FILTER_SORT_X, HomeConfig.MARKET_FILTER_BOTTOM_ROW_Y, HomeConfig.UI_MARKET_FILTER_BG);
         sort.active = true;
-        (sort.getComponent(UITransform) || sort.addComponent(UITransform)).setContentSize(HomeConfig.MARKET_FILTER_SORT_WIDTH, HomeConfig.MARKET_FILTER_CONTROL_HEIGHT);
+        if (!editorSort?.isValid) {
+            (sort.getComponent(UITransform) || sort.addComponent(UITransform)).setContentSize(HomeConfig.MARKET_FILTER_SORT_WIDTH, HomeConfig.MARKET_FILTER_CONTROL_HEIGHT);
+        }
         this.marketSortLabel = this.getOrCreateEditorLabel(sort, 'MarketSortLabel', '', 21, -24, 0, HomeConfig.MARKET_FILTER_SORT_WIDTH - 70, HomeConfig.MARKET_FILTER_CONTROL_HEIGHT, new Color(81, 59, 41, 255));
         this.marketSortLabel.node.active = true;
         this.marketSortLabel.horizontalAlign = HorizontalTextAlignment.CENTER;
@@ -173,22 +192,31 @@ export abstract class HomeFeatureMarketShell extends HomeViewBase {
         this.bindScaledClick(back, () => this.closeMarketPanel());
     }
     protected createMarketFilterSelect(nodeName: string, labelName: string, dropdownName: string, x: number, y: number, width: number, level: MarketFilterLevel): Node {
+        const editorFilter = this.marketFilterRoot!.getChildByName(nodeName);
         const filter = this.getOrCreateEditorSkinnedNode(nodeName, this.marketFilterRoot!, width, HomeConfig.MARKET_FILTER_CONTROL_HEIGHT, x, y, HomeConfig.UI_MARKET_FILTER_BG);
         filter.active = true;
-        filter.setPosition(x, y, 0);
-        (filter.getComponent(UITransform) || filter.addComponent(UITransform)).setContentSize(width, HomeConfig.MARKET_FILTER_CONTROL_HEIGHT);
+        if (!editorFilter?.isValid) {
+            filter.setPosition(x, y, 0);
+            (filter.getComponent(UITransform) || filter.addComponent(UITransform)).setContentSize(width, HomeConfig.MARKET_FILTER_CONTROL_HEIGHT);
+        }
 
+        const editorLabel = filter.getChildByName(labelName);
         const label = this.getOrCreateEditorLabel(filter, labelName, '', 21, -18, 0, width - 48, HomeConfig.MARKET_FILTER_CONTROL_HEIGHT, new Color(81, 59, 41, 255));
         label.node.active = true;
-        label.node.setPosition(-18, 0, 0);
-        (label.node.getComponent(UITransform) || label.node.addComponent(UITransform)).setContentSize(width - 48, HomeConfig.MARKET_FILTER_CONTROL_HEIGHT);
+        if (!editorLabel?.isValid) {
+            label.node.setPosition(-18, 0, 0);
+            (label.node.getComponent(UITransform) || label.node.addComponent(UITransform)).setContentSize(width - 48, HomeConfig.MARKET_FILTER_CONTROL_HEIGHT);
+        }
         label.horizontalAlign = HorizontalTextAlignment.CENTER;
         this.applyMarketFilterTextStyle(label);
 
+        const editorDropdown = filter.getChildByName(dropdownName);
         const dropdown = this.getOrCreateEditorSkinnedNode(dropdownName, filter, HomeConfig.MARKET_FILTER_DROPDOWN_SIZE, HomeConfig.MARKET_FILTER_DROPDOWN_SIZE, width / 2 - 19, 0, HomeConfig.UI_MARKET_DROPDOWN);
         dropdown.active = true;
-        dropdown.setPosition(width / 2 - 19, 0, 0);
-        (dropdown.getComponent(UITransform) || dropdown.addComponent(UITransform)).setContentSize(HomeConfig.MARKET_FILTER_DROPDOWN_SIZE, HomeConfig.MARKET_FILTER_DROPDOWN_SIZE);
+        if (!editorDropdown?.isValid) {
+            dropdown.setPosition(width / 2 - 19, 0, 0);
+            (dropdown.getComponent(UITransform) || dropdown.addComponent(UITransform)).setContentSize(HomeConfig.MARKET_FILTER_DROPDOWN_SIZE, HomeConfig.MARKET_FILTER_DROPDOWN_SIZE);
+        }
         this.bindScaledClick(filter, () => this.openMarketFilterDropdown(level));
         return filter;
     }
@@ -209,12 +237,24 @@ export abstract class HomeFeatureMarketShell extends HomeViewBase {
         }
         return baseTitle;
     }
+    protected applyMarketTabLabelSingleLine(tab: Node, label: Label): void {
+        const tabSize = tab.getComponent(UITransform)?.contentSize;
+        const labelTransform = label.node.getComponent(UITransform) || label.node.addComponent(UITransform);
+        const width = Math.max(1, (tabSize?.width || HomeConfig.MARKET_TAB_WIDTH) - 8);
+        const height = Math.max(1, (tabSize?.height || HomeConfig.MARKET_TAB_HEIGHT) - 10);
+        labelTransform.setContentSize(width, height);
+        label.enableWrapText = false;
+        label.overflow = Overflow.SHRINK;
+        label.lineHeight = Math.min(height, label.fontSize + 6);
+    }
     protected refreshMarketTabLabels(): void {
         HomeConfig.MARKET_TABS.forEach((config) => {
-            const label = this.marketTabNodes[config.tab]?.getChildByName('MarketTabLabel')?.getComponent(Label);
-            if (!label) return;
+            const tabNode = this.marketTabNodes[config.tab];
+            const label = tabNode?.getChildByName('MarketTabLabel')?.getComponent(Label);
+            if (!tabNode?.isValid || !label) return;
             label.string = this.getMarketTabTitle(config.tab);
-            this.applyMarketTextStyle(label, 1);
+            this.applyMarketTextStyle(label, 0);
+            this.applyMarketTabLabelSingleLine(tabNode, label);
         });
     }
     protected getMarketModeButtonSkinPaths(): string[] {
@@ -251,13 +291,17 @@ export abstract class HomeFeatureMarketShell extends HomeViewBase {
     protected createMarketModeButtons(): void {
         if (!this.marketPanel?.isValid) return;
 
+        const editorRoot = this.marketPanel.getChildByName('MarketModeButtons');
         const root = this.getOrCreateEditorNode('MarketModeButtons', this.marketPanel, HomeConfig.VIEW_WIDTH, 116, 0, HomeConfig.MARKET_MODE_BUTTON_ROOT_Y);
         root.active = true;
-        root.setPosition(0, HomeConfig.MARKET_MODE_BUTTON_ROOT_Y, 0);
-        (root.getComponent(UITransform) || root.addComponent(UITransform)).setContentSize(HomeConfig.VIEW_WIDTH, 116);
+        if (!editorRoot?.isValid) {
+            root.setPosition(0, HomeConfig.MARKET_MODE_BUTTON_ROOT_Y, 0);
+            (root.getComponent(UITransform) || root.addComponent(UITransform)).setContentSize(HomeConfig.VIEW_WIDTH, 116);
+        }
         root.setSiblingIndex(31);
         HomeConfig.MARKET_MODE_BUTTONS.forEach((config) => {
             const initialSkinPath = config.mode === this.marketMode ? config.activePath : config.normalPath;
+            const editorButton = root.getChildByName(config.nodeName);
             const button = this.getOrCreateEditorSkinnedNode(
                 config.nodeName,
                 root,
@@ -268,8 +312,10 @@ export abstract class HomeFeatureMarketShell extends HomeViewBase {
                 initialSkinPath,
             );
             button.active = true;
-            button.setPosition(config.x, HomeConfig.MARKET_MODE_BUTTON_Y, 0);
-            (button.getComponent(UITransform) || button.addComponent(UITransform)).setContentSize(HomeConfig.MARKET_MODE_BUTTON_WIDTH, HomeConfig.MARKET_MODE_BUTTON_HEIGHT);
+            if (!editorButton?.isValid) {
+                button.setPosition(config.x, HomeConfig.MARKET_MODE_BUTTON_Y, 0);
+                (button.getComponent(UITransform) || button.addComponent(UITransform)).setContentSize(HomeConfig.MARKET_MODE_BUTTON_WIDTH, HomeConfig.MARKET_MODE_BUTTON_HEIGHT);
+            }
             button.setSiblingIndex((button.parent?.children.length || 1) - 1);
             this.marketModeButtonNodes[config.mode] = button;
             this.bindScaledClick(button, () => this.switchMarketMode(config.mode));
@@ -552,11 +598,17 @@ export abstract class HomeFeatureMarketShell extends HomeViewBase {
         const sellManagePage = this.isMarketSellManagePage();
         const viewportHeight = sellManagePage ? HomeConfig.MARKET_SELL_VIEWPORT_HEIGHT : HomeConfig.MARKET_VIEWPORT_HEIGHT;
         const viewportY = sellManagePage ? HomeConfig.MARKET_SELL_VIEWPORT_Y : HomeConfig.MARKET_VIEWPORT_Y;
+        const editorViewport = this.marketPanel.getChildByName('MarketListViewport');
         this.marketViewport = this.getOrCreateEditorNode('MarketListViewport', this.marketPanel, HomeConfig.MARKET_VIEWPORT_WIDTH, viewportHeight, 0, viewportY);
         this.marketViewport.active = true;
-        this.marketViewport.setPosition(0, viewportY, 0);
-        (this.marketViewport.getComponent(UITransform) || this.marketViewport.addComponent(UITransform)).setContentSize(HomeConfig.MARKET_VIEWPORT_WIDTH, viewportHeight);
+        if (!editorViewport?.isValid) {
+            this.marketViewport.setPosition(0, viewportY, 0);
+            (this.marketViewport.getComponent(UITransform) || this.marketViewport.addComponent(UITransform)).setContentSize(HomeConfig.MARKET_VIEWPORT_WIDTH, viewportHeight);
+        }
         this.marketViewport.setSiblingIndex(15);
+        const viewportTransform = this.marketViewport.getComponent(UITransform) || this.marketViewport.addComponent(UITransform);
+        const effectiveViewportWidth = viewportTransform.contentSize.width || HomeConfig.MARKET_VIEWPORT_WIDTH;
+        const effectiveViewportHeight = viewportTransform.contentSize.height || viewportHeight;
         const mask = this.marketViewport.getComponent(Mask) || this.marketViewport.addComponent(Mask);
         mask.type = Mask.Type.GRAPHICS_RECT;
     
@@ -573,12 +625,18 @@ export abstract class HomeFeatureMarketShell extends HomeViewBase {
         const listings = HomeConfig.MARKET_ITEMS
             .filter((item) => this.marketListingMatchesFilters(item))
             .sort((a, b) => this.marketSortAscending ? a.unitPrice - b.unitPrice : b.unitPrice - a.unitPrice);
-        const contentHeight = Math.max(HomeConfig.MARKET_VIEWPORT_HEIGHT, listings.length * HomeConfig.MARKET_ROW_GAP + 16);
+        const existingContent = this.marketViewport.getChildByName('MarketListContent');
+        const templateRow1 = existingContent?.getChildByName('MarketListing_1');
+        const templateRow2 = existingContent?.getChildByName('MarketListing_2');
+        const rowGap = templateRow1?.isValid && templateRow2?.isValid
+            ? Math.max(1, Math.abs(templateRow1.position.y - templateRow2.position.y))
+            : HomeConfig.MARKET_ROW_GAP;
+        const contentHeight = Math.max(effectiveViewportHeight, listings.length * rowGap + 16);
         const historyContent = this.marketViewport.getChildByName('MarketHistoryContent');
         if (historyContent?.isValid) historyContent.active = false;
-        this.marketContent = this.getOrCreateEditorNode('MarketListContent', this.marketViewport, HomeConfig.MARKET_VIEWPORT_WIDTH, contentHeight, 0, 0);
+        this.marketContent = this.getOrCreateEditorNode('MarketListContent', this.marketViewport, effectiveViewportWidth, contentHeight, 0, 0);
         this.marketContent.active = true;
-        (this.marketContent.getComponent(UITransform) || this.marketContent.addComponent(UITransform)).setContentSize(HomeConfig.MARKET_VIEWPORT_WIDTH, contentHeight);
+        (this.marketContent.getComponent(UITransform) || this.marketContent.addComponent(UITransform)).setContentSize(effectiveViewportWidth, contentHeight);
         this.marketContent.children
             .filter((child) => /^MarketListing_\d+$/.test(child.name)
                 || /^MarketSellListing_\d+$/.test(child.name)
@@ -589,12 +647,14 @@ export abstract class HomeFeatureMarketShell extends HomeViewBase {
         const empty = this.getOrCreateEditorLabel(this.marketContent, 'MarketListEmpty', '\u6682\u65e0\u7b26\u5408\u6761\u4ef6\u7684\u5546\u54c1', 28, 0, 260, 420, 56, new Color(92, 70, 50, 255));
         empty.node.active = listings.length === 0;
         this.applyMarketTextStyle(empty, 1);
-        const startY = HomeConfig.MARKET_VIEWPORT_HEIGHT / 2 - HomeConfig.MARKET_ROW_HEIGHT / 2 - 10;
+        const startY = templateRow1?.isValid
+            ? templateRow1.position.y
+            : effectiveViewportHeight / 2 - HomeConfig.MARKET_ROW_HEIGHT / 2 - 10;
         listings.forEach((item, index) => {
-            this.createMarketListingRow(this.marketContent!, item, index, startY - index * HomeConfig.MARKET_ROW_GAP);
+            this.createMarketListingRow(this.marketContent!, item, index, startY - index * rowGap);
         });
     
-        const maxScrollY = Math.max(0, contentHeight - HomeConfig.MARKET_VIEWPORT_HEIGHT);
+        const maxScrollY = Math.max(0, contentHeight - effectiveViewportHeight);
         this.clampMarketListScroll(this.marketContent, maxScrollY);
         this.bindBagGridScroll(this.marketViewport, this.marketContent, maxScrollY);
         this.bindBagGridScroll(this.marketContent, this.marketContent, maxScrollY);

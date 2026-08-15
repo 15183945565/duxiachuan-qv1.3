@@ -21,8 +21,8 @@ abstract class HomeFeatureItemDetailHost extends HomeViewBase {
 
 const BAG_ILLUSTRATION_DETAIL_LAYOUT = {
     board: { width: 586, height: 367 },
-    titleSkin: { x: 2.266, y: 121.974, width: 250, height: 60 },
-    title: { x: 0, y: 124.974, width: 300, height: 52 },
+    titleSkin: { x: 2.266, y: 127.974, width: 250, height: 60 },
+    title: { x: 0, y: 130.974, width: 300, height: 52 },
     iconFrame: { x: -132.088, y: -10.589, width: 120, height: 120 },
     icon: { x: 0, y: 2, width: 90, height: 90 },
     equipmentLevel: { x: 142.648, y: 52.28, width: 360, height: 32 },
@@ -34,7 +34,12 @@ const BAG_ILLUSTRATION_DETAIL_LAYOUT = {
     equipmentUsageY: -12.72,
     equipmentObtainY: -49.72,
 } as const;
-const BAG_ILLUSTRATION_TITLE_FONT_SIZE = 30;
+const ITEM_DETAIL_TITLE_FONT_SIZE = 36;
+const ITEM_DETAIL_TITLE_LINE_HEIGHT = 44;
+const ITEM_DETAIL_TITLE_Y = 191;
+const ITEM_DETAIL_BODY_TEXT_COLOR = new Color(79, 55, 35, 255);
+const ITEM_DETAIL_TITLE_TEXT_COLOR = new Color(126, 74, 36, 255);
+const BAG_ILLUSTRATION_TITLE_FONT_SIZE = ITEM_DETAIL_TITLE_FONT_SIZE;
 const BAG_ILLUSTRATION_TITLE_HORIZONTAL_PADDING = 108;
 const BAG_ILLUSTRATION_TITLE_MAX_WIDTH = 450;
 
@@ -109,16 +114,16 @@ export abstract class HomeFeatureItemDetail extends HomeFeatureItemDetailHost {
         if (title?.isValid && titleLabel) {
             if (board?.isValid && title.parent !== board) title.setParent(board);
             title.active = true;
-            title.setPosition(0, 185, 0);
+            title.setPosition(0, ITEM_DETAIL_TITLE_Y, 0);
             (title.getComponent(UITransform) || title.addComponent(UITransform)).setContentSize(300, 52);
             titleLabel.string = '\u7269\u54c1\u8be6\u60c5';
-            titleLabel.fontSize = 30;
-            titleLabel.lineHeight = 38;
-            titleLabel.color = new Color(126, 74, 36, 255);
+            titleLabel.fontSize = ITEM_DETAIL_TITLE_FONT_SIZE;
+            titleLabel.lineHeight = ITEM_DETAIL_TITLE_LINE_HEIGHT;
+            titleLabel.color = ITEM_DETAIL_TITLE_TEXT_COLOR;
             titleLabel.horizontalAlign = HorizontalTextAlignment.CENTER;
             titleLabel.verticalAlign = VerticalTextAlignment.CENTER;
             titleLabel.overflow = Overflow.SHRINK;
-            this.setLabelOutline(titleLabel, new Color(255, 245, 215, 255), 2);
+            this.setLabelOutline(titleLabel, new Color(255, 245, 215, 255), 0);
             title.setSiblingIndex(2);
         }
         const iconFrame = resetNode('ItemDetailIconFrame', -232, 72, 120, 120);
@@ -152,33 +157,33 @@ export abstract class HomeFeatureItemDetail extends HomeFeatureItemDetailHost {
         if (nameLabel) {
             nameLabel.fontSize = 28;
             nameLabel.lineHeight = 36;
-            nameLabel.color = new Color(255, 241, 190, 255);
+            nameLabel.color = ITEM_DETAIL_BODY_TEXT_COLOR;
             nameLabel.horizontalAlign = HorizontalTextAlignment.LEFT;
             nameLabel.verticalAlign = VerticalTextAlignment.CENTER;
             nameLabel.overflow = Overflow.SHRINK;
-            this.setLabelOutline(nameLabel, new Color(67, 28, 14, 255), 2);
+            this.setLabelOutline(nameLabel, new Color(255, 245, 215, 255), 0);
         }
         ['ItemDetailType', 'ItemDetailCount'].forEach((nodeName) => {
             const label = this.findNode(nodeName, popup)?.getComponent(Label);
             if (!label) return;
             label.fontSize = 24;
             label.lineHeight = 32;
-            label.color = new Color(236, 218, 184, 255);
+            label.color = ITEM_DETAIL_BODY_TEXT_COLOR;
             label.horizontalAlign = HorizontalTextAlignment.LEFT;
             label.verticalAlign = VerticalTextAlignment.CENTER;
             label.overflow = Overflow.SHRINK;
-            this.setLabelOutline(label, new Color(38, 24, 18, 255), 1);
+            this.setLabelOutline(label, new Color(255, 245, 215, 255), 0);
         });
         const descLabel = this.findNode('ItemDetailDescription', popup)?.getComponent(Label);
         if (descLabel) {
             descLabel.fontSize = 22;
             descLabel.lineHeight = 30;
-            descLabel.color = new Color(223, 207, 176, 255);
+            descLabel.color = ITEM_DETAIL_BODY_TEXT_COLOR;
             descLabel.horizontalAlign = HorizontalTextAlignment.LEFT;
             descLabel.verticalAlign = VerticalTextAlignment.TOP;
             descLabel.overflow = Overflow.SHRINK;
             descLabel.enableWrapText = true;
-            this.setLabelOutline(descLabel, new Color(34, 23, 18, 255), 1);
+            this.setLabelOutline(descLabel, new Color(255, 245, 215, 255), 0);
         }
         const close = this.findNode('ItemDetailPopupClose', popup);
         if (close?.isValid) close.active = false;
@@ -255,15 +260,15 @@ export abstract class HomeFeatureItemDetail extends HomeFeatureItemDetailHost {
             titleLayout.y,
             titleLabelWidth,
             titleLayout.height,
-            new Color(126, 74, 36, 255),
+            ITEM_DETAIL_TITLE_TEXT_COLOR,
         );
         titleLabel.horizontalAlign = HorizontalTextAlignment.CENTER;
         titleLabel.verticalAlign = VerticalTextAlignment.CENTER;
         titleLabel.overflow = Overflow.SHRINK;
-        titleLabel.color = new Color(126, 74, 36, 255);
+        titleLabel.color = ITEM_DETAIL_TITLE_TEXT_COLOR;
         titleLabel.fontSize = BAG_ILLUSTRATION_TITLE_FONT_SIZE;
-        titleLabel.lineHeight = 38;
-        this.setLabelOutline(titleLabel, new Color(255, 245, 215, 255), 2);
+        titleLabel.lineHeight = ITEM_DETAIL_TITLE_LINE_HEIGHT;
+        this.setLabelOutline(titleLabel, new Color(255, 245, 215, 255), 0);
         titleLabel.node.setSiblingIndex(2);
 
         const close = this.findNode('BagIllustrationDetailPopupClose', popup);
@@ -321,13 +326,14 @@ export abstract class HomeFeatureItemDetail extends HomeFeatureItemDetailHost {
                 levelLayout.y,
                 levelLayout.width,
                 levelLayout.height,
-                new Color(236, 218, 184, 255),
+                ITEM_DETAIL_BODY_TEXT_COLOR,
                 true,
             );
             levelLabel.horizontalAlign = HorizontalTextAlignment.LEFT;
             levelLabel.fontSize = 24;
             levelLabel.lineHeight = 30;
-            this.setLabelOutline(levelLabel, new Color(38, 24, 18, 255), 1);
+            levelLabel.color = ITEM_DETAIL_BODY_TEXT_COLOR;
+            this.setLabelOutline(levelLabel, new Color(255, 245, 215, 255), 0);
             levelLabel.node.setSiblingIndex(5);
 
             const statLayout = BAG_ILLUSTRATION_DETAIL_LAYOUT.equipmentStat;
@@ -340,13 +346,14 @@ export abstract class HomeFeatureItemDetail extends HomeFeatureItemDetailHost {
                 statLayout.y,
                 statLayout.width,
                 statLayout.height,
-                new Color(236, 218, 184, 255),
+                ITEM_DETAIL_BODY_TEXT_COLOR,
                 true,
             );
             statLabel.horizontalAlign = HorizontalTextAlignment.LEFT;
             statLabel.fontSize = 24;
             statLabel.lineHeight = 30;
-            this.setLabelOutline(statLabel, new Color(38, 24, 18, 255), 1);
+            statLabel.color = ITEM_DETAIL_BODY_TEXT_COLOR;
+            this.setLabelOutline(statLabel, new Color(255, 245, 215, 255), 0);
             statLabel.node.setSiblingIndex(5);
         } else {
             if (equipmentLevelNode?.isValid) equipmentLevelNode.active = false;
@@ -364,13 +371,14 @@ export abstract class HomeFeatureItemDetail extends HomeFeatureItemDetailHost {
             usageY,
             usageTitleLayout.width,
             usageTitleLayout.height,
-            new Color(236, 218, 184, 255),
+            ITEM_DETAIL_BODY_TEXT_COLOR,
             true,
         );
         usageTitle.horizontalAlign = HorizontalTextAlignment.LEFT;
         usageTitle.fontSize = 24;
         usageTitle.lineHeight = 32;
-        this.setLabelOutline(usageTitle, new Color(38, 24, 18, 255), 1);
+        usageTitle.color = ITEM_DETAIL_BODY_TEXT_COLOR;
+        this.setLabelOutline(usageTitle, new Color(255, 245, 215, 255), 0);
         usageTitle.node.setSiblingIndex(5);
 
         const usageValueLayout = BAG_ILLUSTRATION_DETAIL_LAYOUT.usageValue;
@@ -383,14 +391,15 @@ export abstract class HomeFeatureItemDetail extends HomeFeatureItemDetailHost {
             usageY,
             usageValueLayout.width,
             usageValueLayout.height,
-            new Color(236, 218, 184, 255),
+            ITEM_DETAIL_BODY_TEXT_COLOR,
             true,
         );
         usageValue.horizontalAlign = HorizontalTextAlignment.LEFT;
         usageValue.overflow = Overflow.SHRINK;
         usageValue.fontSize = 24;
         usageValue.lineHeight = 32;
-        this.setLabelOutline(usageValue, new Color(38, 24, 18, 255), 1);
+        usageValue.color = ITEM_DETAIL_BODY_TEXT_COLOR;
+        this.setLabelOutline(usageValue, new Color(255, 245, 215, 255), 0);
         usageValue.node.setSiblingIndex(5);
 
         const obtainBg = board.getChildByName('BagIllustrationObtainBg') || this.findNode('BagIllustrationObtainBg', popup);
@@ -409,13 +418,14 @@ export abstract class HomeFeatureItemDetail extends HomeFeatureItemDetailHost {
             obtainY,
             obtainTitleLayout.width,
             obtainTitleLayout.height,
-            new Color(236, 218, 184, 255),
+            ITEM_DETAIL_BODY_TEXT_COLOR,
             true,
         );
         obtainTitle.horizontalAlign = HorizontalTextAlignment.LEFT;
         obtainTitle.fontSize = 24;
         obtainTitle.lineHeight = 32;
-        this.setLabelOutline(obtainTitle, new Color(38, 24, 18, 255), 1);
+        obtainTitle.color = ITEM_DETAIL_BODY_TEXT_COLOR;
+        this.setLabelOutline(obtainTitle, new Color(255, 245, 215, 255), 0);
         obtainTitle.node.setSiblingIndex(6);
 
         const obtainValueLayout = BAG_ILLUSTRATION_DETAIL_LAYOUT.obtainValue;
@@ -428,14 +438,15 @@ export abstract class HomeFeatureItemDetail extends HomeFeatureItemDetailHost {
             obtainY,
             obtainValueLayout.width,
             obtainValueLayout.height,
-            new Color(236, 218, 184, 255),
+            ITEM_DETAIL_BODY_TEXT_COLOR,
             true,
         );
         obtainValue.horizontalAlign = HorizontalTextAlignment.LEFT;
         obtainValue.overflow = Overflow.SHRINK;
         obtainValue.fontSize = 24;
         obtainValue.lineHeight = 32;
-        this.setLabelOutline(obtainValue, new Color(38, 24, 18, 255), 1);
+        obtainValue.color = ITEM_DETAIL_BODY_TEXT_COLOR;
+        this.setLabelOutline(obtainValue, new Color(255, 245, 215, 255), 0);
         obtainValue.node.setSiblingIndex(6);
     }
     protected getBagIllustrationEquipmentAttrLines(item: BagIllustrationCatalogItem): [string, string] | null {
@@ -617,16 +628,16 @@ export abstract class HomeFeatureItemDetail extends HomeFeatureItemDetailHost {
         if (title?.isValid && titleLabel) {
             if (title.parent !== board) title.setParent(board);
             title.active = true;
-            title.setPosition(0, 185, 0);
+            title.setPosition(0, ITEM_DETAIL_TITLE_Y, 0);
             (title.getComponent(UITransform) || title.addComponent(UITransform)).setContentSize(300, 52);
             titleLabel.string = titleText;
-            titleLabel.fontSize = 30;
-            titleLabel.lineHeight = 38;
-            titleLabel.color = new Color(126, 74, 36, 255);
+            titleLabel.fontSize = ITEM_DETAIL_TITLE_FONT_SIZE;
+            titleLabel.lineHeight = ITEM_DETAIL_TITLE_LINE_HEIGHT;
+            titleLabel.color = ITEM_DETAIL_TITLE_TEXT_COLOR;
             titleLabel.horizontalAlign = HorizontalTextAlignment.CENTER;
             titleLabel.verticalAlign = VerticalTextAlignment.CENTER;
             titleLabel.overflow = Overflow.SHRINK;
-            this.setLabelOutline(titleLabel, new Color(255, 245, 215, 255), 2);
+            this.setLabelOutline(titleLabel, new Color(255, 245, 215, 255), 0);
             title.setSiblingIndex(2);
         }
 
@@ -660,12 +671,12 @@ export abstract class HomeFeatureItemDetail extends HomeFeatureItemDetailHost {
             (node.getComponent(UITransform) || node.addComponent(UITransform)).setContentSize(config.width, config.height);
             label.fontSize = config.fontSize;
             label.lineHeight = config.lineHeight;
-            label.color = new Color(92, 65, 43, 255);
+            label.color = ITEM_DETAIL_BODY_TEXT_COLOR;
             label.horizontalAlign = HorizontalTextAlignment.CENTER;
             label.verticalAlign = config.top ? VerticalTextAlignment.TOP : VerticalTextAlignment.CENTER;
             label.overflow = Overflow.SHRINK;
             label.enableWrapText = config.nodeName === 'ItemDetailDescription';
-            this.setLabelOutline(label, new Color(255, 247, 224, 255), 1);
+            this.setLabelOutline(label, new Color(255, 247, 224, 255), 0);
         });
 
         const secondary = this.findNode('ItemDetailSecondaryButton', popup);

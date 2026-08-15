@@ -6,6 +6,7 @@ import { DisplayAdapter } from '../../Services/DisplayAdapter';
 import { PhoneLoginPanel } from '../Login/PhoneLoginPanel';
 import { AuthService } from '../../Services/AuthService';
 import type { PhoneLoginResult } from '../../Services/AuthService';
+import { RepairService } from '../../Services/RepairService';
 import { GlobalButtonClickAudio } from '../Common/GlobalButtonClickAudio';
 import { applySimKaiFontToTree } from '../Common/UIFont';
 
@@ -100,6 +101,7 @@ export class BootLoadingView extends Component {
     private loginMusicClip: AudioClip | null = null;
     private loginMusicPromise: Promise<AudioClip> | null = null;
     private shouldPlayLoginMusic = false;
+    private isRepairingLogin = false;
     protected onLoad(): void {
         DisplayAdapter.apply();
         BackendRuntime.initialize();
@@ -110,6 +112,7 @@ export class BootLoadingView extends Component {
         this.setupLoginMusicSource();
         this.setupLoginPanel();
         this.setupEnterGameButton();
+        this.setupRepairButton();
         screen.on('window-resize', this.onWindowResize, this);
         screen.on('orientation-change', this.onOrientationChange, this);
         if (this.repairStatusLabel) this.repairStatusLabel.string = '';
@@ -138,6 +141,7 @@ export class BootLoadingView extends Component {
 
     protected onDestroy(): void {
         GlobalButtonClickAudio.uninstall(this.node);
+        this.safeOff(this.repairButton, Node.EventType.TOUCH_END, this.onRepairClicked);
         this.safeOff(this.enterGameButton, Node.EventType.TOUCH_START, this.onEnterGameTouchStart);
         this.safeOff(this.enterGameButton, Node.EventType.TOUCH_CANCEL, this.onEnterGameTouchCancel);
         this.safeOff(this.enterGameButton, Node.EventType.TOUCH_END, this.onEnterGameClicked);
@@ -364,6 +368,13 @@ export class BootLoadingView extends Component {
         this.setEnterGameButtonVisible(false);
     }
 
+    private setupRepairButton(): void {
+        if (!this.repairButton) return;
+
+        this.repairButton.off(Node.EventType.TOUCH_END, this.onRepairClicked, this);
+        this.repairButton.on(Node.EventType.TOUCH_END, this.onRepairClicked, this);
+    }
+
     private onWindowResize(): void {
         DisplayAdapter.apply();
     }
@@ -413,6 +424,33 @@ export class BootLoadingView extends Component {
         this.setHealthNoticeVisible(true);
         this.setEnterGameButtonVisible(true);
         this.playLoginMusic();
+    }
+
+    private async onRepairClicked(event?: EventTouch): Promise<void> {
+        if (event) {
+            event.propagationStopped = true;
+        }
+        if (this.isRepairingLogin) return;
+
+        this.isRepairingLogin = true;
+        if (this.repairStatusLabel) {
+            this.repairStatusLabel.string = '正在清除登录状态...';
+        }
+
+        try {
+            const result = await RepairService.repair();
+            if (this.repairStatusLabel) {
+                this.repairStatusLabel.string = result.message;
+            }
+            this.showLoginPanel();
+        } catch (err) {
+            console.error('[BootLoadingView] repair failed', err);
+            if (this.repairStatusLabel) {
+                this.repairStatusLabel.string = '修复失败，请刷新后重试';
+            }
+        } finally {
+            this.isRepairingLogin = false;
+        }
     }
 
     private onEnterGameTouchStart(event: EventTouch): void {

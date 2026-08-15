@@ -171,7 +171,7 @@
     "_lpos": {
       "__type__": "cc.Vec3",
       "x": 2.2660000000000196,
-      "y": 121.97400000000005,
+      "y": 127.97400000000005,
       "z": 0
     },
     "_lrot": {
@@ -307,7 +307,7 @@
     "_lpos": {
       "__type__": "cc.Vec3",
       "x": 0,
-      "y": 124.97400000000005,
+      "y": 130.97400000000005,
       "z": 0
     },
     "_lrot": {
@@ -386,10 +386,10 @@
     "_string": "一级突破珠",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
-    "_actualFontSize": 30,
-    "_fontSize": 30,
+    "_actualFontSize": 36,
+    "_fontSize": 36,
     "_fontFamily": "Microsoft YaHei",
-    "_lineHeight": 38,
+    "_lineHeight": 44,
     "_overflow": 2,
     "_enableWrapText": false,
     "_font": null,
@@ -400,7 +400,7 @@
     "_isUnderline": false,
     "_underlineHeight": 2,
     "_cacheMode": 0,
-    "_enableOutline": true,
+    "_enableOutline": false,
     "_outlineColor": {
       "__type__": "cc.Color",
       "r": 255,
@@ -408,7 +408,7 @@
       "b": 215,
       "a": 255
     },
-    "_outlineWidth": 2,
+    "_outlineWidth": 0,
     "_enableShadow": false,
     "_shadowColor": {
       "__type__": "cc.Color",
@@ -949,9 +949,9 @@
     "_dstBlendFactor": 4,
     "_color": {
       "__type__": "cc.Color",
-      "r": 236,
-      "g": 218,
-      "b": 184,
+      "r": 79,
+      "g": 55,
+      "b": 35,
       "a": 255
     },
     "_string": "等级：lv.1",
@@ -971,7 +971,7 @@
     "_isUnderline": false,
     "_underlineHeight": 2,
     "_cacheMode": 0,
-    "_enableOutline": true,
+    "_enableOutline": false,
     "_outlineColor": {
       "__type__": "cc.Color",
       "r": 38,
@@ -979,7 +979,7 @@
       "b": 18,
       "a": 255
     },
-    "_outlineWidth": 1,
+    "_outlineWidth": 0,
     "_enableShadow": false,
     "_shadowColor": {
       "__type__": "cc.Color",
@@ -1108,9 +1108,9 @@
     "_dstBlendFactor": 4,
     "_color": {
       "__type__": "cc.Color",
-      "r": 236,
-      "g": 218,
-      "b": 184,
+      "r": 79,
+      "g": 55,
+      "b": 35,
       "a": 255
     },
     "_string": "攻击：+40",
@@ -1130,7 +1130,7 @@
     "_isUnderline": false,
     "_underlineHeight": 2,
     "_cacheMode": 0,
-    "_enableOutline": true,
+    "_enableOutline": false,
     "_outlineColor": {
       "__type__": "cc.Color",
       "r": 38,
@@ -1138,7 +1138,7 @@
       "b": 18,
       "a": 255
     },
-    "_outlineWidth": 1,
+    "_outlineWidth": 0,
     "_enableShadow": false,
     "_shadowColor": {
       "__type__": "cc.Color",
@@ -1267,9 +1267,9 @@
     "_dstBlendFactor": 4,
     "_color": {
       "__type__": "cc.Color",
-      "r": 236,
-      "g": 218,
-      "b": 184,
+      "r": 79,
+      "g": 55,
+      "b": 35,
       "a": 255
     },
     "_string": "用途：",
@@ -1289,7 +1289,7 @@
     "_isUnderline": false,
     "_underlineHeight": 2,
     "_cacheMode": 0,
-    "_enableOutline": true,
+    "_enableOutline": false,
     "_outlineColor": {
       "__type__": "cc.Color",
       "r": 38,
@@ -1297,7 +1297,7 @@
       "b": 18,
       "a": 255
     },
-    "_outlineWidth": 1,
+    "_outlineWidth": 0,
     "_enableShadow": false,
     "_shadowColor": {
       "__type__": "cc.Color",
@@ -1426,9 +1426,9 @@
     "_dstBlendFactor": 4,
     "_color": {
       "__type__": "cc.Color",
-      "r": 236,
-      "g": 218,
-      "b": 184,
+      "r": 79,
+      "g": 55,
+      "b": 35,
       "a": 255
     },
     "_string": "角色突破",
@@ -1448,7 +1448,7 @@
     "_isUnderline": false,
     "_underlineHeight": 2,
     "_cacheMode": 0,
-    "_enableOutline": true,
+    "_enableOutline": false,
     "_outlineColor": {
       "__type__": "cc.Color",
       "r": 38,
@@ -1456,7 +1456,7 @@
       "b": 18,
       "a": 255
     },
-    "_outlineWidth": 1,
+    "_outlineWidth": 0,
     "_enableShadow": false,
     "_shadowColor": {
       "__type__": "cc.Color",
@@ -1721,9 +1721,9 @@
     "_dstBlendFactor": 4,
     "_color": {
       "__type__": "cc.Color",
-      "r": 236,
-      "g": 218,
-      "b": 184,
+      "r": 79,
+      "g": 55,
+      "b": 35,
       "a": 255
     },
     "_string": "获得：",
@@ -1743,7 +1743,7 @@
     "_isUnderline": false,
     "_underlineHeight": 2,
     "_cacheMode": 0,
-    "_enableOutline": true,
+    "_enableOutline": false,
     "_outlineColor": {
       "__type__": "cc.Color",
       "r": 38,
@@ -1751,7 +1751,7 @@
       "b": 18,
       "a": 255
     },
-    "_outlineWidth": 1,
+    "_outlineWidth": 0,
     "_enableShadow": false,
     "_shadowColor": {
       "__type__": "cc.Color",
@@ -1880,9 +1880,9 @@
     "_dstBlendFactor": 4,
     "_color": {
       "__type__": "cc.Color",
-      "r": 236,
-      "g": 218,
-      "b": 184,
+      "r": 79,
+      "g": 55,
+      "b": 35,
       "a": 255
     },
     "_string": "战场",
@@ -1902,7 +1902,7 @@
     "_isUnderline": false,
     "_underlineHeight": 2,
     "_cacheMode": 0,
-    "_enableOutline": true,
+    "_enableOutline": false,
     "_outlineColor": {
       "__type__": "cc.Color",
       "r": 38,
@@ -1910,7 +1910,7 @@
       "b": 18,
       "a": 255
     },
-    "_outlineWidth": 1,
+    "_outlineWidth": 0,
     "_enableShadow": false,
     "_shadowColor": {
       "__type__": "cc.Color",

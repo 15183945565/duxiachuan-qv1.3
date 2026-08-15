@@ -62,9 +62,13 @@ export abstract class HomeFeatureMarketTrade extends HomeViewBase {
     protected createMarketListingRow(parent: Node, item: MarketListingData, index: number, y: number): void {
         const row = this.getOrCreateEditorSkinnedNode(`MarketListing_${index + 1}`, parent, HomeConfig.MARKET_ROW_WIDTH, HomeConfig.MARKET_ROW_HEIGHT, 0, y, HomeConfig.UI_MARKET_ITEM_ROW);
         row.active = true;
-        row.setPosition(0, y, 0);
-        (row.getComponent(UITransform) || row.addComponent(UITransform)).setContentSize(HomeConfig.MARKET_ROW_WIDTH, HomeConfig.MARKET_ROW_HEIGHT);
         const layoutTemplate = this.getMarketListingLayoutTemplate(parent, row);
+        const templateTransform = layoutTemplate?.getComponent(UITransform);
+        row.setPosition(layoutTemplate?.position.x || 0, y, 0);
+        (row.getComponent(UITransform) || row.addComponent(UITransform)).setContentSize(
+            templateTransform?.contentSize.width || HomeConfig.MARKET_ROW_WIDTH,
+            templateTransform?.contentSize.height || HomeConfig.MARKET_ROW_HEIGHT,
+        );
 
         const itemFrame = this.getOrCreateEditorSkinnedNode('MarketItemFrame', row, 102, 102, -252, -21, item.framePath);
         itemFrame.active = true;
@@ -149,16 +153,18 @@ export abstract class HomeFeatureMarketTrade extends HomeViewBase {
     
         const transactions = this.marketTransactions.filter((transaction) => (transaction.mode || 'trade') === this.marketMode);
         const transactionCount = Math.max(transactions.length, 1);
-        const viewportHeight = this.marketViewport.getComponent(UITransform)?.contentSize.height || HomeConfig.MARKET_VIEWPORT_HEIGHT;
+        const viewportTransform = this.marketViewport.getComponent(UITransform) || this.marketViewport.addComponent(UITransform);
+        const viewportWidth = viewportTransform.contentSize.width || HomeConfig.MARKET_VIEWPORT_WIDTH;
+        const viewportHeight = viewportTransform.contentSize.height || HomeConfig.MARKET_VIEWPORT_HEIGHT;
         const historyRowHeight = 80;
         const historyRowGap = 80;
         const historyTopPadding = 18;
         const contentHeight = Math.max(viewportHeight, transactionCount * historyRowGap + historyTopPadding + 24);
         const listContent = this.marketViewport.getChildByName('MarketListContent');
         if (listContent?.isValid) listContent.active = false;
-        this.marketContent = this.getOrCreateEditorNode('MarketHistoryContent', this.marketViewport, HomeConfig.MARKET_VIEWPORT_WIDTH, contentHeight, 0, 0);
+        this.marketContent = this.getOrCreateEditorNode('MarketHistoryContent', this.marketViewport, viewportWidth, contentHeight, 0, 0);
         this.marketContent.active = true;
-        (this.marketContent.getComponent(UITransform) || this.marketContent.addComponent(UITransform)).setContentSize(HomeConfig.MARKET_VIEWPORT_WIDTH, contentHeight);
+        (this.marketContent.getComponent(UITransform) || this.marketContent.addComponent(UITransform)).setContentSize(viewportWidth, contentHeight);
         this.marketContent.children
             .filter((child) => /^MarketHistory_\d+$/.test(child.name) || child.name === 'MarketHistoryEmpty')
             .forEach((child) => {
@@ -174,10 +180,10 @@ export abstract class HomeFeatureMarketTrade extends HomeViewBase {
     
         const startY = contentHeight / 2 - historyTopPadding - historyRowHeight / 2;
         transactions.forEach((transaction, index) => {
-            const row = this.getOrCreateEditorNode(`MarketHistory_${index + 1}`, this.marketContent!, HomeConfig.MARKET_VIEWPORT_WIDTH, historyRowHeight, 0, startY - index * historyRowGap);
+            const row = this.getOrCreateEditorNode(`MarketHistory_${index + 1}`, this.marketContent!, viewportWidth, historyRowHeight, 0, startY - index * historyRowGap);
             row.active = true;
             row.setPosition(0, startY - index * historyRowGap, 0);
-            (row.getComponent(UITransform) || row.addComponent(UITransform)).setContentSize(HomeConfig.MARKET_VIEWPORT_WIDTH, historyRowHeight);
+            (row.getComponent(UITransform) || row.addComponent(UITransform)).setContentSize(viewportWidth, historyRowHeight);
             const rowSkin = row.getComponent(Sprite);
             if (rowSkin) rowSkin.enabled = false;
             this.applyMarketHistoryLogRow(row, transaction);
@@ -265,9 +271,9 @@ export abstract class HomeFeatureMarketTrade extends HomeViewBase {
     }
     protected applyMarketTextStyle(label: Label, outlineWidth: number): void {
         applySimKaiFont(label);
-        label.enableOutline = true;
+        label.enableOutline = outlineWidth > 0;
         label.outlineColor = new Color(255, 249, 230, 255);
-        label.outlineWidth = outlineWidth;
+        label.outlineWidth = Math.max(0, outlineWidth);
     }
     protected getMarketTotalPrice(unitPrice: number, amount: number): number {
         return Math.round(unitPrice * amount * 100) / 100;

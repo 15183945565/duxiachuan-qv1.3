@@ -43,12 +43,19 @@ export abstract class HomeFeatureMarketSell extends HomeFeatureMarketSellHost {
         const rowCount = listingCount + (hasAddSlot ? 1 : 0);
         const extraTopGap = hasAddSlot && listingCount > 0 ? HomeConfig.MARKET_SELL_ADD_TO_LISTING_EXTRA_GAP : 0;
         const viewportHeight = this.marketViewport.getComponent(UITransform)?.contentSize.height || HomeConfig.MARKET_SELL_VIEWPORT_HEIGHT;
-        const contentHeight = Math.max(viewportHeight, Math.max(rowCount, 1) * HomeConfig.MARKET_ROW_GAP + extraTopGap + 16);
+        const existingContent = this.marketViewport.getChildByName('MarketListContent');
+        const templateRow1 = existingContent?.getChildByName('MarketListing_1');
+        const templateRow2 = existingContent?.getChildByName('MarketListing_2');
+        const rowGap = templateRow1?.isValid && templateRow2?.isValid
+            ? Math.max(1, Math.abs(templateRow1.position.y - templateRow2.position.y))
+            : HomeConfig.MARKET_ROW_GAP;
+        const viewportWidth = this.marketViewport.getComponent(UITransform)?.contentSize.width || HomeConfig.MARKET_VIEWPORT_WIDTH;
+        const contentHeight = Math.max(viewportHeight, Math.max(rowCount, 1) * rowGap + extraTopGap + 16);
         const historyContent = this.marketViewport.getChildByName('MarketHistoryContent');
         if (historyContent?.isValid) historyContent.active = false;
-        this.marketContent = this.getOrCreateEditorNode('MarketListContent', this.marketViewport, HomeConfig.MARKET_VIEWPORT_WIDTH, contentHeight, 0, 0);
+        this.marketContent = this.getOrCreateEditorNode('MarketListContent', this.marketViewport, viewportWidth, contentHeight, 0, 0);
         this.marketContent.active = true;
-        (this.marketContent.getComponent(UITransform) || this.marketContent.addComponent(UITransform)).setContentSize(HomeConfig.MARKET_VIEWPORT_WIDTH, contentHeight);
+        (this.marketContent.getComponent(UITransform) || this.marketContent.addComponent(UITransform)).setContentSize(viewportWidth, contentHeight);
         this.marketContent.children
             .filter((child) => /^MarketListing_\d+$/.test(child.name)
                 || /^MarketSellListing_\d+$/.test(child.name)
@@ -60,13 +67,17 @@ export abstract class HomeFeatureMarketSell extends HomeFeatureMarketSellHost {
 
         const addSlotTemplate = this.marketContent.getChildByName('MarketSellAddSlot');
         const defaultStartY = viewportHeight / 2 - HomeConfig.MARKET_ROW_HEIGHT / 2 - 10;
-        const startY = hasAddSlot && addSlotTemplate?.isValid ? addSlotTemplate.position.y : defaultStartY;
+        const startY = hasAddSlot && addSlotTemplate?.isValid
+            ? addSlotTemplate.position.y
+            : templateRow1?.isValid
+                ? templateRow1.position.y
+                : defaultStartY;
         const listingStartIndex = hasAddSlot ? 1 : 0;
         if (hasAddSlot) {
             this.createMarketSellAddRow(this.marketContent, startY);
         }
         postedListings.forEach((item, index) => {
-            this.createMarketSellPostedRow(this.marketContent!, item, index, startY - (index + listingStartIndex) * HomeConfig.MARKET_ROW_GAP - extraTopGap);
+            this.createMarketSellPostedRow(this.marketContent!, item, index, startY - (index + listingStartIndex) * rowGap - extraTopGap);
         });
 
         const maxScrollY = Math.max(0, contentHeight - viewportHeight);
@@ -102,9 +113,13 @@ export abstract class HomeFeatureMarketSell extends HomeFeatureMarketSellHost {
     protected createMarketSellPostedRow(parent: Node, item: MarketSellListingData, index: number, y: number): void {
         const row = this.getOrCreateEditorSkinnedNode(`MarketSellListing_${index + 1}`, parent, HomeConfig.MARKET_ROW_WIDTH, HomeConfig.MARKET_ROW_HEIGHT, 0, y, HomeConfig.UI_MARKET_ITEM_ROW);
         row.active = true;
-        row.setPosition(0, y, 0);
-        (row.getComponent(UITransform) || row.addComponent(UITransform)).setContentSize(HomeConfig.MARKET_ROW_WIDTH, HomeConfig.MARKET_ROW_HEIGHT);
         const layoutTemplate = this.getMarketListingLayoutTemplate(parent, row);
+        const templateTransform = layoutTemplate?.getComponent(UITransform);
+        row.setPosition(layoutTemplate?.position.x || 0, y, 0);
+        (row.getComponent(UITransform) || row.addComponent(UITransform)).setContentSize(
+            templateTransform?.contentSize.width || HomeConfig.MARKET_ROW_WIDTH,
+            templateTransform?.contentSize.height || HomeConfig.MARKET_ROW_HEIGHT,
+        );
 
         const itemFrame = this.getOrCreateEditorSkinnedNode('MarketItemFrame', row, 102, 102, -252, -21, item.framePath);
         itemFrame.active = true;

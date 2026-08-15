@@ -288,7 +288,7 @@
     "_lpos": {
       "__type__": "cc.Vec3",
       "x": 0,
-      "y": 185,
+      "y": 191,
       "z": 0
     },
     "_lrot": {
@@ -359,10 +359,10 @@
     "_string": "物品详情",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
-    "_actualFontSize": 30,
-    "_fontSize": 30,
+    "_actualFontSize": 36,
+    "_fontSize": 36,
     "_fontFamily": "Microsoft YaHei",
-    "_lineHeight": 38,
+    "_lineHeight": 44,
     "_overflow": 2,
     "_enableWrapText": false,
     "_font": null,
@@ -373,7 +373,7 @@
     "_isUnderline": false,
     "_underlineHeight": 2,
     "_cacheMode": 0,
-    "_enableOutline": true,
+    "_enableOutline": false,
     "_outlineColor": {
       "__type__": "cc.Color",
       "r": 255,
@@ -381,7 +381,7 @@
       "b": 215,
       "a": 255
     },
-    "_outlineWidth": 2,
+    "_outlineWidth": 0,
     "_enableShadow": false,
     "_shadowColor": {
       "__type__": "cc.Color",
@@ -949,9 +949,9 @@
     "_dstBlendFactor": 4,
     "_color": {
       "__type__": "cc.Color",
-      "r": 255,
-      "g": 241,
-      "b": 190,
+      "r": 79,
+      "g": 55,
+      "b": 35,
       "a": 255
     },
     "_string": "物品名称",
@@ -971,7 +971,7 @@
     "_isUnderline": false,
     "_underlineHeight": 2,
     "_cacheMode": 0,
-    "_enableOutline": true,
+    "_enableOutline": false,
     "_outlineColor": {
       "__type__": "cc.Color",
       "r": 67,
@@ -979,7 +979,7 @@
       "b": 14,
       "a": 255
     },
-    "_outlineWidth": 2,
+    "_outlineWidth": 0,
     "_enableShadow": false,
     "_shadowColor": {
       "__type__": "cc.Color",
@@ -1081,9 +1081,9 @@
     "_dstBlendFactor": 4,
     "_color": {
       "__type__": "cc.Color",
-      "r": 236,
-      "g": 218,
-      "b": 184,
+      "r": 79,
+      "g": 55,
+      "b": 35,
       "a": 255
     },
     "_string": "类型：道具",
@@ -1103,7 +1103,7 @@
     "_isUnderline": false,
     "_underlineHeight": 2,
     "_cacheMode": 0,
-    "_enableOutline": true,
+    "_enableOutline": false,
     "_outlineColor": {
       "__type__": "cc.Color",
       "r": 38,
@@ -1111,7 +1111,7 @@
       "b": 18,
       "a": 255
     },
-    "_outlineWidth": 1,
+    "_outlineWidth": 0,
     "_enableShadow": false,
     "_shadowColor": {
       "__type__": "cc.Color",
@@ -1213,9 +1213,9 @@
     "_dstBlendFactor": 4,
     "_color": {
       "__type__": "cc.Color",
-      "r": 236,
-      "g": 218,
-      "b": 184,
+      "r": 79,
+      "g": 55,
+      "b": 35,
       "a": 255
     },
     "_string": "数量：0",
@@ -1235,7 +1235,7 @@
     "_isUnderline": false,
     "_underlineHeight": 2,
     "_cacheMode": 0,
-    "_enableOutline": true,
+    "_enableOutline": false,
     "_outlineColor": {
       "__type__": "cc.Color",
       "r": 38,
@@ -1243,7 +1243,7 @@
       "b": 18,
       "a": 255
     },
-    "_outlineWidth": 1,
+    "_outlineWidth": 0,
     "_enableShadow": false,
     "_shadowColor": {
       "__type__": "cc.Color",
@@ -1345,9 +1345,9 @@
     "_dstBlendFactor": 4,
     "_color": {
       "__type__": "cc.Color",
-      "r": 223,
-      "g": 207,
-      "b": 176,
+      "r": 79,
+      "g": 55,
+      "b": 35,
       "a": 255
     },
     "_string": "物品用途和获取方式在这里显示。",
@@ -1367,7 +1367,7 @@
     "_isUnderline": false,
     "_underlineHeight": 2,
     "_cacheMode": 0,
-    "_enableOutline": true,
+    "_enableOutline": false,
     "_outlineColor": {
       "__type__": "cc.Color",
       "r": 34,
@@ -1375,7 +1375,7 @@
       "b": 18,
       "a": 255
     },
-    "_outlineWidth": 1,
+    "_outlineWidth": 0,
     "_enableShadow": false,
     "_shadowColor": {
       "__type__": "cc.Color",

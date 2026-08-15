@@ -168,7 +168,25 @@ type DuelJianghuRankEntry = {
     dodge: number;
     streak: number;
 };
+type WanderingMerchantRecycleItem = {
+    catalogId: string;
+    price: number;
+    purchaseLimit: number;
+};
+type WanderingMerchantRecycleEntry = WanderingMerchantRecycleItem & {
+    catalog: BagIllustrationCatalogItem;
+};
 export abstract class HomeViewRoleBag extends HomeViewBase {
+    protected abstract formatCommercePrice(value: number): string;
+    protected abstract layoutCommerceQuantityConfirmPopup(
+        popup: Node,
+        titleText: string,
+        actionText: string,
+        itemName: string,
+        unitPrice: number,
+        currencyName?: string,
+    ): { quantityValue: Label | null; message: RichText | null };
+
     protected readonly roleEquippedItems = new Map<RoleEquipmentSlotId, RoleEquipmentRuntimeItem>();
     protected roleEquipDetailPopup: Node | null = null;
     protected roleEquipReplacePopup: Node | null = null;
@@ -201,6 +219,7 @@ export abstract class HomeViewRoleBag extends HomeViewBase {
     protected readonly characterSelectRoleSkeletons = new Map<RoleGender, sp.Skeleton>();
     protected readonly characterSelectCardRoots = new Map<RoleGender, Node>();
     protected readonly roleEquipmentLevels = new Map<RoleEquipmentSlotId, number>();
+    protected readonly wanderingMerchantRemaining = new Map<string, number>();
     protected readonly roleInventoryCounts = new Map<string, number>(
         HomeConfig.ROLE_INITIAL_BAG_ITEMS.map((item) => [item.itemId, item.count] as [string, number]),
     );
@@ -239,6 +258,7 @@ export abstract class HomeViewRoleBag extends HomeViewBase {
             characterSelectRoleSkeletons: new Map<RoleGender, sp.Skeleton>(),
             characterSelectCardRoots: new Map<RoleGender, Node>(),
             roleEquipmentLevels: new Map<RoleEquipmentSlotId, number>(),
+            wanderingMerchantRemaining: new Map<string, number>(),
             roleInventoryCounts: new Map<string, number>(
                 HomeConfig.ROLE_INITIAL_BAG_ITEMS.map(
                     (item) => [item.itemId, item.count] as [string, number],
@@ -424,6 +444,8 @@ export abstract class HomeViewRoleBag extends HomeViewBase {
             this.bindGiftPage(panel);
         } else if (panel.name === 'SharePanel') {
             this.bindSharePage(panel);
+        } else if (panel.name === 'WanderingMerchantPanel') {
+            this.bindWanderingMerchantPage(panel);
         }
     }
     protected bindAlliancePage(panel: Node): void {
@@ -550,6 +572,185 @@ export abstract class HomeViewRoleBag extends HomeViewBase {
             const label = node.getComponentInChildren(Label);
             if (label) label.color = selected ? new Color(101, 52, 18, 255) : new Color(65, 57, 45, 255);
         });
+    }
+    protected getWanderingMerchantRecycleConfigs(): WanderingMerchantRecycleItem[] {
+        return [
+            { catalogId: 'material_092', price: 20, purchaseLimit: 50 },
+            { catalogId: 'material_087', price: 40, purchaseLimit: 40 },
+            { catalogId: 'material_089', price: 80, purchaseLimit: 30 },
+            { catalogId: 'material_090', price: 120, purchaseLimit: 20 },
+            { catalogId: 'material_091', price: 180, purchaseLimit: 15 },
+            { catalogId: 'material_088', price: 260, purchaseLimit: 10 },
+        ];
+    }
+    protected getWanderingMerchantRecycleEntries(): WanderingMerchantRecycleEntry[] {
+        return this.getWanderingMerchantRecycleConfigs()
+            .map((config) => {
+                const catalog = BAG_ILLUSTRATION_CATALOG.find((item) => item.id === config.catalogId);
+                return catalog ? { ...config, catalog } : null;
+            })
+            .filter((entry): entry is WanderingMerchantRecycleEntry => Boolean(entry));
+    }
+    protected ensureWanderingMerchantRemaining(): void {
+        if (this.wanderingMerchantRemaining.size > 0) return;
+
+        let parsed: Record<string, number> = {};
+        const raw = sys.localStorage.getItem(HomeConfig.WANDERING_MERCHANT_STORE_KEY);
+        if (raw) {
+            try {
+                parsed = JSON.parse(raw) as Record<string, number>;
+            } catch (err) {
+                console.warn('[MainHomeView] invalid wandering merchant store', err);
+            }
+        }
+
+        this.getWanderingMerchantRecycleConfigs().forEach((config) => {
+            const stored = parsed[config.catalogId];
+            const remaining = typeof stored === 'number' && Number.isFinite(stored)
+                ? Math.max(0, Math.min(config.purchaseLimit, Math.floor(stored)))
+                : config.purchaseLimit;
+            this.wanderingMerchantRemaining.set(config.catalogId, remaining);
+        });
+    }
+    protected saveWanderingMerchantRemaining(): void {
+        const data: Record<string, number> = {};
+        this.wanderingMerchantRemaining.forEach((value, key) => {
+            data[key] = Math.max(0, Math.floor(value));
+        });
+        sys.localStorage.setItem(HomeConfig.WANDERING_MERCHANT_STORE_KEY, JSON.stringify(data));
+    }
+    protected getWanderingMerchantRemaining(entry: WanderingMerchantRecycleEntry): number {
+        this.ensureWanderingMerchantRemaining();
+        return Math.max(0, this.wanderingMerchantRemaining.get(entry.catalogId) ?? entry.purchaseLimit);
+    }
+    protected bindWanderingMerchantPage(panel: Node): void {
+        this.ensureWanderingMerchantRemaining();
+
+        const oldScrollView = this.findNode('WanderingMerchantScrollView', panel);
+        if (oldScrollView) oldScrollView.active = false;
+        const oldTemplate = this.findNode('WanderingMerchantArticleTemplate', panel);
+        if (oldTemplate) oldTemplate.active = false;
+
+        const board = this.findNode('WanderingMerchantBoard', panel) || panel;
+        let grid = this.findNode('WanderingMerchantRecycleGrid', panel);
+        if (!grid?.isValid) {
+            grid = this.createNode('WanderingMerchantRecycleGrid', board, 672, 664, 0, 78);
+        }
+        if (grid.parent !== board) {
+            grid.setParent(board);
+        }
+        grid.active = true;
+        grid.setPosition(0, 78, 0);
+        (grid.getComponent(UITransform) || grid.addComponent(UITransform)).setContentSize(672, 664);
+        [...grid.children].forEach((child) => {
+            child.removeFromParent();
+            child.destroy();
+        });
+
+        this.getWanderingMerchantRecycleEntries().forEach((entry, index) => {
+            this.createWanderingMerchantCard(grid!, entry, index);
+        });
+    }
+    protected createWanderingMerchantCard(parent: Node, entry: WanderingMerchantRecycleEntry, index: number): void {
+        const cardWidth = 207;
+        const cardHeight = 278;
+        const col = index % 3;
+        const row = Math.floor(index / 3);
+        const x = (col - 1) * 224;
+        const y = 166 - row * 320;
+        const cell = this.createNode(`WanderingMerchantRecycle_${entry.catalogId}`, parent, cardWidth, cardHeight, x, y);
+
+        this.createSkinnedNode('WanderingMerchantItemBg', cell, cardWidth, cardHeight, 0, 0, HomeConfig.UI_WANDERING_MERCHANT_ITEM_BG).setSiblingIndex(0);
+
+        const name = this.createLabel(cell, 'WanderingMerchantItemName', entry.catalog.name, 20, 0, 98, 176, 38, new Color(92, 55, 28, 255));
+        name.lineHeight = 26;
+        name.overflow = Overflow.SHRINK;
+        this.setLabelOutline(name, new Color(255, 244, 202, 255), 1);
+        name.node.setSiblingIndex(2);
+
+        const iconFrame = this.createSkinnedNode('WanderingMerchantItemFrame', cell, 96, 96, 0, 29, entry.catalog.framePath);
+        iconFrame.setSiblingIndex(3);
+        this.createSkinnedNode('WanderingMerchantItemIcon', iconFrame, 72, 72, 0, 2, entry.catalog.iconPath).setSiblingIndex(1);
+
+        const sellButton = this.createSkinnedNode('WanderingMerchantSellButton', cell, 92, 40, 0, -103, HomeConfig.UI_WANDERING_MERCHANT_SELL_BUTTON);
+        sellButton.setSiblingIndex(5);
+        const sellLabel = this.createLabel(sellButton, 'WanderingMerchantSellButtonLabel', '出售', 22, 0, 1, 86, 34, new Color(255, 238, 218, 255));
+        sellLabel.lineHeight = 28;
+        this.setLabelOutline(sellLabel, new Color(94, 36, 35, 255), 2);
+        sellLabel.node.setSiblingIndex(1);
+        const opacity = sellButton.getComponent(UIOpacity) || sellButton.addComponent(UIOpacity);
+        opacity.opacity = this.getWanderingMerchantRemaining(entry) > 0 ? 255 : 135;
+        this.bindScaledClick(sellButton, () => this.openWanderingMerchantSellConfirm(entry));
+    }
+    protected formatWanderingMerchantSellRichMessage(entry: WanderingMerchantRecycleEntry, quantity: number): string {
+        const totalPrice = this.formatCommercePrice(entry.price * quantity);
+        const remaining = this.getWanderingMerchantRemaining(entry);
+        const normal = '#6f462a';
+        const red = '#d83a2e';
+        const name = this.escapeRichText(entry.catalog.name);
+        return `<outline color=#fff7dc width=1><color=${normal}>是否以</color><color=${red}>${totalPrice}</color><color=${normal}>元宝出售给流浪商人${name} x</color><color=${red}>${quantity}</color><color=${normal}>？\n（剩余收购数量：${remaining}）</color></outline>`;
+    }
+    protected openWanderingMerchantSellConfirm(entry: WanderingMerchantRecycleEntry): void {
+        const remaining = this.getWanderingMerchantRemaining(entry);
+        if (remaining <= 0) {
+            this.showToast('该遗珍今日收购数量已满');
+            return;
+        }
+
+        this.commerceQuantity = 1;
+        this.commerceQuantityMax = remaining;
+        this.openSharedFlowPopup('ConfirmPopup', {
+            title: '提示说明',
+            variant: 'commerceQuantityConfirm',
+            onConfirm: () => this.completeWanderingMerchantSale(entry, this.commerceQuantity),
+        });
+
+        const popup = this.popupRoot?.getChildByName('ConfirmPopup') || this.findNode('ConfirmPopup');
+        if (!popup?.isValid) return;
+        const { quantityValue, message } = this.layoutCommerceQuantityConfirmPopup(popup, '提示说明', '出售', entry.catalog.name, entry.price, '元宝');
+        const refresh = (): void => {
+            if (quantityValue) quantityValue.string = `${this.commerceQuantity}`;
+            if (message) message.string = this.formatWanderingMerchantSellRichMessage(entry, this.commerceQuantity);
+        };
+        const minus = this.findNode('ConfirmQuantityMinus', popup);
+        const plus = this.findNode('ConfirmQuantityPlus', popup);
+        if (minus) this.bindScaledClick(minus, () => {
+            if (this.commerceQuantity <= 1) {
+                this.showToast('数量不能低于1');
+                refresh();
+                return;
+            }
+            this.commerceQuantity = Math.max(1, this.commerceQuantity - 1);
+            refresh();
+        });
+        if (plus) this.bindScaledClick(plus, () => {
+            if (this.commerceQuantity >= this.commerceQuantityMax) {
+                this.showToast(`数量已达到上限：${this.commerceQuantityMax}`);
+                refresh();
+                return;
+            }
+            this.commerceQuantity = Math.min(this.commerceQuantityMax, this.commerceQuantity + 1);
+            refresh();
+        });
+        refresh();
+    }
+    protected completeWanderingMerchantSale(entry: WanderingMerchantRecycleEntry, quantity: number): void {
+        const remaining = this.getWanderingMerchantRemaining(entry);
+        const soldCount = Math.max(0, Math.min(remaining, Math.floor(quantity)));
+        if (soldCount <= 0) {
+            this.showToast('该遗珍今日收购数量已满');
+            return;
+        }
+
+        const nextRemaining = Math.max(0, remaining - soldCount);
+        this.wanderingMerchantRemaining.set(entry.catalogId, nextRemaining);
+        this.saveWanderingMerchantRemaining();
+        this.showToast(`出售成功，获得${this.formatCommercePrice(entry.price * soldCount)}元宝`);
+
+        const panel = this.popupRoot?.getChildByName('WanderingMerchantPanel') || this.findNode('WanderingMerchantPanel');
+        if (panel?.isValid && panel.active) {
+            this.bindWanderingMerchantPage(panel);
+        }
     }
     protected ensureSharedPopupDimMask(popup: Node, closeOnTap: boolean): Node {
         const maskName = `${popup.name}DimMask`;
