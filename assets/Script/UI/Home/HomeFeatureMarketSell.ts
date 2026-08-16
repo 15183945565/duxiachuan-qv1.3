@@ -79,6 +79,7 @@ export abstract class HomeFeatureMarketSell extends HomeFeatureMarketSellHost {
         postedListings.forEach((item, index) => {
             this.createMarketSellPostedRow(this.marketContent!, item, index, startY - (index + listingStartIndex) * rowGap - extraTopGap);
         });
+        this.syncMarketListingPriceLayout(this.marketContent);
 
         const maxScrollY = Math.max(0, contentHeight - viewportHeight);
         this.clampMarketListScroll(this.marketContent, maxScrollY);
@@ -115,7 +116,7 @@ export abstract class HomeFeatureMarketSell extends HomeFeatureMarketSellHost {
         row.active = true;
         const layoutTemplate = this.getMarketListingLayoutTemplate(parent, row);
         const templateTransform = layoutTemplate?.getComponent(UITransform);
-        row.setPosition(layoutTemplate?.position.x || 0, y, 0);
+        row.setPosition(layoutTemplate?.position.x ?? 0, y, 0);
         (row.getComponent(UITransform) || row.addComponent(UITransform)).setContentSize(
             templateTransform?.contentSize.width || HomeConfig.MARKET_ROW_WIDTH,
             templateTransform?.contentSize.height || HomeConfig.MARKET_ROW_HEIGHT,

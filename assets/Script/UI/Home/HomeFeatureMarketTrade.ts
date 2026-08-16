@@ -41,10 +41,30 @@ export abstract class HomeFeatureMarketTrade extends HomeViewBase {
         const currentY = content.position.y || 0;
         content.setPosition(0, this.clamp(currentY, 0, maxScrollY), 0);
     }
+    protected marketListingRowHasLayout(row: Node | null | undefined): boolean {
+        if (!row?.isValid) return false;
+        return [
+            'MarketItemFrame',
+            'MarketItemIcon',
+            'MarketItemAmount',
+            'MarketItemName',
+            'MarketUnitPrice',
+            'MarketTotalPrice',
+            'MarketActionButton',
+        ].some((childName) => row.getChildByName(childName)?.isValid);
+    }
     protected getMarketListingLayoutTemplate(parent: Node, row: Node): Node | null {
-        const preferred = parent.getChildByName('MarketListing_2');
-        if (preferred?.isValid) return preferred;
-        return parent.children.find((child) => child !== row && /^MarketListing_\d+$/.test(child.name)) || row;
+        const templates = parent.children
+            .filter((child) => child !== row && /^MarketListing_\d+$/.test(child.name) && this.marketListingRowHasLayout(child))
+            .sort((a, b) => {
+                const left = Number(a.name.match(/\d+$/)?.[0] || 0);
+                const right = Number(b.name.match(/\d+$/)?.[0] || 0);
+                return left - right;
+            });
+        const firstTemplate = row.name === 'MarketListing_1' && this.marketListingRowHasLayout(row)
+            ? row
+            : templates[0];
+        return firstTemplate || (this.marketListingRowHasLayout(row) ? row : null);
     }
     protected applyMarketListingChildLayout(row: Node, template: Node | null, childName: string, fallbackX: number, fallbackY: number, fallbackWidth: number, fallbackHeight: number): void {
         const child = row.getChildByName(childName);
@@ -59,12 +79,38 @@ export abstract class HomeFeatureMarketTrade extends HomeViewBase {
             templateTransform?.contentSize.height || fallbackHeight,
         );
     }
+    protected syncMarketListingPriceLayout(parent: Node): void {
+        const rows = parent.children
+            .filter((child) => /^Market(?:Sell)?Listing_\d+$/.test(child.name) && child.active)
+            .sort((a, b) => b.position.y - a.position.y);
+        const template = rows.find((row) => row.getChildByName('MarketUnitPrice')?.isValid && row.getChildByName('MarketTotalPrice')?.isValid)
+            || parent.getChildByName('MarketListing_1');
+        if (!template?.isValid) return;
+
+        ['MarketUnitPrice', 'MarketTotalPrice'].forEach((childName) => {
+            const templateChild = template.getChildByName(childName);
+            if (!templateChild?.isValid) return;
+            const templateTransform = templateChild.getComponent(UITransform);
+            rows.forEach((row) => {
+                const child = row.getChildByName(childName);
+                if (!child?.isValid || child === templateChild) return;
+                child.setPosition(templateChild.position.x, templateChild.position.y, 0);
+                if (templateTransform) {
+                    (child.getComponent(UITransform) || child.addComponent(UITransform)).setContentSize(
+                        templateTransform.contentSize.width,
+                        templateTransform.contentSize.height,
+                    );
+                }
+            });
+        });
+    }
     protected createMarketListingRow(parent: Node, item: MarketListingData, index: number, y: number): void {
         const row = this.getOrCreateEditorSkinnedNode(`MarketListing_${index + 1}`, parent, HomeConfig.MARKET_ROW_WIDTH, HomeConfig.MARKET_ROW_HEIGHT, 0, y, HomeConfig.UI_MARKET_ITEM_ROW);
         row.active = true;
         const layoutTemplate = this.getMarketListingLayoutTemplate(parent, row);
         const templateTransform = layoutTemplate?.getComponent(UITransform);
-        row.setPosition(layoutTemplate?.position.x || 0, y, 0);
+        const hasOwnLayout = layoutTemplate === row && this.marketListingRowHasLayout(row);
+        row.setPosition(layoutTemplate?.position.x ?? 0, hasOwnLayout ? row.position.y : y, 0);
         (row.getComponent(UITransform) || row.addComponent(UITransform)).setContentSize(
             templateTransform?.contentSize.width || HomeConfig.MARKET_ROW_WIDTH,
             templateTransform?.contentSize.height || HomeConfig.MARKET_ROW_HEIGHT,
@@ -115,23 +161,13 @@ export abstract class HomeFeatureMarketTrade extends HomeViewBase {
     protected handleMarketAction(item: MarketListingData): void {
         const action = this.getMarketCurrentAction();
         const actionText = this.getMarketDetailActionText();
-        this.openCommerceItemDetail(
+        this.openCommerceQuantityConfirm(
+            this.getMarketConfirmTitle(),
             item.name,
-            HomeConfig.MARKET_CATEGORY_TITLES[item.category],
-            `\u5355\u4ef7 ${this.formatMarketPrice(item.unitPrice)} \u5143\u5b9d\uff0c${actionText}\u6570\u91cf\u53ef\u5728\u4e0b\u4e00\u6b65\u8c03\u6574\u3002`,
-            `${item.amount}`,
-            item.iconPath,
+            item.unitPrice,
+            item.amount,
             actionText,
-            () => this.openCommerceQuantityConfirm(
-                this.getMarketConfirmTitle(),
-                item.name,
-                item.unitPrice,
-                item.amount,
-                actionText,
-                (quantity) => this.completeMarketAction(item, action, quantity),
-            ),
-            item.framePath,
-            'market',
+            (quantity) => this.completeMarketAction(item, action, quantity),
         );
     }
     protected completeMarketAction(item: MarketListingData, action: 'buy' | 'sell', quantity: number): void {

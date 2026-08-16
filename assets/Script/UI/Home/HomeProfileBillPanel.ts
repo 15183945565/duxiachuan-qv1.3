@@ -22,6 +22,7 @@ import type { HomeViewBase } from './HomeViewBase';
 
 type ProfileBillRecord = typeof HomeConfig.PROFILE_BILL_RECORDS[number];
 type ProfileBillType = 'income' | 'expense';
+type ProfileBillSource = 'profile' | 'gift';
 
 interface ProfileBillRuntime {
     node: Node;
@@ -50,58 +51,84 @@ const LIGHT_OUTLINE = new Color(246, 245, 235, 255);
 const BILL_TAB_ACTIVE_LABEL_COLOR = new Color(255, 248, 218, 255);
 const BILL_TAB_INACTIVE_LABEL_COLOR = new Color(238, 225, 198, 255);
 const billTabSelections = new WeakMap<ProfileBillRuntime, ProfileBillType>();
+const PROFILE_BILL_SOURCES: readonly ProfileBillSource[] = ['profile', 'gift'];
 const PROFILE_BILL_TABS: ReadonlyArray<{ id: ProfileBillType; label: string; x: number }> = [
     { id: 'income', label: '\u6536\u5165', x: HomeConfig.PROFILE_BILL_INCOME_TAB_X },
     { id: 'expense', label: '\u652f\u51fa', x: HomeConfig.PROFILE_BILL_EXPENSE_TAB_X },
 ];
 
 export function openProfileBillPanel(host: HomeViewBase): void {
+    openProfileBillPanelFromSource(host, 'profile');
+}
+
+export function openGiftBillPanel(host: HomeViewBase): void {
+    openProfileBillPanelFromSource(host, 'gift');
+}
+
+function openProfileBillPanelFromSource(host: HomeViewBase, source: ProfileBillSource): void {
     const api = host as unknown as ProfileBillRuntime;
-    const panel = ensureProfileBillPanel(api);
+    const panel = ensureProfileBillPanel(api, source);
     panel.active = true;
-    setProfilePopupBoardVisible(api, false);
+    setProfileBillSourceContentVisible(api, source, false);
     api.ensureInputBlocker(panel, HomeConfig.VIEW_WIDTH, HomeConfig.VIEW_HEIGHT);
     panel.setSiblingIndex((panel.parent?.children.length || 1) - 1);
     if (!billTabSelections.has(api)) {
         billTabSelections.set(api, 'income');
     }
-    bindProfileBillPanel(api, panel);
+    bindProfileBillPanel(api, panel, source);
     refreshProfileBillRows(api, panel);
     api.refreshRootLayerOrder();
 }
 
-export function closeProfileBillPanel(host: HomeViewBase): void {
+export function closeProfileBillPanel(host: HomeViewBase, source?: ProfileBillSource): void {
     const api = host as unknown as ProfileBillRuntime;
-    const panel = findProfileBillPanel(api);
-    if (panel?.isValid) {
-        panel.active = false;
-    }
-    setProfilePopupBoardVisible(api, true);
+    const sources = source ? [source] : PROFILE_BILL_SOURCES;
+    sources.forEach((targetSource) => {
+        const panel = findProfileBillPanel(api, targetSource);
+        if (panel?.isValid) {
+            panel.active = false;
+        }
+        setProfileBillSourceContentVisible(api, targetSource, true);
+    });
 }
 
-function ensureProfileBillPanel(api: ProfileBillRuntime): Node {
-    const root = getProfilePopupRoot(api);
+function ensureProfileBillPanel(api: ProfileBillRuntime, source: ProfileBillSource): Node {
+    const root = getProfileBillRoot(api, source);
+    if (!root) {
+        throw new Error(`[MainHomeView] ${source} bill root is required before opening bill panel`);
+    }
     let panel = api.findNode(PANEL_NAME, root);
     if (!panel?.isValid) {
         panel = buildProfileBillPanel(api, root);
     }
-    bindProfileBillPanel(api, panel);
+    bindProfileBillPanel(api, panel, source);
     return panel;
 }
 
-function findProfileBillPanel(api: ProfileBillRuntime): Node | null {
-    const root = getProfilePopupRoot(api, false);
+function findProfileBillPanel(api: ProfileBillRuntime, source: ProfileBillSource): Node | null {
+    const root = getProfileBillRoot(api, source, false);
     return root ? api.findNode(PANEL_NAME, root) : null;
 }
 
-function getProfilePopupRoot(api: ProfileBillRuntime, required = true): Node {
+function getProfileBillRoot(api: ProfileBillRuntime, source: ProfileBillSource, required = true): Node | null {
+    if (source === 'gift') {
+        const root = api.findNode('GiftPanel', api.popupRoot || api.uiHudLayer || api.node);
+        if (!root && required) {
+            throw new Error('[MainHomeView] GiftPanel is required before opening bill panel');
+        }
+        return root || null;
+    }
+    return getProfilePopupRoot(api, required);
+}
+
+function getProfilePopupRoot(api: ProfileBillRuntime, required = true): Node | null {
     const root = api.profilePopupRoot?.isValid
         ? api.profilePopupRoot
         : api.findNode('ProfilePopup', api.popupRoot || api.uiHudLayer || api.node);
     if (!root && required) {
         throw new Error('[MainHomeView] ProfilePopup is required before opening bill panel');
     }
-    return root || api.node;
+    return root || null;
 }
 
 function buildProfileBillPanel(api: ProfileBillRuntime, root: Node): Node {
@@ -122,7 +149,7 @@ function buildProfileBillPanel(api: ProfileBillRuntime, root: Node): Node {
     return panel;
 }
 
-function bindProfileBillPanel(api: ProfileBillRuntime, panel: Node): void {
+function bindProfileBillPanel(api: ProfileBillRuntime, panel: Node, source: ProfileBillSource): void {
     api.ensureInputBlocker(panel, HomeConfig.VIEW_WIDTH, HomeConfig.VIEW_HEIGHT);
     panel.off(Node.EventType.TOUCH_END);
     panel.on(Node.EventType.TOUCH_END, (event: EventTouch) => {
@@ -131,7 +158,7 @@ function bindProfileBillPanel(api: ProfileBillRuntime, panel: Node): void {
 
     ensureSkinnedChild(api, panel, 'ProfileBillBg', HomeConfig.PROFILE_BILL_BG_WIDTH, HomeConfig.PROFILE_BILL_BG_HEIGHT, 0, 0, HomeConfig.UI_PROFILE_BILL_BG);
     const back = ensureSkinnedChild(api, panel, 'ProfileBillBackButton', HomeConfig.BOTTOM_ENTRY_BACK_BUTTON_WIDTH, HomeConfig.BOTTOM_ENTRY_BACK_BUTTON_HEIGHT, -310, 694, HomeConfig.UI_RANK_BACK);
-    api.bindScaledClick(back, () => closeProfileBillPanel(api as unknown as HomeViewBase));
+    api.bindScaledClick(back, () => closeProfileBillPanel(api as unknown as HomeViewBase, source));
     ensureStyledLabel(api, panel, 'ProfileBillTitleLabel', '\u5143\u5b9d\u8d26\u5355', 42, 0, 680, 260, 66, TITLE_COLOR, HorizontalTextAlignment.CENTER, 1);
     createOrRefreshBillTabs(api, panel);
 
@@ -280,8 +307,8 @@ function createRowTemplate(api: ProfileBillRuntime, parent: Node): Node {
     const row = api.createNode(ROW_TEMPLATE_NAME, parent, HomeConfig.PROFILE_BILL_ROW_WIDTH, HomeConfig.PROFILE_BILL_ROW_HEIGHT, 0, 0);
     row.active = false;
     createStyledLabel(api, row, 'ProfileBillRowTitle', '', 26, -155, 16, 420, 38, ROW_TITLE_COLOR, HorizontalTextAlignment.LEFT, 3).setSiblingIndex(0);
-    api.createSkinnedNode('ProfileBillYuanbaoIcon', row, 38, 38, 184, 17, HomeConfig.UI_HOME_JIFEN_ICON).setSiblingIndex(1);
-    createStyledLabel(api, row, 'ProfileBillYuanbaoLabel', '', 28, 254, 17, 128, 40, YUANBAO_COLOR, HorizontalTextAlignment.LEFT, 2).setSiblingIndex(2);
+    api.createSkinnedNode('ProfileBillYuanbaoIcon', row, 38, 38, 208.166, 17, HomeConfig.UI_HOME_JIFEN_ICON).setSiblingIndex(1);
+    createStyledLabel(api, row, 'ProfileBillYuanbaoLabel', '', 28, 258, 17, 126, 40, YUANBAO_COLOR, HorizontalTextAlignment.RIGHT, 2).setSiblingIndex(2);
     createStyledLabel(api, row, 'ProfileBillTimeLabel', '', 23, 178, -24, 286, 34, ROW_TIME_COLOR, HorizontalTextAlignment.RIGHT, 0).setSiblingIndex(3);
     api.createSkinnedNode('ProfileBillDivider', row, HomeConfig.PROFILE_BILL_ROW_WIDTH, 4, 0, -42, HomeConfig.UI_PROFILE_BILL_DIVIDER).setSiblingIndex(4);
     return row;
@@ -292,8 +319,8 @@ function fillProfileBillRow(api: ProfileBillRuntime, row: Node, record: ProfileB
     const amountColor = billType === 'expense' ? YUANBAO_EXPENSE_COLOR : YUANBAO_COLOR;
     ensureEditorNodeSize(row, HomeConfig.PROFILE_BILL_ROW_WIDTH, HomeConfig.PROFILE_BILL_ROW_HEIGHT);
     ensureStyledLabel(api, row, 'ProfileBillRowTitle', record.title, 26, -155, 16, 420, 38, ROW_TITLE_COLOR, HorizontalTextAlignment.LEFT, 3).string = record.title;
-    ensureSkinnedChild(api, row, 'ProfileBillYuanbaoIcon', 38, 38, 184, 17, HomeConfig.UI_HOME_JIFEN_ICON);
-    ensureStyledLabel(api, row, 'ProfileBillYuanbaoLabel', `${amountPrefix}${record.yuanbao}`, 28, 254, 17, 128, 40, amountColor, HorizontalTextAlignment.LEFT, 2).string = `${amountPrefix}${record.yuanbao}`;
+    ensureSkinnedChild(api, row, 'ProfileBillYuanbaoIcon', 38, 38, 208.166, 17, HomeConfig.UI_HOME_JIFEN_ICON);
+    ensureStyledLabel(api, row, 'ProfileBillYuanbaoLabel', `${amountPrefix}${record.yuanbao}`, 28, 258, 17, 126, 40, amountColor, HorizontalTextAlignment.RIGHT, 2).string = `${amountPrefix}${record.yuanbao}`;
     ensureStyledLabel(api, row, 'ProfileBillTimeLabel', record.time, 23, 178, -24, 286, 34, ROW_TIME_COLOR, HorizontalTextAlignment.RIGHT, 0).string = record.time;
     ensureSkinnedChild(api, row, 'ProfileBillDivider', HomeConfig.PROFILE_BILL_ROW_WIDTH, 4, 0, -42, HomeConfig.UI_PROFILE_BILL_DIVIDER);
 }
@@ -388,7 +415,15 @@ function setNodeSize(node: Node, width: number, height: number): void {
     (node.getComponent(UITransform) || node.addComponent(UITransform)).setContentSize(width, height);
 }
 
-function setProfilePopupBoardVisible(api: ProfileBillRuntime, visible: boolean): void {
+function setProfileBillSourceContentVisible(api: ProfileBillRuntime, source: ProfileBillSource, visible: boolean): void {
+    if (source === 'gift') {
+        const root = getProfileBillRoot(api, 'gift', false);
+        const giftRoot = root?.getChildByName('GiftTransferRoot') || null;
+        if (giftRoot?.isValid) {
+            giftRoot.active = visible;
+        }
+        return;
+    }
     const root = getProfilePopupRoot(api, false);
     const board = api.profilePopupBoard?.isValid
         ? api.profilePopupBoard

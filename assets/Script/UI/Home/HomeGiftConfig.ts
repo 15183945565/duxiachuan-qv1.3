@@ -10,6 +10,7 @@ export const GIFT_UI_ROOT = 'Texture/UI/Gift';
 export const UI_GIFT_TRANSFER_PANEL_BG = `${GIFT_UI_ROOT}/gift_transfer_panel_bg`;
 export const UI_GIFT_YUANBAO_SLOT_BG = `${GIFT_UI_ROOT}/gift_yuanbao_slot_bg`;
 export const UI_GIFT_TRANSLUCENT_BAR = `${GIFT_UI_ROOT}/gift_translucent_bar`;
+export const GIFT_TRANSLUCENT_BAR_ALPHA = 150;
 export const UI_GIFT_PLUS_BUTTON = `${GIFT_UI_ROOT}/gift_plus_btn`;
 export const UI_GIFT_MINUS_BUTTON = `${GIFT_UI_ROOT}/gift_minus_btn`;
 export const UI_VALUE_GIFT_BUY_BUTTON_BG = `${GIFT_UI_ROOT}/gift_value_buy_button_bg`;
@@ -49,7 +50,7 @@ export const VALUE_GIFT_MATERIALS = [
 
 export const GIFT_DEFAULT_AMOUNT = 1;
 export const GIFT_MIN_AMOUNT = 20;
-export const GIFT_FEE_RATE = 0.1;
+export const GIFT_FEE_RATE = 0.08;
 
 export const GIFT_PREVIEW_PLAYERS: readonly GiftTargetPlayerConfig[] = [
     {

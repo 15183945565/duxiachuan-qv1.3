@@ -39,14 +39,9 @@ export abstract class HomeFeatureBattleChallenge extends HomeFeatureBattleChalle
     protected openBattleChallengeConfirmPopup(): void {
         if (!this.canEnterBattleChallenge(true)) return;
 
-        const popup = this.ensureBattleTargetChallengePopup();
         this.battleTargetChallengeSelected = '';
-        this.battleTargetChallengeMode = 'confirm';
-        this.battleChallengeConfirmType = 'normal';
-        this.refreshBattleTargetChallengePopup();
-        popup.active = true;
-        this.ensureInputBlocker(popup);
-        popup.setSiblingIndex((popup.parent?.children.length || 1) - 1);
+        this.closeBattleTargetChallengePopup();
+        this.openBattleSharedConfirmPopup('normal');
     }
 
     protected openBattleTargetChallengePopup(): void {
@@ -73,14 +68,9 @@ export abstract class HomeFeatureBattleChallenge extends HomeFeatureBattleChalle
             return;
         }
 
-        const popup = this.ensureBattleTargetChallengePopup();
         this.battleTargetChallengeSelected = '';
-        this.battleTargetChallengeMode = 'confirm';
-        this.battleChallengeConfirmType = 'host';
-        this.refreshBattleTargetChallengePopup();
-        popup.active = true;
-        this.ensureInputBlocker(popup);
-        popup.setSiblingIndex((popup.parent?.children.length || 1) - 1);
+        this.closeBattleTargetChallengePopup();
+        this.openBattleSharedConfirmPopup('host');
     }
 
     protected closeBattleTargetChallengePopup(): void {
@@ -392,14 +382,34 @@ export abstract class HomeFeatureBattleChallenge extends HomeFeatureBattleChalle
         return `\u662f\u5426\u82b1\u8d39${HomeConfig.BATTLE_TARGET_CHALLENGE_TICKET_COST}\u6311\u6218\u5361\u5e76\u9009\u62e9${this.battleTargetChallengeSelected}\u4ea7\u51fa\u8fdb\u884c\u5b9a\u5411\u6311\u6218`;
     }
 
+    protected openBattleSharedConfirmPopup(type: 'normal' | 'target' | 'host'): void {
+        this.battleChallengeConfirmType = type;
+        this.openSharedFlowPopup('ConfirmPopup', {
+            title: '\u7cfb\u7edf\u63d0\u793a',
+            message: this.getBattleChallengeConfirmMessage(),
+            onConfirm: () => {
+                if (type === 'host') {
+                    this.confirmBattleAutoHost();
+                    return;
+                }
+
+                if (!this.canEnterBattleChallenge(true)) {
+                    return;
+                }
+
+                void this.startBattleChallenge();
+            },
+        });
+    }
+
     protected handleBattleTargetChallengeConfirm(): void {
         if (this.battleTargetChallengeMode === 'select') {
             if (!this.battleTargetChallengeSelected) {
                 this.showToast('\u8bf7\u5148\u9009\u62e9\u5b9a\u5411\u4ea7\u51fa');
                 return;
             }
-            this.battleTargetChallengeMode = 'confirm';
-            this.refreshBattleTargetChallengePopup();
+            this.closeBattleTargetChallengePopup();
+            this.openBattleSharedConfirmPopup('target');
             return;
         }
 

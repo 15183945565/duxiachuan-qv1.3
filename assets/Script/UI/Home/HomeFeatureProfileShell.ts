@@ -15,7 +15,7 @@ import { applySimKaiFont } from '../Common/UIFont';
 import * as HomeConfig from './HomeConfig';
 import type { RoleProfile } from './HomeTypes';
 import { HomeViewBase } from './HomeViewBase';
-import { closeProfileBillPanel, openProfileBillPanel } from './HomeProfileBillPanel';
+import { closeProfileBillPanel } from './HomeProfileBillPanel';
 import { closeProfileDaoYouPanel, openProfileDaoYouPanel } from './HomeProfileDaoYouPanel';
 
 /**
@@ -182,13 +182,13 @@ export abstract class HomeFeatureProfileShell extends HomeViewBase {
             this.bindScaledClick(copyButton, () => this.copyProfileUid());
         }
         this.ensureProfileAvatarFrameButton(board);
+        this.hideProfileBillEntry(board);
 
         [
             { slotName: 'ProfileCustomerButtonSlot', buttonName: 'ProfileCustomerButton', message: '' },
             { slotName: 'ProfileFriendButtonSlot', buttonName: 'ProfileFriendButton', message: '\u9053\u53cb\u529f\u80fd\u9884\u7559' },
             { slotName: 'ProfileSettingsButtonSlot', buttonName: 'ProfileSettingsButton', message: '\u8bbe\u7f6e\u529f\u80fd\u9884\u7559' },
             { slotName: 'ProfileRealNameButtonSlot', buttonName: 'ProfileRealNameButton', message: '\u5b9e\u540d\u529f\u80fd\u9884\u7559' },
-            { slotName: 'ProfileBillButtonSlot', buttonName: 'ProfileBillButton', message: '\u8d26\u5355\u529f\u80fd\u9884\u7559' },
             { slotName: 'ProfileStreamerButtonSlot', buttonName: 'ProfileStreamerButton', message: '\u4e3b\u64ad\u529f\u80fd\u9884\u7559' },
         ].forEach((action) => {
             const slot = this.findNode(action.slotName, board);
@@ -211,10 +211,6 @@ export abstract class HomeFeatureProfileShell extends HomeViewBase {
                     }
                     if (action.buttonName === 'ProfileSettingsButton') {
                         this.openProfileSettingsPopup();
-                        return;
-                    }
-                    if (action.buttonName === 'ProfileBillButton') {
-                        openProfileBillPanel(this);
                         return;
                     }
                     this.showToast(action.message);
@@ -244,11 +240,11 @@ export abstract class HomeFeatureProfileShell extends HomeViewBase {
             { name: 'ProfileFriendButton', path: HomeConfig.UI_PROFILE_BTN_FRIEND },
             { name: 'ProfileSettingsButton', path: HomeConfig.UI_PROFILE_BTN_SETTINGS },
             { name: 'ProfileRealNameButton', path: HomeConfig.UI_PROFILE_BTN_REALNAME },
-            { name: 'ProfileBillButton', path: HomeConfig.UI_PROFILE_BTN_BILL },
             { name: 'ProfileStreamerButton', path: HomeConfig.UI_PROFILE_BTN_STREAMER },
         ].forEach((item) => {
             skin(item.name, item.path, 92, 93);
         });
+        this.hideProfileBillEntry(board);
 
         if (root !== board) {
             root.setSiblingIndex((root.parent?.children.length || 1) - 1);
@@ -327,7 +323,6 @@ export abstract class HomeFeatureProfileShell extends HomeViewBase {
             { name: 'ProfileFriendButton', icon: HomeConfig.UI_PROFILE_BTN_FRIEND, x: 200.267, y: 21.921, message: '\u9053\u53cb\u529f\u80fd\u9884\u7559' },
             { name: 'ProfileSettingsButton', icon: HomeConfig.UI_PROFILE_BTN_SETTINGS, x: 3.609, y: -76, message: '\u8bbe\u7f6e\u529f\u80fd\u9884\u7559' },
             { name: 'ProfileStreamerButton', icon: HomeConfig.UI_PROFILE_BTN_STREAMER, x: 101.589, y: -76, message: '\u4e3b\u64ad\u529f\u80fd\u9884\u7559' },
-            { name: 'ProfileBillButton', icon: HomeConfig.UI_PROFILE_BTN_BILL, x: 199.569, y: -76, message: '\u8d26\u5355\u529f\u80fd\u9884\u7559' },
         ];
 
         actions.forEach((action) => {
@@ -348,12 +343,19 @@ export abstract class HomeFeatureProfileShell extends HomeViewBase {
                     this.openProfileSettingsPopup();
                     return;
                 }
-                if (action.name === 'ProfileBillButton') {
-                    openProfileBillPanel(this);
-                    return;
-                }
                 this.showToast(action.message);
             });
+        });
+    }
+    protected hideProfileBillEntry(board: Node): void {
+        ['ProfileBillButtonSlot', 'ProfileBillButton'].forEach((name) => {
+            const node = this.findNode(name, board);
+            if (node?.isValid) {
+                node.active = false;
+                node.off(Node.EventType.TOUCH_START);
+                node.off(Node.EventType.TOUCH_END);
+                node.off(Node.EventType.TOUCH_CANCEL);
+            }
         });
     }
     protected refreshProfilePopupLabels(): void {

@@ -335,37 +335,48 @@ export abstract class HomeFeatureMagicBattleDamage extends HomeFeatureMagicBattl
         damage.horizontalAlign = HorizontalTextAlignment.RIGHT;
         this.applyMagicBattleDamageTextStyle(damage);
 
-        let duelButton = row.getChildByName('MagicBattleDamageDuelButton');
-        if (!participant.isPlayer) {
-            duelButton = this.getOrCreateBattleSkinnedNode(
-                row,
-                'MagicBattleDamageDuelButton',
-                HomeConfig.MAGIC_BATTLE_DAMAGE_DUEL_BUTTON_WIDTH,
-                HomeConfig.MAGIC_BATTLE_DAMAGE_DUEL_BUTTON_HEIGHT,
-                138,
-                -6,
-                HomeConfig.UI_MAGIC_DUEL_BUTTON,
-            ).node;
-            duelButton.active = true;
-            duelButton.setSiblingIndex(8);
-            const duelLabel = this.getOrCreateBattleLabel(
-                duelButton,
-                'MagicBattleDamageDuelButtonLabel',
-                '\u51b3\u6597',
-                22,
-                0,
-                0,
-                84,
-                34,
-                new Color(69, 36, 16, 255),
-            ).label;
-            duelLabel.lineHeight = 28;
-            this.setMagicFloorTextEdge(duelLabel, false);
+        const duelButton = this.getOrCreateBattleSkinnedNode(
+            row,
+            'MagicBattleDamageDuelButton',
+            HomeConfig.MAGIC_BATTLE_DAMAGE_DUEL_BUTTON_WIDTH,
+            HomeConfig.MAGIC_BATTLE_DAMAGE_DUEL_BUTTON_HEIGHT,
+            138,
+            -6,
+            HomeConfig.UI_MAGIC_DUEL_BUTTON,
+        ).node;
+        duelButton.active = true;
+        duelButton.setSiblingIndex(8);
+        duelButton.off(Node.EventType.TOUCH_START);
+        duelButton.off(Node.EventType.TOUCH_END);
+        duelButton.off(Node.EventType.TOUCH_CANCEL);
+
+        const duelLabel = this.getOrCreateBattleLabel(
+            duelButton,
+            'MagicBattleDamageDuelButtonLabel',
+            participant.isPlayer ? '\u81ea\u5df1' : participant.active ? '\u51b3\u6597' : '\u5df2\u79bb\u5f00',
+            participant.active && !participant.isPlayer ? 22 : 19,
+            0,
+            0,
+            84,
+            34,
+            participant.active && !participant.isPlayer
+                ? new Color(69, 36, 16, 255)
+                : new Color(120, 94, 62, 255),
+        ).label;
+        duelLabel.string = participant.isPlayer ? '\u81ea\u5df1' : participant.active ? '\u51b3\u6597' : '\u5df2\u79bb\u5f00';
+        duelLabel.fontSize = participant.active && !participant.isPlayer ? 22 : 19;
+        duelLabel.lineHeight = 28;
+        duelLabel.color = participant.active && !participant.isPlayer
+            ? new Color(69, 36, 16, 255)
+            : new Color(120, 94, 62, 255);
+        this.setMagicFloorTextEdge(duelLabel, false);
+        duelLabel.node.active = true;
+        duelLabel.node.setSiblingIndex(1);
+
+        if (!participant.isPlayer && participant.active) {
             this.bindScaledClick(duelButton, () => {
                 void this.openMagicBattleDuelPopup(participant.id);
             });
-        } else if (duelButton?.isValid) {
-            duelButton.active = false;
         }
         this.applyMagicBattleDamageRowLayerOrder(row);
     }
@@ -486,9 +497,12 @@ export abstract class HomeFeatureMagicBattleDamage extends HomeFeatureMagicBattl
     }
     protected getMagicBattleDamageRanking(): MagicBattleDamageParticipant[] {
         return this.magicBattleParticipants
-            .filter((participant) => participant.active)
             .slice()
-            .sort((a, b) => b.damage - a.damage || (a.isPlayer ? -1 : b.isPlayer ? 1 : 0));
+            .sort((a, b) => (
+                (a.active === b.active ? 0 : a.active ? -1 : 1)
+                || b.damage - a.damage
+                || (a.isPlayer ? -1 : b.isPlayer ? 1 : 0)
+            ));
     }
     protected getMagicBattlePlayerRank(): number {
         const ranking = this.getMagicBattleDamageRanking();

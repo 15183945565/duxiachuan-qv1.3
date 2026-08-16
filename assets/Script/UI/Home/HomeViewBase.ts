@@ -1170,6 +1170,7 @@ export abstract class HomeViewBase extends Component {
     protected abstract getMarketRecordTitle(mode?: MarketMode): string;
     protected abstract getMarketListingLayoutTemplate(parent: Node, row: Node): Node | null;
     protected abstract applyMarketListingChildLayout(row: Node, template: Node | null, childName: string, fallbackX: number, fallbackY: number, fallbackWidth: number, fallbackHeight: number): void;
+    protected abstract syncMarketListingPriceLayout(parent: Node): void;
     protected abstract getMarketTotalPrice(unitPrice: number, amount: number): number;
     protected abstract formatMarketPrice(value: number): string;
     protected abstract openMarketSellListingDetail(item: MarketSellListingData): void;

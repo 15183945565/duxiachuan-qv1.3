@@ -653,6 +653,7 @@ export abstract class HomeFeatureMarketShell extends HomeViewBase {
         listings.forEach((item, index) => {
             this.createMarketListingRow(this.marketContent!, item, index, startY - index * rowGap);
         });
+        this.syncMarketListingPriceLayout(this.marketContent);
     
         const maxScrollY = Math.max(0, contentHeight - effectiveViewportHeight);
         this.clampMarketListScroll(this.marketContent, maxScrollY);

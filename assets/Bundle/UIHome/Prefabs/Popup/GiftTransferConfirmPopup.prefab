@@ -147,7 +147,7 @@
       "__id__": 2
     },
     "_children": [],
-    "_active": false,
+    "_active": true,
     "_components": [
       {
         "__id__": 4
@@ -162,7 +162,7 @@
     "_lpos": {
       "__type__": "cc.Vec3",
       "x": 0,
-      "y": 166,
+      "y": 134,
       "z": 0
     },
     "_lrot": {
@@ -298,7 +298,7 @@
     "_lpos": {
       "__type__": "cc.Vec3",
       "x": 0,
-      "y": 166,
+      "y": 134,
       "z": 0
     },
     "_lrot": {
@@ -377,7 +377,7 @@
     "_string": "提示说明",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
-    "_actualFontSize": 30,
+    "_actualFontSize": 31,
     "_fontSize": 30,
     "_fontFamily": "Microsoft YaHei",
     "_lineHeight": 38,
@@ -637,7 +637,7 @@
     "_contentSize": {
       "__type__": "cc.Size",
       "width": 540,
-      "height": 180
+      "height": 50.4
     },
     "_anchorPoint": {
       "__type__": "cc.Vec2",
@@ -1952,8 +1952,8 @@
     },
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": -112,
-      "y": -162.13400000000001,
+      "x": -108.47699999999998,
+      "y": -139.79999999999995,
       "z": 0
     },
     "_lrot": {
@@ -2082,7 +2082,7 @@
     "_string": "取消",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
-    "_actualFontSize": 31,
+    "_actualFontSize": 32,
     "_fontSize": 31,
     "_fontFamily": "Microsoft YaHei",
     "_lineHeight": 38,
@@ -2251,8 +2251,8 @@
     },
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": 111.214,
-      "y": -162.13400000000001,
+      "x": 114.73700000000002,
+      "y": -139.23299999999995,
       "z": 0
     },
     "_lrot": {
@@ -2381,7 +2381,7 @@
     "_string": "确定",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
-    "_actualFontSize": 31,
+    "_actualFontSize": 32,
     "_fontSize": 31,
     "_fontFamily": "Microsoft YaHei",
     "_lineHeight": 38,

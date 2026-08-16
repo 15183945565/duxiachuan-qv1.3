@@ -18,6 +18,7 @@ import {
 import { applySimKaiFont } from '../Common/UIFont';
 import { bindShareTaskPanel, claimShareTaskReward, handleShareTaskAction, refreshShareTaskPanel } from './HomeShareTaskPanel';
 import * as HomeConfig from './HomeConfig';
+import { openGiftBillPanel } from './HomeProfileBillPanel';
 import { HomeViewBase } from './HomeViewBase';
 
 /**
@@ -124,14 +125,16 @@ export abstract class HomeFeatureGiftShare extends HomeViewBase {
         close.setSiblingIndex(20);
         this.bindScaledClick(close, () => this.closeEditorFeaturePage(panel));
 
-        const slot = this.createSkinnedNode('GiftOwnedYuanbaoSlot', root, 112, 128, 0, 202, HomeConfig.UI_GIFT_YUANBAO_SLOT_BG);
+        const slot = this.createSkinnedNode('GiftOwnedYuanbaoSlot', root, 154, 128, 0, 202, HomeConfig.UI_GIFT_YUANBAO_SLOT_BG);
         slot.setSiblingIndex(2);
         this.createSkinnedNode('GiftOwnedYuanbaoIcon', slot, 72, 67, 0, 20, HomeConfig.UI_HOME_JIFEN_ICON).setSiblingIndex(1);
         this.createGiftLabel(slot, 'GiftOwnedYuanbaoAmount', this.getGiftOwnedYuanbaoText(), 22, 0, -43, 70, 28, Color.WHITE, 2).node.setSiblingIndex(2);
+        this.ensureGiftBillButton(root);
 
         const uidRow = this.createNode('GiftUidSearchRow', root, 600, 62, 0, 18);
         uidRow.setSiblingIndex(3);
         const uidInput = this.createSkinnedNode('GiftUidInput', uidRow, 390, 60, -76, 0, HomeConfig.UI_GIFT_TRANSLUCENT_BAR);
+        this.setGiftTranslucentBarOpacity(uidInput);
         this.giftUidEditBox = this.setupGiftEditBox(uidInput, '\u70b9\u51fb\u8f93\u5165\u73a9\u5bb6\u7684UID', 12, '', true);
         const searchButton = this.createSkinnedNode('GiftUidSearchButton', uidRow, 162, 62, 200, 0, HomeConfig.UI_CONFIRM_BUTTON_BG);
         this.createGiftLabel(searchButton, 'GiftUidSearchButtonLabel', '\u641c\u7d22', 32, 0, 2, 130, 42, Color.WHITE, 3);
@@ -147,6 +150,7 @@ export abstract class HomeFeatureGiftShare extends HomeViewBase {
         const amountRoot = this.createNode('GiftAmountRoot', root, 440, 62, 0, -165);
         amountRoot.setSiblingIndex(5);
         const amountInput = this.createSkinnedNode('GiftAmountInput', amountRoot, 170, 45, 0, 0, HomeConfig.UI_GIFT_TRANSLUCENT_BAR);
+        this.setGiftTranslucentBarOpacity(amountInput);
         const minus = this.createSkinnedNode('GiftAmountMinusButton', amountRoot, 41, 41, -118, 0, HomeConfig.UI_GIFT_MINUS_BUTTON);
         const plus = this.createSkinnedNode('GiftAmountPlusButton', amountRoot, 41, 41, 118, 0, HomeConfig.UI_GIFT_PLUS_BUTTON);
         this.giftAmountEditBox = this.setupGiftEditBox(amountInput, '', 8, `${HomeConfig.GIFT_DEFAULT_AMOUNT}`, true);
@@ -155,7 +159,7 @@ export abstract class HomeFeatureGiftShare extends HomeViewBase {
 
         const summaryRoot = this.createNode('GiftTransferSummaryRoot', root, 310, 90, 0, -255);
         summaryRoot.setSiblingIndex(6);
-        this.createGiftLabel(summaryRoot, 'GiftFinalPrefixLabel', '\u6700\u7ec8\u8d60\u9001\uff1a', 22, -42, 20, 128, 32, new Color(122, 84, 51, 255));
+        this.createGiftLabel(summaryRoot, 'GiftFinalPrefixLabel', '\u6700\u7ec8\u6d88\u8d39\uff1a', 22, -42, 20, 128, 32, new Color(122, 84, 51, 255));
         this.createGiftLabel(summaryRoot, 'GiftFinalAmountLabel', '', 22, 86, 20, 150, 32, new Color(33, 176, 76, 255));
         const feeText = `\u6bcf\u7b14\u8d60\u9001\u6536\u53d6${Math.round(HomeConfig.GIFT_FEE_RATE * 100)}%\u624b\u7eed\u8d39`;
         this.createGiftLabel(summaryRoot, 'GiftFeeHintLabel', feeText, 18, 0, -16, 300, 28, new Color(122, 84, 51, 255));
@@ -267,6 +271,12 @@ export abstract class HomeFeatureGiftShare extends HomeViewBase {
             this.applyUiSkinKeepingEditorSize(node, skinPath, fallbackWidth, fallbackHeight);
         }
         return node;
+    }
+
+    protected setGiftTranslucentBarOpacity(node: Node): void {
+        const sprite = node.getComponent(Sprite) || node.addComponent(Sprite);
+        const color = sprite.color;
+        sprite.color = new Color(color.r, color.g, color.b, HomeConfig.GIFT_TRANSLUCENT_BAR_ALPHA);
     }
 
     protected getOrCreateValueGiftLabel(
@@ -521,9 +531,11 @@ export abstract class HomeFeatureGiftShare extends HomeViewBase {
 
         const close = this.findNode('GiftTransferClose', root);
         if (close) this.bindScaledClick(close, () => this.closeEditorFeaturePage(panel));
+        this.ensureGiftBillButton(root);
 
         const uidInput = this.findNode('GiftUidInput', root);
         if (uidInput) {
+            this.setGiftTranslucentBarOpacity(uidInput);
             this.giftUidEditBox = this.setupGiftEditBox(uidInput, '\u70b9\u51fb\u8f93\u5165\u73a9\u5bb6\u7684UID', 12, '', true);
         }
 
@@ -532,6 +544,7 @@ export abstract class HomeFeatureGiftShare extends HomeViewBase {
 
         const amountInput = this.findNode('GiftAmountInput', root);
         if (amountInput) {
+            this.setGiftTranslucentBarOpacity(amountInput);
             this.giftAmountEditBox = this.setupGiftEditBox(amountInput, '', 8, `${HomeConfig.GIFT_DEFAULT_AMOUNT}`, true);
         }
 
@@ -546,7 +559,7 @@ export abstract class HomeFeatureGiftShare extends HomeViewBase {
 
         this.setGiftTransferLabelText(root, 'GiftTransferTitle', '\u5143\u5b9d\u8d60\u9001');
         this.setGiftTransferLabelText(root, 'GiftOwnedYuanbaoAmount', this.getGiftOwnedYuanbaoText());
-        this.setGiftTransferLabelText(root, 'GiftFinalPrefixLabel', '\u6700\u7ec8\u8d60\u9001\uff1a');
+        this.setGiftTransferLabelText(root, 'GiftFinalPrefixLabel', '\u6700\u7ec8\u6d88\u8d39\uff1a');
         this.setGiftTransferLabelText(root, 'GiftFeeHintLabel', `\u6bcf\u7b14\u8d60\u9001\u6536\u53d6${Math.round(HomeConfig.GIFT_FEE_RATE * 100)}%\u624b\u7eed\u8d39`);
 
         this.bindGiftEditBoxEvents();
@@ -559,6 +572,18 @@ export abstract class HomeFeatureGiftShare extends HomeViewBase {
         if (label) label.string = text;
     }
 
+    protected ensureGiftBillButton(root: Node): void {
+        let button = this.findNode('GiftBillButton', root);
+        if (!button?.isValid) {
+            button = this.createSkinnedNode('GiftBillButton', root, 92, 93, 205, 132, HomeConfig.UI_PROFILE_BTN_BILL);
+        } else {
+            button.active = true;
+            this.applyUiSkinKeepingEditorSize(button, HomeConfig.UI_PROFILE_BTN_BILL, 92, 93);
+        }
+        button.setSiblingIndex(4);
+        this.bindScaledClick(button, () => openGiftBillPanel(this));
+    }
+
     protected setupGiftEditBox(inputNode: Node, placeholder: string, maxLength: number, value: string, numeric: boolean): EditBox {
         const editNode = this.ensureGiftEditBoxTouchNode(inputNode);
         const transform = editNode.getComponent(UITransform) || editNode.addComponent(UITransform);
@@ -567,7 +592,7 @@ export abstract class HomeFeatureGiftShare extends HomeViewBase {
         editBox ||= editNode.addComponent(EditBox);
 
         const textLabel = this.getOrCreateGiftEditBoxLabel(editNode, 'TEXT_LABEL', new Color(55, 44, 34, 255), size.width, size.height);
-        const placeholderLabel = this.getOrCreateGiftEditBoxLabel(editNode, 'PLACEHOLDER_LABEL', new Color(205, 216, 214, 255), size.width, size.height);
+        const placeholderLabel = this.getOrCreateGiftEditBoxLabel(editNode, 'PLACEHOLDER_LABEL', new Color(55, 44, 34, 255), size.width, size.height);
         const editBoxCompat = editBox as unknown as {
             textLabel?: Label;
             placeholderLabel?: Label;
@@ -585,11 +610,14 @@ export abstract class HomeFeatureGiftShare extends HomeViewBase {
             string?: string;
         };
 
+        const inputMode = (EditBox as unknown as { InputMode?: { SINGLE_LINE?: number } }).InputMode?.SINGLE_LINE ?? 6;
+        const inputFlag = (EditBox as unknown as { InputFlag?: { SENSITIVE?: number } }).InputFlag?.SENSITIVE ?? 1;
+        const returnType = (EditBox as unknown as { KeyboardReturnType?: { DONE?: number } }).KeyboardReturnType?.DONE ?? 0;
         editBoxCompat.textLabel = textLabel;
         editBoxCompat.placeholderLabel = placeholderLabel;
-        editBoxCompat.inputMode = (EditBox as unknown as { InputMode?: { SINGLE_LINE?: number } }).InputMode?.SINGLE_LINE ?? 6;
-        editBoxCompat.inputFlag = (EditBox as unknown as { InputFlag?: { SENSITIVE?: number } }).InputFlag?.SENSITIVE ?? 1;
-        editBoxCompat.returnType = (EditBox as unknown as { KeyboardReturnType?: { DONE?: number } }).KeyboardReturnType?.DONE ?? 0;
+        editBoxCompat.inputMode = inputMode;
+        editBoxCompat.inputFlag = inputFlag;
+        editBoxCompat.returnType = returnType;
         editBoxCompat.fontSize = textLabel.fontSize;
         editBoxCompat.placeholderFontSize = placeholderLabel.fontSize;
         editBoxCompat.fontColor = textLabel.color.clone();
@@ -599,6 +627,32 @@ export abstract class HomeFeatureGiftShare extends HomeViewBase {
         editBoxCompat.placeholder = placeholder;
         editBoxCompat.maxLength = maxLength;
         editBoxCompat.string = value;
+        const editBoxInternal = editBox as unknown as {
+            _inputMode?: number;
+            _inputFlag?: number;
+            _returnType?: number;
+            _fontSize?: number;
+            _placeholderFontSize?: number;
+            _fontColor?: Color;
+            _placeholderFontColor?: Color;
+            _cursorColor?: Color;
+            _backgroundImage?: SpriteFrame | null;
+            _placeholder?: string;
+            _maxLength?: number;
+            _string?: string;
+        };
+        editBoxInternal._inputMode = inputMode;
+        editBoxInternal._inputFlag = inputFlag;
+        editBoxInternal._returnType = returnType;
+        editBoxInternal._fontSize = textLabel.fontSize;
+        editBoxInternal._placeholderFontSize = placeholderLabel.fontSize;
+        editBoxInternal._fontColor = textLabel.color.clone();
+        editBoxInternal._placeholderFontColor = placeholderLabel.color.clone();
+        editBoxInternal._cursorColor = textLabel.color.clone();
+        editBoxInternal._backgroundImage = null;
+        editBoxInternal._placeholder = placeholder;
+        editBoxInternal._maxLength = maxLength;
+        editBoxInternal._string = value;
         placeholderLabel.string = placeholder;
         textLabel.string = value;
         return editBox;
@@ -611,13 +665,15 @@ export abstract class HomeFeatureGiftShare extends HomeViewBase {
             inputNode.addChild(editNode);
         }
 
+        const transform = editNode.getComponent(UITransform) || editNode.addComponent(UITransform);
+        const editorSize = transform.contentSize;
+        const hasEditorSize = editorSize.width > 0 && editorSize.height > 0;
         const inputSize = inputNode.getComponent(UITransform)?.contentSize;
-        const width = Math.max(80, (inputSize?.width || 300) - 18);
-        const height = Math.max(24, (inputSize?.height || 50) - 8);
+        const width = hasEditorSize ? editorSize.width : Math.max(80, (inputSize?.width || 300) - 18);
+        const height = hasEditorSize ? editorSize.height : Math.max(24, (inputSize?.height || 50) - 8);
         editNode.active = true;
         editNode.layer = inputNode.layer;
         editNode.setPosition(0, 0, 0);
-        const transform = editNode.getComponent(UITransform) || editNode.addComponent(UITransform);
         transform.setAnchorPoint(0.5, 0.5);
         transform.setContentSize(width, height);
 
@@ -678,6 +734,7 @@ export abstract class HomeFeatureGiftShare extends HomeViewBase {
             if (raw !== digits) {
                 this.giftUidEditBox.string = digits;
             }
+            this.syncGiftEditBoxVisibleText(this.giftUidEditBox);
         }
         const uid = this.getGiftUidInputValue();
         if (this.giftSelectedPlayer && this.giftSelectedPlayer.uid !== uid) {
@@ -693,8 +750,16 @@ export abstract class HomeFeatureGiftShare extends HomeViewBase {
         if (raw !== digits) {
             this.giftAmountEditBox.string = digits;
         }
+        this.syncGiftEditBoxVisibleText(this.giftAmountEditBox);
         this.giftAmount = digits.length > 0 ? Math.max(0, Math.floor(Number(digits))) : 0;
         this.refreshGiftAmountSummary();
+    }
+
+    protected syncGiftEditBoxVisibleText(editBox: EditBox): void {
+        const textLabel = editBox.node.getChildByName('TEXT_LABEL')?.getComponent(Label);
+        if (textLabel) {
+            textLabel.string = editBox.string || '';
+        }
     }
 
     protected searchGiftTargetPlayer(): void {
@@ -739,6 +804,7 @@ export abstract class HomeFeatureGiftShare extends HomeViewBase {
         this.giftAmount = amount;
         if (this.giftAmountEditBox?.isValid) {
             this.giftAmountEditBox.string = `${amount}`;
+            this.syncGiftEditBoxVisibleText(this.giftAmountEditBox);
         }
         this.refreshGiftAmountSummary();
     }
@@ -749,13 +815,21 @@ export abstract class HomeFeatureGiftShare extends HomeViewBase {
         return Number.isFinite(value) ? Math.max(0, Math.floor(value)) : 0;
     }
 
+    protected getGiftFinalCost(amount: number): number {
+        return Math.round(amount * (1 + HomeConfig.GIFT_FEE_RATE) * 100) / 100;
+    }
+
+    protected formatGiftYuanbaoAmount(amount: number): string {
+        return amount.toFixed(2).replace(/\.?0+$/, '');
+    }
+
     protected refreshGiftAmountSummary(): void {
         const panel = this.popupRoot?.getChildByName('GiftPanel') || this.findNode('GiftPanel');
         const amountLabel = panel ? this.findNode('GiftFinalAmountLabel', panel)?.getComponent(Label) : null;
         const amount = this.getGiftAmountValue();
         this.giftAmount = amount;
         if (amountLabel) {
-            amountLabel.string = `${amount} \u5143\u5b9d`;
+            amountLabel.string = `${this.formatGiftYuanbaoAmount(this.getGiftFinalCost(amount))} \u5143\u5b9d`;
         }
     }
 
@@ -767,19 +841,20 @@ export abstract class HomeFeatureGiftShare extends HomeViewBase {
 
         const amount = this.getGiftAmountValue();
         if (amount < HomeConfig.GIFT_MIN_AMOUNT) {
-            this.showToast('\u8d60\u9001\u5143\u5b9d\u4e0d\u5f97\u5c0f\u4e8e20');
+            this.showToast('\u8f6c\u589e\u5143\u5b9d\u6570\u4e0d\u5f97\u5c0f\u4e8e20');
             return;
         }
 
+        const finalCost = this.formatGiftYuanbaoAmount(this.getGiftFinalCost(amount));
         this.openSharedFlowPopup('GiftTransferConfirmPopup', {
             title: '\u63d0\u793a\u4fe1\u606f',
-            message: `\u662f\u5426\u786e\u8ba4\u8d60\u9001${amount}\u5143\u5b9d\u7ed9\u73a9\u5bb6${this.giftSelectedPlayer.nickname}\uff1f`,
-            onConfirm: () => this.completeGiftTransfer(amount, this.giftSelectedPlayer?.nickname || ''),
+            message: `\u662f\u5426\u786e\u8ba4\u6d88\u8d39${finalCost}\u5143\u5b9d\uff0c\u8f6c\u589e${amount}\u5143\u5b9d\u7ed9\u73a9\u5bb6${this.giftSelectedPlayer.nickname}\uff1f`,
+            onConfirm: () => this.completeGiftTransfer(amount, finalCost, this.giftSelectedPlayer?.nickname || ''),
         });
     }
 
-    protected completeGiftTransfer(amount: number, nickname: string): void {
-        this.showToast(`\u8d60\u9001${amount}\u5143\u5b9d\u7ed9${nickname}\u7684\u8bf7\u6c42\u5df2\u63d0\u4ea4`);
+    protected completeGiftTransfer(amount: number, finalCost: string, nickname: string): void {
+        this.showToast(`\u6d88\u8d39${finalCost}\u5143\u5b9d\uff0c\u8f6c\u589e${amount}\u5143\u5b9d\u7ed9${nickname}\u7684\u8bf7\u6c42\u5df2\u63d0\u4ea4`);
     }
 
     protected getGiftOwnedYuanbaoText(): string {
