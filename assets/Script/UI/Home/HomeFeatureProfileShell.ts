@@ -1,11 +1,13 @@
 import {
     Color,
+    EditBox,
     EventTouch,
     Graphics,
     HorizontalTextAlignment,
     Label,
     Node,
     Overflow,
+    RichText,
     Sprite,
     UITransform,
     VerticalTextAlignment,
@@ -24,6 +26,12 @@ import { closeProfileRealNamePanel, openProfileRealNamePanel } from './HomeProfi
  * Owns the profile entry, main profile popup, labels, and action routing.
  */
 export abstract class HomeFeatureProfileShell extends HomeViewBase {
+    protected profileRenameEditBox: EditBox | null = null;
+    protected profileRenameDisplayLabel: Label | null = null;
+    protected profileRenamePendingOldName = '';
+    protected profileRenamePendingNewName = '';
+    protected profileRenameInputSyncing = false;
+
     protected setupAvatarProfileButton(): void {
         const topHud = this.persistentCurrencyHud || this.findNode('TopHud', this.uiMainLayer || this.node) || this.findNode('TopHud');
         if (!topHud) return;
@@ -180,7 +188,7 @@ export abstract class HomeFeatureProfileShell extends HomeViewBase {
 
         const editButton = this.findNode('ProfileEditButton', board);
         if (editButton) {
-            this.bindScaledClick(editButton, () => this.showToast('\u6539\u540d\u529f\u80fd\u9884\u7559'));
+            this.bindScaledClick(editButton, () => this.openProfileRenameInputPopup());
         }
 
         const copyButton = this.findNode('ProfileCopyButton', board);
@@ -294,7 +302,7 @@ export abstract class HomeFeatureProfileShell extends HomeViewBase {
         this.applyProfileNicknameLabelStyle(this.profilePopupNameLabel);
 
         const editButton = this.createSkinnedNode('ProfileEditButton', header, 34, 34, 13.547, 60.16, HomeConfig.UI_PROFILE_BTN_EDIT);
-        this.bindScaledClick(editButton, () => this.showToast('\u6539\u540d\u529f\u80fd\u9884\u7559'));
+        this.bindScaledClick(editButton, () => this.openProfileRenameInputPopup());
 
         this.profilePopupUidLabel = this.createLabel(header, 'ProfileUidLabel', `UID: ${HomeConfig.DEFAULT_UID}`, 25, 249.518, 60.16, 209.078, 45.58, Color.WHITE);
         this.applyProfileTextOutline(this.profilePopupUidLabel, 2);
@@ -506,6 +514,291 @@ export abstract class HomeFeatureProfileShell extends HomeViewBase {
             console.warn('[MainHomeView] open customer service failed', err);
         }
         this.showToast('\u5ba2\u670d\u94fe\u63a5\u6253\u5f00\u5931\u8d25');
+    }
+    protected openProfileRenameInputPopup(): void {
+        this.profileRenamePendingOldName = this.profile.name || HomeConfig.DEFAULT_NAME;
+        this.profileRenamePendingNewName = '';
+        this.profileRenameEditBox = null;
+        this.profileRenameDisplayLabel = null;
+        this.openSharedFlowPopup('ConfirmPopup', {
+            title: '\u7cfb\u7edf\u63d0\u793a',
+            onConfirm: () => this.handleProfileRenameInputConfirm(),
+        });
+
+        const popup = this.popupRoot?.getChildByName('ConfirmPopup') || this.findNode('ConfirmPopup');
+        if (!popup?.isValid) return;
+        this.layoutProfileRenameInputPopup(popup);
+    }
+    protected layoutProfileRenameInputPopup(popup: Node): void {
+        const board = this.findNode('ConfirmPopupBoard', popup);
+        if (!board?.isValid) return;
+
+        const messageNode = this.findNode('ConfirmMessage', popup);
+        if (messageNode?.isValid) {
+            const richText = messageNode.getComponent(RichText);
+            if (richText) richText.string = '';
+            const label = messageNode.getComponent(Label);
+            if (label) label.string = '';
+            messageNode.active = false;
+        }
+
+        const messageBg = this.findNode('ConfirmMessageBg', popup);
+        if (messageBg?.isValid) messageBg.active = false;
+
+        const quantityRoot = this.findNode('ConfirmQuantityRoot', popup);
+        if (quantityRoot?.isValid) quantityRoot.active = false;
+
+        const inputRoot = this.getOrCreateProfileRenameNode(board, 'ProfileRenameInputRoot', 470, 90, 0, 4);
+        inputRoot.setSiblingIndex(5);
+
+        const inputBg = this.getOrCreateProfileRenameNode(inputRoot, 'ProfileRenameInputBg', 420, 62, 0, 0);
+        this.drawProfileRenameInputBackground(inputBg, 420, 62);
+        inputBg.setSiblingIndex(0);
+        this.profileRenameDisplayLabel = this.getOrCreateProfileRenameLabel(inputBg, 'ProfileRenameDisplayText', '', 28, 0, 0, 382, 48, new Color(105, 72, 48, 255));
+        this.profileRenameDisplayLabel.horizontalAlign = HorizontalTextAlignment.LEFT;
+        this.profileRenameDisplayLabel.overflow = Overflow.CLAMP;
+        this.profileRenameDisplayLabel.node.setSiblingIndex(1);
+        this.profileRenameEditBox = this.setupProfileRenameEditBox(inputBg);
+        this.syncProfileRenameEditBox(this.profileRenameEditBox, '');
+    }
+    protected getOrCreateProfileRenameNode(parent: Node, name: string, width: number, height: number, x: number, y: number): Node {
+        let node = parent.getChildByName(name);
+        if (!node?.isValid) {
+            node = this.createNode(name, parent, width, height, x, y);
+        }
+        if (node.parent !== parent) {
+            node.setParent(parent);
+        }
+        node.active = true;
+        node.setPosition(x, y, 0);
+        (node.getComponent(UITransform) || node.addComponent(UITransform)).setContentSize(width, height);
+        return node;
+    }
+    protected drawProfileRenameInputBackground(node: Node, width: number, height: number): void {
+        const transform = node.getComponent(UITransform) || node.addComponent(UITransform);
+        transform.setContentSize(width, height);
+        const graphics = node.getComponent(Graphics) || node.addComponent(Graphics);
+        graphics.clear();
+        graphics.fillColor = new Color(255, 249, 229, 255);
+        graphics.strokeColor = new Color(198, 170, 128, 255);
+        graphics.lineWidth = 2;
+        graphics.rect(-width / 2, -height / 2, width, height);
+        graphics.fill();
+        graphics.stroke();
+    }
+    protected setupProfileRenameEditBox(inputBg: Node): EditBox {
+        this.hideNativeProfileRenameInputChrome();
+        const width = 420;
+        const height = 62;
+        const editNode = this.getOrCreateProfileRenameNode(inputBg, 'EditBoxTouch', width, height, 0, 0);
+        editNode.setSiblingIndex(2);
+
+        const hiddenColor = new Color(0, 0, 0, 0);
+        const textLabel = this.getOrCreateProfileRenameLabel(editNode, 'TEXT_LABEL', '', 1, 0, 0, 1, 1, hiddenColor);
+        textLabel.color = hiddenColor;
+        const placeholderLabel = this.getOrCreateProfileRenameLabel(editNode, 'PLACEHOLDER_LABEL', '', 1, 0, 0, 1, 1, hiddenColor);
+        placeholderLabel.color = hiddenColor;
+
+        let editBox = editNode.getComponent(EditBox);
+        editBox ||= editNode.addComponent(EditBox);
+        const editBoxCompat = editBox as unknown as {
+            textLabel?: Label;
+            placeholderLabel?: Label;
+            inputMode?: number;
+            inputFlag?: number;
+            returnType?: number;
+            fontSize?: number;
+            placeholderFontSize?: number;
+            fontColor?: Color;
+            placeholderFontColor?: Color;
+            cursorColor?: Color;
+            backgroundImage?: null;
+            placeholder?: string;
+            maxLength?: number;
+            lineHeight?: number;
+            string?: string;
+            _textLabel?: Label;
+            _placeholderLabel?: Label;
+            _inputMode?: number;
+            _inputFlag?: number;
+            _returnType?: number;
+            _fontSize?: number;
+            _placeholderFontSize?: number;
+            _fontColor?: Color;
+            _placeholderFontColor?: Color;
+            _cursorColor?: Color;
+            _backgroundImage?: null;
+            _placeholder?: string;
+            _maxLength?: number;
+            _lineHeight?: number;
+            _string?: string;
+        };
+        const inputMode = (EditBox as unknown as { InputMode?: { SINGLE_LINE?: number } }).InputMode?.SINGLE_LINE ?? 6;
+        const inputFlag = (EditBox as unknown as { InputFlag?: { SENSITIVE?: number } }).InputFlag?.SENSITIVE ?? 1;
+        const returnType = (EditBox as unknown as { KeyboardReturnType?: { DONE?: number } }).KeyboardReturnType?.DONE ?? 0;
+        const hiddenTextColor = new Color(0, 0, 0, 0);
+
+        editBoxCompat.textLabel = textLabel;
+        editBoxCompat.placeholderLabel = placeholderLabel;
+        editBoxCompat.inputMode = inputMode;
+        editBoxCompat.inputFlag = inputFlag;
+        editBoxCompat.returnType = returnType;
+        editBoxCompat.fontSize = 1;
+        editBoxCompat.placeholderFontSize = 1;
+        editBoxCompat.fontColor = hiddenTextColor;
+        editBoxCompat.placeholderFontColor = hiddenTextColor;
+        editBoxCompat.cursorColor = hiddenTextColor;
+        editBoxCompat.backgroundImage = null;
+        editBoxCompat.placeholder = '';
+        editBoxCompat.maxLength = 8;
+        editBoxCompat.lineHeight = 1;
+        editBoxCompat._textLabel = textLabel;
+        editBoxCompat._placeholderLabel = placeholderLabel;
+        editBoxCompat._inputMode = inputMode;
+        editBoxCompat._inputFlag = inputFlag;
+        editBoxCompat._returnType = returnType;
+        editBoxCompat._fontSize = 1;
+        editBoxCompat._placeholderFontSize = 1;
+        editBoxCompat._fontColor = hiddenTextColor;
+        editBoxCompat._placeholderFontColor = hiddenTextColor;
+        editBoxCompat._cursorColor = hiddenTextColor;
+        editBoxCompat._backgroundImage = null;
+        editBoxCompat._placeholder = '';
+        editBoxCompat._maxLength = 8;
+        editBoxCompat._lineHeight = 1;
+
+        editNode.targetOff(this);
+        editNode.on(this.getProfileRenameEditBoxEventType('TEXT_CHANGED'), () => this.applyProfileRenameInput(editBox), this);
+        editNode.on(this.getProfileRenameEditBoxEventType('EDITING_DID_ENDED'), () => this.applyProfileRenameInput(editBox), this);
+        editNode.on(this.getProfileRenameEditBoxEventType('EDITING_RETURN'), () => this.applyProfileRenameInput(editBox), this);
+        return editBox;
+    }
+    protected hideNativeProfileRenameInputChrome(): void {
+        const doc = (globalThis as unknown as { document?: Document }).document;
+        if (!doc || doc.getElementById('duxiachuan-profile-rename-input-chrome')) return;
+
+        const style = doc.createElement('style');
+        style.id = 'duxiachuan-profile-rename-input-chrome';
+        style.textContent = [
+            'input, textarea {',
+            'caret-color: transparent !important;',
+            'background: transparent !important;',
+            'border: 0 !important;',
+            'outline: none !important;',
+            'box-shadow: none !important;',
+            'color: transparent !important;',
+            '}',
+        ].join('');
+        doc.head?.appendChild(style);
+    }
+    protected getOrCreateProfileRenameLabel(parent: Node, name: string, text: string, fontSize: number, x: number, y: number, width: number, height: number, color: Color): Label {
+        let label = parent.getChildByName(name)?.getComponent(Label) || null;
+        if (!label) {
+            label = this.createLabel(parent, name, text, fontSize, x, y, width, height, color);
+        } else {
+            label.node.active = true;
+            label.node.setPosition(x, y, 0);
+            (label.node.getComponent(UITransform) || label.node.addComponent(UITransform)).setContentSize(width, height);
+        }
+        applySimKaiFont(label);
+        label.enabled = true;
+        label.string = text;
+        label.fontSize = fontSize;
+        label.lineHeight = fontSize + 8;
+        label.color = color;
+        label.horizontalAlign = HorizontalTextAlignment.CENTER;
+        label.verticalAlign = VerticalTextAlignment.CENTER;
+        label.enableWrapText = false;
+        return label;
+    }
+    protected getProfileRenameEditBoxEventType(name: 'TEXT_CHANGED' | 'EDITING_DID_ENDED' | 'EDITING_RETURN'): string {
+        const eventType = EditBox as unknown as { EventType?: Record<string, string> };
+        return eventType.EventType?.[name] || {
+            TEXT_CHANGED: 'text-changed',
+            EDITING_DID_ENDED: 'editing-did-ended',
+            EDITING_RETURN: 'editing-return',
+        }[name];
+    }
+    protected applyProfileRenameInput(editBox: EditBox): void {
+        if (this.profileRenameInputSyncing) return;
+        const raw = editBox.string || '';
+        const clean = raw.replace(/\s+/g, '').slice(0, 8);
+        this.syncProfileRenameEditBox(editBox, clean);
+    }
+    protected syncProfileRenameEditBox(editBox: EditBox, value: string): void {
+        this.profileRenameInputSyncing = true;
+        const editBoxCompat = editBox as unknown as {
+            string?: string;
+            _string?: string;
+            textLabel?: Label;
+            _textLabel?: Label;
+            placeholderLabel?: Label;
+            _placeholderLabel?: Label;
+        };
+        editBoxCompat.string = value;
+        editBoxCompat._string = value;
+        const textLabel = editBoxCompat.textLabel || editBoxCompat._textLabel;
+        if (textLabel) {
+            textLabel.string = value;
+            textLabel.node.active = true;
+        }
+        const placeholderLabel = editBoxCompat.placeholderLabel || editBoxCompat._placeholderLabel;
+        if (placeholderLabel) {
+            placeholderLabel.string = '';
+            placeholderLabel.node.active = true;
+        }
+        const displayLabel = this.profileRenameDisplayLabel?.isValid
+            ? this.profileRenameDisplayLabel
+            : editBox.node.parent?.getChildByName('ProfileRenameDisplayText')?.getComponent(Label) || null;
+        if (displayLabel) {
+            this.profileRenameDisplayLabel = displayLabel;
+            displayLabel.string = value;
+            displayLabel.node.active = true;
+        }
+        this.profileRenameInputSyncing = false;
+    }
+    protected handleProfileRenameInputConfirm(): void {
+        const newName = (this.profileRenameEditBox?.string || '').replace(/\s+/g, '').trim();
+        const oldName = this.profileRenamePendingOldName || this.profile.name || HomeConfig.DEFAULT_NAME;
+        this.profileRenameEditBox = null;
+        if (!newName) {
+            this.showToast('\u8bf7\u8f93\u5165\u65b0\u6635\u79f0');
+            return;
+        }
+        if (newName === oldName) {
+            this.showToast('\u65b0\u6635\u79f0\u4e0d\u80fd\u548c\u539f\u6635\u79f0\u76f8\u540c');
+            return;
+        }
+
+        this.profileRenamePendingNewName = newName;
+        this.openSharedFlowPopup('ConfirmPopup', {
+            title: '\u7cfb\u7edf\u63d0\u793a',
+            message: `\u662f\u5426\u6d88\u8017\u4e00\u5f20\u6539\u540d\u5361\u5c06\u539f\u6765\u7684\u540d\u5b57${oldName}\u6539\u6210${newName}\uff1f`,
+            onConfirm: () => this.confirmProfileRename(),
+        });
+    }
+    protected confirmProfileRename(): void {
+        const newName = this.profileRenamePendingNewName.trim();
+        if (!newName) {
+            this.showToast('\u8bf7\u8f93\u5165\u65b0\u6635\u79f0');
+            return;
+        }
+
+        this.ensureShopStore();
+        if (!this.shopStore) return;
+        const count = this.shopStore.inventory.rename_card || 0;
+        if (count <= 0) {
+            this.showToast('\u6539\u540d\u5361\u4e0d\u8db3');
+            return;
+        }
+
+        this.shopStore.inventory.rename_card = count - 1;
+        this.saveShopStore();
+        this.profile.name = newName;
+        this.saveProfile(this.profile);
+        this.updateProfileLabels();
+        this.refreshShopPanel();
+        this.showToast('\u6539\u540d\u6210\u529f');
     }
     protected applyProfileTextOutline(label: Label, width: number): void {
         label.enableOutline = width > 0;

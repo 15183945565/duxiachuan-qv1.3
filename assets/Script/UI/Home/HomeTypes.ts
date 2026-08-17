@@ -189,6 +189,8 @@ export interface MarketListingData {
     unitPrice: number;
     iconPath: string;
     framePath: string;
+    createdAt?: number;
+    expiresAt?: number;
 }
 
 export interface MarketSellListingData extends MarketListingData {
@@ -201,11 +203,13 @@ export interface MarketSellListingData extends MarketListingData {
 export interface MarketTransactionData {
     id: string;
     itemId: string;
-    action: 'buy' | 'sell';
+    action: 'buy' | 'sell' | 'post' | 'cancel' | 'expire';
     mode?: MarketMode;
     itemName: string;
     amount: number;
     totalPrice: number;
+    iconPath?: string;
+    framePath?: string;
 }
 
 export interface BagBottomTabButton {

@@ -932,7 +932,7 @@ export abstract class HomeViewBase extends Component {
     protected abstract getBagGridLayout(view: BagCatalogView): { height: number; y: number };
     protected abstract createBagGridItem(parent: Node, index: number, item: BagIllustrationCatalogItem | undefined, x: number, y: number, showInventoryCount?: boolean): void;
     protected abstract bindGridItemTap(node: Node, onTap: () => void): void;
-    protected abstract bindBagGridScroll(node: Node, content: Node, maxScrollY: number): void;
+    protected abstract bindBagGridScroll(node: Node, content: Node, maxScrollY: number, minScrollY?: number): void;
     protected abstract createBagBottomTabs(): void;
     protected abstract createBagBottomButton(parent: Node, name: string, x: number, tab: BagPageTab, title: string, normalPath: string, activePath: string): Node;
     protected abstract switchBagPage(tab: BagPageTab): void;
@@ -1152,7 +1152,7 @@ export abstract class HomeViewBase extends Component {
     protected abstract buildMarketSellListingPage(): void;
     protected abstract closeMarketSellItemSelectPopup(): void;
     protected abstract closeMarketSellConfirmPopup(): void;
-    protected abstract clampMarketListScroll(content: Node, maxScrollY: number): void;
+    protected abstract clampMarketListScroll(content: Node, maxScrollY: number, minScrollY?: number): void;
     protected abstract getCurrentMarketPostedListings(mode?: MarketMode): MarketSellListingData[];
     protected abstract getMarketListingMode(item: MarketSellListingData): MarketMode;
     protected abstract isMarketRequestPostPage(): boolean;

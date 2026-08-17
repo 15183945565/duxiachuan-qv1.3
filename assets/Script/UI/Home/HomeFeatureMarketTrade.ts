@@ -3,6 +3,7 @@ import {
     HorizontalTextAlignment,
     Label,
     Node,
+    Overflow,
     RichText,
     Sprite,
     UITransform,
@@ -37,9 +38,9 @@ export abstract class HomeFeatureMarketTrade extends HomeViewBase {
             'market',
         );
     }
-    protected clampMarketListScroll(content: Node, maxScrollY: number): void {
+    protected clampMarketListScroll(content: Node, maxScrollY: number, minScrollY = 0): void {
         const currentY = content.position.y || 0;
-        content.setPosition(0, this.clamp(currentY, 0, maxScrollY), 0);
+        content.setPosition(0, this.clamp(currentY, minScrollY, minScrollY + maxScrollY), 0);
     }
     protected marketListingRowHasLayout(row: Node | null | undefined): boolean {
         if (!row?.isValid) return false;
@@ -104,6 +105,27 @@ export abstract class HomeFeatureMarketTrade extends HomeViewBase {
             });
         });
     }
+    protected getMarketListingRemainingText(item: MarketListingData): string {
+        const now = Date.now();
+        const createdAt = Number.isFinite(item.createdAt) && (item.createdAt || 0) > 0
+            ? item.createdAt as number
+            : now;
+        const expiresAt = Number.isFinite(item.expiresAt) && (item.expiresAt || 0) > 0
+            ? item.expiresAt as number
+            : createdAt + HomeConfig.MARKET_POST_EXPIRE_DURATION_MS;
+        const remain = Math.max(0, expiresAt - now);
+        if (remain <= 0) return '\u5269\u4f59\uff1a\u5373\u5c06\u4e0b\u67b6';
+
+        const minuteMs = 60 * 1000;
+        const hourMs = 60 * minuteMs;
+        const dayMs = 24 * hourMs;
+        const days = Math.floor(remain / dayMs);
+        const hours = Math.floor((remain % dayMs) / hourMs);
+        const minutes = Math.max(1, Math.ceil((remain % hourMs) / minuteMs));
+        if (days > 0) return `\u5269\u4f59\uff1a${days}\u5929${hours}\u65f6`;
+        if (hours > 0) return `\u5269\u4f59\uff1a${hours}\u65f6${minutes}\u5206`;
+        return `\u5269\u4f59\uff1a${minutes}\u5206`;
+    }
     protected createMarketListingRow(parent: Node, item: MarketListingData, index: number, y: number): void {
         const row = this.getOrCreateEditorSkinnedNode(`MarketListing_${index + 1}`, parent, HomeConfig.MARKET_ROW_WIDTH, HomeConfig.MARKET_ROW_HEIGHT, 0, y, HomeConfig.UI_MARKET_ITEM_ROW);
         row.active = true;
@@ -136,6 +158,14 @@ export abstract class HomeFeatureMarketTrade extends HomeViewBase {
         this.applyMarketListingChildLayout(row, layoutTemplate, 'MarketItemName', 0, 54, 360, 36);
         name.horizontalAlign = HorizontalTextAlignment.CENTER;
         this.applyMarketTextStyle(name, 1);
+        const remain = this.getOrCreateEditorLabel(row, 'MarketRemainTime', this.getMarketListingRemainingText(item), 17, 210, 54, 170, 28, new Color(92, 65, 43, 255));
+        remain.node.active = true;
+        remain.node.setPosition(210, 54, 0);
+        (remain.node.getComponent(UITransform) || remain.node.addComponent(UITransform)).setContentSize(170, 28);
+        remain.horizontalAlign = HorizontalTextAlignment.RIGHT;
+        remain.overflow = Overflow.SHRINK;
+        this.applyMarketTextStyle(remain, 0);
+        remain.node.setSiblingIndex(4);
         const totalPrice = this.getMarketTotalPrice(item.unitPrice, item.amount);
         const unit = this.getOrCreateEditorLabel(row, 'MarketUnitPrice', `\u5355\u4ef7\uff1a${this.formatMarketPrice(item.unitPrice)} \u5143\u5b9d`, 20, -58.902, 7, 260, 32, new Color(92, 65, 43, 255));
         unit.node.active = true;
@@ -170,19 +200,34 @@ export abstract class HomeFeatureMarketTrade extends HomeViewBase {
             (quantity) => this.completeMarketAction(item, action, quantity),
         );
     }
+    protected applyMarketPostedListingFill(item: MarketListingData, quantity: number): void {
+        const index = this.marketSellListings.findIndex((listing) => listing.id === item.id);
+        if (index < 0) return;
+        const listing = this.marketSellListings[index];
+        const remain = Math.max(0, listing.amount - quantity);
+        if (remain <= 0) {
+            this.marketSellListings.splice(index, 1);
+            return;
+        }
+        listing.amount = remain;
+    }
     protected completeMarketAction(item: MarketListingData, action: 'buy' | 'sell', quantity: number): void {
         const totalPrice = this.getMarketTotalPrice(item.unitPrice, quantity);
         this.marketTransactions.unshift({
             id: `${Date.now()}_${item.id}`,
-            itemId: item.id,
+            itemId: item.itemId,
             action,
             mode: this.marketMode,
             itemName: item.name,
             amount: quantity,
             totalPrice,
+            iconPath: item.iconPath,
+            framePath: item.framePath,
         });
+        this.applyMarketPostedListingFill(item, quantity);
         this.showToast(this.getMarketSuccessTitle(action));
-        if (this.marketActiveTab === 'history') this.refreshMarketList();
+        this.refreshMarketTabLabels();
+        this.refreshMarketList();
     }
     protected buildMarketHistoryList(): void {
         if (!this.marketViewport?.isValid) return;
@@ -192,14 +237,20 @@ export abstract class HomeFeatureMarketTrade extends HomeViewBase {
         const viewportTransform = this.marketViewport.getComponent(UITransform) || this.marketViewport.addComponent(UITransform);
         const viewportWidth = viewportTransform.contentSize.width || HomeConfig.MARKET_VIEWPORT_WIDTH;
         const viewportHeight = viewportTransform.contentSize.height || HomeConfig.MARKET_VIEWPORT_HEIGHT;
-        const historyRowHeight = 80;
-        const historyRowGap = 80;
-        const historyTopPadding = 18;
-        const contentHeight = Math.max(viewportHeight, transactionCount * historyRowGap + historyTopPadding + 24);
+        const startY = viewportHeight / 2
+            - HomeConfig.MARKET_HISTORY_CONTENT_Y
+            - HomeConfig.MARKET_HISTORY_ROW_TOP_PADDING
+            - HomeConfig.MARKET_HISTORY_ROW_HEIGHT / 2;
+        const lastRowY = startY - (transactionCount - 1) * HomeConfig.MARKET_HISTORY_ROW_STEP;
+        const contentBottomY = lastRowY - HomeConfig.MARKET_HISTORY_ROW_HEIGHT / 2;
+        const visibleBottomAtRest = -viewportHeight / 2 - HomeConfig.MARKET_HISTORY_CONTENT_Y;
+        const maxScrollY = Math.max(0, visibleBottomAtRest - contentBottomY + 24);
+        const contentHeight = viewportHeight + maxScrollY;
         const listContent = this.marketViewport.getChildByName('MarketListContent');
         if (listContent?.isValid) listContent.active = false;
         this.marketContent = this.getOrCreateEditorNode('MarketHistoryContent', this.marketViewport, viewportWidth, contentHeight, 0, 0);
         this.marketContent.active = true;
+        this.marketContent.setPosition(0, HomeConfig.MARKET_HISTORY_CONTENT_Y, 0);
         (this.marketContent.getComponent(UITransform) || this.marketContent.addComponent(UITransform)).setContentSize(viewportWidth, contentHeight);
         this.marketContent.children
             .filter((child) => /^MarketHistory_\d+$/.test(child.name) || child.name === 'MarketHistoryEmpty')
@@ -210,27 +261,24 @@ export abstract class HomeFeatureMarketTrade extends HomeViewBase {
             const empty = this.getOrCreateEditorLabel(this.marketContent, 'MarketHistoryEmpty', this.getMarketHistoryEmptyText(), 30, 0, 260, 420, 64, new Color(92, 70, 50, 255));
             empty.node.active = true;
             this.applyMarketTextStyle(empty, 1);
-            this.clampMarketListScroll(this.marketContent, 0);
+            this.clampMarketListScroll(this.marketContent, 0, HomeConfig.MARKET_HISTORY_CONTENT_Y);
             return;
         }
     
-        const startY = contentHeight / 2 - historyTopPadding - historyRowHeight / 2;
         transactions.forEach((transaction, index) => {
-            const row = this.getOrCreateEditorNode(`MarketHistory_${index + 1}`, this.marketContent!, viewportWidth, historyRowHeight, 0, startY - index * historyRowGap);
+            const row = this.getOrCreateEditorNode(`MarketHistory_${index + 1}`, this.marketContent!, viewportWidth, HomeConfig.MARKET_HISTORY_ROW_HEIGHT, 0, startY - index * HomeConfig.MARKET_HISTORY_ROW_STEP);
             row.active = true;
-            row.setPosition(0, startY - index * historyRowGap, 0);
-            (row.getComponent(UITransform) || row.addComponent(UITransform)).setContentSize(viewportWidth, historyRowHeight);
+            row.setPosition(0, startY - index * HomeConfig.MARKET_HISTORY_ROW_STEP, 0);
+            (row.getComponent(UITransform) || row.addComponent(UITransform)).setContentSize(viewportWidth, HomeConfig.MARKET_HISTORY_ROW_HEIGHT);
             const rowSkin = row.getComponent(Sprite);
             if (rowSkin) rowSkin.enabled = false;
             this.applyMarketHistoryLogRow(row, transaction);
             row.setSiblingIndex(index);
-            this.bindScaledClick(row, () => this.openMarketTransactionDetail(transaction));
         });
     
-        const maxScrollY = Math.max(0, contentHeight - viewportHeight);
-        this.clampMarketListScroll(this.marketContent, maxScrollY);
-        this.bindBagGridScroll(this.marketViewport, this.marketContent, maxScrollY);
-        this.bindBagGridScroll(this.marketContent, this.marketContent, maxScrollY);
+        this.clampMarketListScroll(this.marketContent, maxScrollY, HomeConfig.MARKET_HISTORY_CONTENT_Y);
+        this.bindBagGridScroll(this.marketViewport, this.marketContent, maxScrollY, HomeConfig.MARKET_HISTORY_CONTENT_Y);
+        this.bindBagGridScroll(this.marketContent, this.marketContent, maxScrollY, HomeConfig.MARKET_HISTORY_CONTENT_Y);
     }
     protected applyMarketHistoryLogRow(row: Node, transaction: MarketTransactionData): void {
         ['MarketHistoryItemName', 'MarketHistoryPrice', 'MarketHistoryStatus'].forEach((nodeName) => {
@@ -238,43 +286,43 @@ export abstract class HomeFeatureMarketTrade extends HomeViewBase {
             if (legacyNode?.isValid) legacyNode.active = false;
         });
 
-        const richNode = this.getOrCreateEditorNode('MarketHistoryRichText', row, 592, 64, 0, 4);
+        const richNode = this.getOrCreateEditorNode('MarketHistoryRichText', row, HomeConfig.MARKET_HISTORY_RICH_TEXT_WIDTH, HomeConfig.MARKET_HISTORY_RICH_TEXT_HEIGHT, 0, HomeConfig.MARKET_HISTORY_RICH_TEXT_Y);
         richNode.active = true;
-        richNode.setPosition(0, 4, 0);
-        (richNode.getComponent(UITransform) || richNode.addComponent(UITransform)).setContentSize(592, 64);
+        richNode.setPosition(0, HomeConfig.MARKET_HISTORY_RICH_TEXT_Y, 0);
+        (richNode.getComponent(UITransform) || richNode.addComponent(UITransform)).setContentSize(HomeConfig.MARKET_HISTORY_RICH_TEXT_WIDTH, HomeConfig.MARKET_HISTORY_RICH_TEXT_HEIGHT);
         const label = richNode.getComponent(Label);
         if (label) label.enabled = false;
         const richText = richNode.getComponent(RichText) || richNode.addComponent(RichText);
         richText.enabled = true;
         richText.string = this.formatMarketHistoryRichText(transaction);
-        richText.fontSize = 21;
-        richText.lineHeight = 28;
-        richText.maxWidth = 592;
+        richText.fontSize = HomeConfig.MARKET_HISTORY_RICH_TEXT_FONT_SIZE;
+        richText.lineHeight = HomeConfig.MARKET_HISTORY_RICH_TEXT_LINE_HEIGHT;
+        richText.maxWidth = HomeConfig.MARKET_HISTORY_RICH_TEXT_WIDTH;
         richText.horizontalAlign = HorizontalTextAlignment.LEFT;
         applySimKaiFontToRichText(richText);
 
-        const divider = this.getOrCreateEditorSkinnedNode('MarketHistoryDivider', row, 610, 4, 0, -36, HomeConfig.UI_BEAST_RECORD_DIVIDER);
+        const divider = this.getOrCreateEditorSkinnedNode('MarketHistoryDivider', row, HomeConfig.MARKET_HISTORY_DIVIDER_WIDTH, HomeConfig.MARKET_HISTORY_DIVIDER_HEIGHT, 0, HomeConfig.MARKET_HISTORY_DIVIDER_Y, HomeConfig.UI_BEAST_RECORD_DIVIDER);
         divider.active = true;
-        divider.setPosition(0, -36, 0);
-        (divider.getComponent(UITransform) || divider.addComponent(UITransform)).setContentSize(610, 4);
+        divider.setPosition(0, HomeConfig.MARKET_HISTORY_DIVIDER_Y, 0);
+        (divider.getComponent(UITransform) || divider.addComponent(UITransform)).setContentSize(HomeConfig.MARKET_HISTORY_DIVIDER_WIDTH, HomeConfig.MARKET_HISTORY_DIVIDER_HEIGHT);
         divider.setSiblingIndex(0);
         richNode.setSiblingIndex(1);
     }
     protected formatMarketHistoryRichText(transaction: MarketTransactionData): string {
-        const baseColor = '#ead9bd';
-        const valueGreen = '#3dee30';
-        const amountColor = '#ff3434';
-        const outlineColor = '#1a0e08';
-        const time = this.formatMarketTransactionTime(transaction);
+        const timeColor = '#8f7b58';
+        const valueGreen = '#19b82d';
+        const amountColor = '#d63030';
+        const outlineColor = '#f5efe4';
+        const time = this.formatMarketTransactionTime(transaction).replace(/[\uff0c,]\s*$/, '');
         const actionText = this.getMarketTransactionStatus(transaction);
         const amountText = `${this.formatMarketPrice(transaction.totalPrice)}\u5143\u5b9d`;
+        const itemText = `${transaction.itemName} x${transaction.amount}`;
         return [
-            `<outline color=${outlineColor} width=2>`,
-            `<color=${baseColor}>${this.escapeRichText(time)}</color><br/>`,
-            `<color=${valueGreen}>${this.escapeRichText(transaction.itemName)}  x${transaction.amount}</color>`,
-            `<color=${baseColor}>  </color>`,
+            `<outline color=${outlineColor} width=1>`,
+            `<color=${timeColor}>${this.escapeRichText(time)}\uff0c</color>`,
+            `<color=${valueGreen}>${this.escapeRichText(itemText)}</color>`,
+            `<color=${timeColor}> </color>`,
             `<color=${valueGreen}>${this.escapeRichText(actionText)}</color>`,
-            `<color=${baseColor}>  </color>`,
             `<color=${amountColor}>${this.escapeRichText(amountText)}</color>`,
             '</outline>',
         ].join('');
@@ -290,18 +338,20 @@ export abstract class HomeFeatureMarketTrade extends HomeViewBase {
         return `${date.getFullYear()}\u5e74${pad(date.getMonth() + 1)}\u6708${pad(date.getDate())}\u65e5${pad(date.getHours())}\u65f6${pad(date.getMinutes())}\u5206\uff0c`;
     }
     protected openMarketTransactionDetail(transaction: MarketTransactionData): void {
-        const listing = HomeConfig.MARKET_ITEMS.find((item) => item.id === transaction.itemId);
+        const listing = HomeConfig.MARKET_ITEMS.find((item) => item.itemId === transaction.itemId || item.id === transaction.itemId);
         const actionText = this.getMarketTransactionStatus(transaction);
         const totalTitle = (transaction.mode || 'trade') === 'request' ? '\u6c42\u8d2d\u603b\u4ef7' : '\u4ea4\u6613\u603b\u4ef7';
+        const iconPath = transaction.iconPath || listing?.iconPath || '';
+        const framePath = transaction.framePath || listing?.framePath;
         this.openCommerceItemDetail(
             transaction.itemName,
             this.getMarketRecordTitle(transaction.mode || 'trade'),
             `${actionText}\n\u6570\u91cf\uff1a${transaction.amount}\n${totalTitle}\uff1a${this.formatMarketPrice(transaction.totalPrice)} \u5143\u5b9d`,
             `${transaction.amount}`,
-            listing?.iconPath || HomeConfig.UI_SHOP_JADE_PACK_1,
+            iconPath,
             '\u5173\u95ed',
             () => undefined,
-            listing?.framePath || HomeConfig.UI_SHOP_ITEM_FRAME_LV7,
+            framePath,
             'market',
         );
     }

@@ -193,6 +193,11 @@ export abstract class HomeViewAdventure extends HomeViewRoleBag {
     }
     protected resetSharedConfirmPopupStyle(popup: Node): void {
         this.hideMagicMonsterRoomPromptNodes(popup);
+        const profileRenameInputRoot = this.findNode('ProfileRenameInputRoot', popup);
+        if (profileRenameInputRoot?.isValid) {
+            profileRenameInputRoot.active = false;
+            profileRenameInputRoot.setPosition(0, -2000, 0);
+        }
 
         const board = this.findNode('ConfirmPopupBoard', popup);
         if (board?.isValid) {

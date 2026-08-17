@@ -646,7 +646,7 @@ export abstract class HomeFeatureRoleEquipment extends HomeFeatureRoleEquipmentH
             this.closeRoleEquipDetailPopup();
         }, this);
 
-        const board = this.getOrCreateRoleEquipSkin(popup, 'RoleEquipDetailBoard', HomeConfig.ROLE_EQUIP_DETAIL_WIDTH, HomeConfig.ROLE_EQUIP_DETAIL_HEIGHT, 0, 0, HomeConfig.UI_BAG_ITEM_DETAIL_ATTR_BG, true);
+        const board = this.getOrCreateRoleEquipSkin(popup, 'RoleEquipDetailBoard', HomeConfig.SHARED_CONFIRM_BOARD_WIDTH, HomeConfig.SHARED_CONFIRM_BOARD_HEIGHT, 0, 0, HomeConfig.UI_ROLE_EQUIP_DETAIL_BG);
         board.setSiblingIndex(1);
         board.off(Node.EventType.TOUCH_START);
         board.off(Node.EventType.TOUCH_END);
@@ -657,10 +657,10 @@ export abstract class HomeFeatureRoleEquipment extends HomeFeatureRoleEquipmentH
             event.propagationStopped = true;
         }, this);
 
-        const titleSkin = this.getOrCreateRoleEquipChild(board, 'RoleEquipDetailTitleSkin', HomeConfig.BAG_ITEM_DETAIL_TITLE_WIDTH, HomeConfig.BAG_ITEM_DETAIL_TITLE_HEIGHT, 0, 182, true);
-        titleSkin.active = false;
+        const titleSkin = this.getOrCreateRoleEquipSkin(board, 'RoleEquipDetailTitleSkin', HomeConfig.SHARED_CONFIRM_TITLE_WIDTH, HomeConfig.SHARED_CONFIRM_TITLE_HEIGHT, 0, HomeConfig.SHARED_CONFIRM_TITLE_Y, HomeConfig.UI_ROLE_EQUIP_DETAIL_TITLE_BG);
+        titleSkin.active = true;
         titleSkin.setSiblingIndex(1);
-        this.getOrCreateRoleEquipLabel(board, 'RoleEquipDetailTitle', '\u88c5\u5907\u8be6\u60c5', 30, 0, 186, 260, 42, new Color(126, 74, 36, 255), true).node.setSiblingIndex(2);
+        this.getOrCreateRoleEquipLabel(board, 'RoleEquipDetailTitle', '\u88c5\u5907\u8be6\u60c5', HomeConfig.SHARED_CONFIRM_TITLE_FONT_SIZE, 0, HomeConfig.SHARED_CONFIRM_TITLE_Y, HomeConfig.SHARED_CONFIRM_TITLE_LABEL_WIDTH, HomeConfig.SHARED_CONFIRM_TITLE_LABEL_HEIGHT, new Color(126, 74, 36, 255)).node.setSiblingIndex(2);
         return popup;
     }
     protected ensureRoleEquipReplacePopup(): Node {
@@ -766,14 +766,42 @@ export abstract class HomeFeatureRoleEquipment extends HomeFeatureRoleEquipmentH
         const popup = this.roleEquipDetailPopup || this.ensureRoleEquipDetailPopup();
         const board = popup.getChildByName('RoleEquipDetailBoard');
         if (!board?.isValid) return;
+        const isConfirm = mode === 'confirm';
+        const boardWidth = HomeConfig.SHARED_CONFIRM_BOARD_WIDTH;
+        const boardHeight = HomeConfig.SHARED_CONFIRM_BOARD_HEIGHT;
+        board.setPosition(0, 0, 0);
+        (board.getComponent(UITransform) || board.addComponent(UITransform)).setContentSize(boardWidth, boardHeight);
+        this.applyUiSkin(board, HomeConfig.UI_ROLE_EQUIP_DETAIL_BG, boardWidth, boardHeight);
+
+        const titleSkin = board.getChildByName('RoleEquipDetailTitleSkin');
+        if (titleSkin?.isValid) {
+            const titleWidth = HomeConfig.SHARED_CONFIRM_TITLE_WIDTH;
+            const titleHeight = HomeConfig.SHARED_CONFIRM_TITLE_HEIGHT;
+            const titleY = HomeConfig.SHARED_CONFIRM_TITLE_Y;
+            titleSkin.active = true;
+            titleSkin.setPosition(0, titleY, 0);
+            (titleSkin.getComponent(UITransform) || titleSkin.addComponent(UITransform)).setContentSize(titleWidth, titleHeight);
+            this.applyUiSkin(titleSkin, HomeConfig.UI_ROLE_EQUIP_DETAIL_TITLE_BG, titleWidth, titleHeight);
+            titleSkin.setSiblingIndex(1);
+        }
+
         const currentItem = this.getCurrentRoleEquipment(config);
         const displayItem = item || currentItem || this.getRoleEquipmentPlaceholder(config);
         const titleText = mode === 'confirm' ? '\u63d0\u793a\u8bf4\u660e' : '\u88c5\u5907\u8be6\u60c5';
         const title = board.getChildByName('RoleEquipDetailTitle')?.getComponent(Label);
         if (title) {
+            const titleY = HomeConfig.SHARED_CONFIRM_TITLE_Y;
+            const titleWidth = HomeConfig.SHARED_CONFIRM_TITLE_LABEL_WIDTH;
+            const titleHeight = HomeConfig.SHARED_CONFIRM_TITLE_LABEL_HEIGHT;
+            title.node.setPosition(0, titleY, 0);
+            (title.node.getComponent(UITransform) || title.node.addComponent(UITransform)).setContentSize(titleWidth, titleHeight);
             title.string = titleText;
             title.color = new Color(126, 74, 36, 255);
+            title.fontSize = HomeConfig.SHARED_CONFIRM_TITLE_FONT_SIZE;
+            title.lineHeight = HomeConfig.SHARED_CONFIRM_TITLE_LINE_HEIGHT;
+            title.overflow = Overflow.SHRINK;
             this.setLabelOutline(title, new Color(255, 245, 215, 255), 2);
+            title.node.setSiblingIndex(2);
         }
 
         const iconFrame = this.getOrCreateRoleEquipSkin(board, 'RoleEquipDetailIconFrame', 116, 116, -210, 56, displayItem?.framePath || HomeConfig.UI_ROLE_EQUIP_FRAME_LV1, true);
@@ -806,17 +834,26 @@ export abstract class HomeFeatureRoleEquipment extends HomeFeatureRoleEquipmentH
             board,
             'RoleEquipDetailConfirmMessage',
             '',
-            24,
+            isConfirm ? 28 : 24,
             0,
-            8,
-            500,
-            92,
-            new Color(111, 70, 42, 255),
-            true,
+            isConfirm ? HomeConfig.BATTLE_TARGET_CHALLENGE_MESSAGE_Y : 8,
+            isConfirm ? HomeConfig.BATTLE_TARGET_CHALLENGE_MESSAGE_WIDTH : 500,
+            isConfirm ? HomeConfig.BATTLE_TARGET_CHALLENGE_MESSAGE_HEIGHT : 92,
+            isConfirm ? new Color(107, 75, 46, 255) : new Color(111, 70, 42, 255),
         );
+        confirmMessage.node.setPosition(0, isConfirm ? HomeConfig.BATTLE_TARGET_CHALLENGE_MESSAGE_Y : 8, 0);
+        (confirmMessage.node.getComponent(UITransform) || confirmMessage.node.addComponent(UITransform)).setContentSize(
+            isConfirm ? HomeConfig.BATTLE_TARGET_CHALLENGE_MESSAGE_WIDTH : 500,
+            isConfirm ? HomeConfig.BATTLE_TARGET_CHALLENGE_MESSAGE_HEIGHT : 92,
+        );
+        confirmMessage.fontSize = isConfirm ? 28 : 24;
+        confirmMessage.lineHeight = isConfirm ? 40 : 32;
+        confirmMessage.color = isConfirm ? new Color(107, 75, 46, 255) : new Color(111, 70, 42, 255);
         confirmMessage.horizontalAlign = HorizontalTextAlignment.CENTER;
         confirmMessage.verticalAlign = VerticalTextAlignment.CENTER;
         confirmMessage.enableWrapText = true;
+        confirmMessage.overflow = Overflow.SHRINK;
+        this.setLabelOutline(confirmMessage, new Color(255, 246, 220, 255), isConfirm ? 1 : 0);
         confirmMessage.node.setSiblingIndex(5);
 
         const attrLines = this.getEquipmentAttrLines(mode === 'detail' ? displayItem : item, config);
@@ -840,12 +877,27 @@ export abstract class HomeFeatureRoleEquipment extends HomeFeatureRoleEquipmentH
             confirmMessage.node.active = false;
         }
 
-        const leftButton = this.getOrCreateRoleEquipSkin(board, 'RoleEquipDetailLeftButton', 154, 55, -115, -184, HomeConfig.UI_ROLE_EQUIP_DETAIL_BUTTON_BG, true);
-        const rightButton = this.getOrCreateRoleEquipSkin(board, 'RoleEquipDetailRightButton', 154, 55, 115, -184, HomeConfig.UI_ROLE_EQUIP_DETAIL_BUTTON_BG, true);
+        const buttonWidth = HomeConfig.SHARED_CONFIRM_BUTTON_WIDTH;
+        const buttonHeight = HomeConfig.SHARED_CONFIRM_BUTTON_HEIGHT;
+        const buttonY = HomeConfig.SHARED_CONFIRM_BUTTON_Y;
+        const leftButtonX = HomeConfig.SHARED_CONFIRM_CANCEL_BUTTON_X;
+        const rightButtonX = HomeConfig.SHARED_CONFIRM_ACCEPT_BUTTON_X;
+        const leftButton = this.getOrCreateRoleEquipSkin(board, 'RoleEquipDetailLeftButton', buttonWidth, buttonHeight, leftButtonX, buttonY, HomeConfig.UI_ROLE_EQUIP_DETAIL_BUTTON_BG);
+        const rightButton = this.getOrCreateRoleEquipSkin(board, 'RoleEquipDetailRightButton', buttonWidth, buttonHeight, rightButtonX, buttonY, HomeConfig.UI_ROLE_EQUIP_DETAIL_BUTTON_BG);
         leftButton.setSiblingIndex(8);
         rightButton.setSiblingIndex(8);
-        const leftLabel = this.getOrCreateRoleEquipLabel(leftButton, 'RoleEquipDetailLeftButtonLabel', mode === 'confirm' ? '\u53d6\u6d88' : '\u66ff\u6362', 27, 0, 2, 130, 40, Color.WHITE, true);
-        const rightLabel = this.getOrCreateRoleEquipLabel(rightButton, 'RoleEquipDetailRightButtonLabel', mode === 'confirm' ? '\u786e\u8ba4' : '\u953b\u9020', 27, 0, 2, 130, 40, Color.WHITE, true);
+        const buttonLabelFontSize = HomeConfig.SHARED_CONFIRM_BUTTON_FONT_SIZE;
+        const buttonLabelLineHeight = HomeConfig.SHARED_CONFIRM_BUTTON_LINE_HEIGHT;
+        const buttonLabelWidth = HomeConfig.SHARED_CONFIRM_BUTTON_LABEL_WIDTH;
+        const buttonLabelHeight = HomeConfig.SHARED_CONFIRM_BUTTON_LABEL_HEIGHT;
+        const buttonLabelY = HomeConfig.SHARED_CONFIRM_BUTTON_LABEL_Y;
+        const leftLabel = this.getOrCreateRoleEquipLabel(leftButton, 'RoleEquipDetailLeftButtonLabel', mode === 'confirm' ? '\u53d6\u6d88' : '\u66ff\u6362', buttonLabelFontSize, 0, buttonLabelY, buttonLabelWidth, buttonLabelHeight, Color.WHITE);
+        const rightLabel = this.getOrCreateRoleEquipLabel(rightButton, 'RoleEquipDetailRightButtonLabel', mode === 'confirm' ? '\u786e\u8ba4' : '\u953b\u9020', buttonLabelFontSize, 0, buttonLabelY, buttonLabelWidth, buttonLabelHeight, Color.WHITE);
+        [leftLabel, rightLabel].forEach((label) => {
+            label.lineHeight = buttonLabelLineHeight;
+            label.node.setPosition(0, buttonLabelY, 0);
+            (label.node.getComponent(UITransform) || label.node.addComponent(UITransform)).setContentSize(buttonLabelWidth, buttonLabelHeight);
+        });
         [leftLabel, rightLabel].forEach((label) => this.setLabelOutline(label, new Color(67, 36, 18, 255), 2));
 
         if (mode === 'confirm') {

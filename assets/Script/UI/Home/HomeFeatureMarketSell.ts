@@ -1,5 +1,6 @@
 import {
     Color,
+    EditBox,
     EventTouch,
     Graphics,
     HorizontalTextAlignment,
@@ -34,27 +35,53 @@ abstract class HomeFeatureMarketSellHost extends HomeViewBase {
  * Owns market sale selection, draft pricing, validation, and listing publication.
  */
 export abstract class HomeFeatureMarketSell extends HomeFeatureMarketSellHost {
+    protected marketSellQuantityInputSyncing = false;
+
     protected buildMarketSellListingPage(): void {
         if (!this.marketViewport?.isValid) return;
 
         const postedListings = this.getCurrentMarketPostedListings();
         const listingCount = postedListings.length;
         const hasAddSlot = listingCount < HomeConfig.MARKET_SELL_MAX_LISTINGS;
-        const rowCount = listingCount + (hasAddSlot ? 1 : 0);
-        const extraTopGap = hasAddSlot && listingCount > 0 ? HomeConfig.MARKET_SELL_ADD_TO_LISTING_EXTRA_GAP : 0;
         const viewportHeight = this.marketViewport.getComponent(UITransform)?.contentSize.height || HomeConfig.MARKET_SELL_VIEWPORT_HEIGHT;
         const existingContent = this.marketViewport.getChildByName('MarketListContent');
         const templateRow1 = existingContent?.getChildByName('MarketListing_1');
         const templateRow2 = existingContent?.getChildByName('MarketListing_2');
-        const rowGap = templateRow1?.isValid && templateRow2?.isValid
-            ? Math.max(1, Math.abs(templateRow1.position.y - templateRow2.position.y))
-            : HomeConfig.MARKET_ROW_GAP;
+        const templateGap = templateRow1?.isValid && templateRow2?.isValid
+            ? Math.abs(templateRow1.position.y - templateRow2.position.y)
+            : 0;
+        const rowGap = templateGap >= HomeConfig.MARKET_ROW_HEIGHT ? templateGap : HomeConfig.MARKET_ROW_GAP;
         const viewportWidth = this.marketViewport.getComponent(UITransform)?.contentSize.width || HomeConfig.MARKET_VIEWPORT_WIDTH;
-        const contentHeight = Math.max(viewportHeight, Math.max(rowCount, 1) * rowGap + extraTopGap + 16);
+        const defaultStartY = viewportHeight / 2 - HomeConfig.MARKET_ROW_HEIGHT / 2 - 10;
+        const templateStartY = templateRow1?.isValid && templateGap >= HomeConfig.MARKET_ROW_HEIGHT
+            ? templateRow1.position.y
+            : templateRow2?.isValid
+                ? templateRow2.position.y + rowGap
+                : templateRow1?.isValid
+                    ? templateRow1.position.y
+                    : defaultStartY;
+        const startY = hasAddSlot
+            ? HomeConfig.MARKET_SELL_ADD_SLOT_Y
+            : templateStartY;
+        const listingStartY = hasAddSlot
+            ? startY - rowGap - HomeConfig.MARKET_SELL_ADD_TO_LISTING_EXTRA_GAP
+            : templateStartY;
+        const lastListingY = listingCount > 0
+            ? listingStartY - (listingCount - 1) * rowGap
+            : startY;
+        const contentBottomY = listingCount > 0
+            ? lastListingY - HomeConfig.MARKET_ROW_HEIGHT / 2
+            : hasAddSlot
+                ? startY - HomeConfig.MARKET_SELL_ADD_SLOT_HEIGHT / 2
+                : -viewportHeight / 2;
+        const visibleBottomAtRest = -viewportHeight / 2 - HomeConfig.MARKET_SELL_CONTENT_Y;
+        const maxScrollY = Math.max(0, visibleBottomAtRest - contentBottomY);
+        const contentHeight = viewportHeight + maxScrollY;
         const historyContent = this.marketViewport.getChildByName('MarketHistoryContent');
         if (historyContent?.isValid) historyContent.active = false;
         this.marketContent = this.getOrCreateEditorNode('MarketListContent', this.marketViewport, viewportWidth, contentHeight, 0, 0);
         this.marketContent.active = true;
+        this.marketContent.setPosition(0, HomeConfig.MARKET_SELL_CONTENT_Y, 0);
         (this.marketContent.getComponent(UITransform) || this.marketContent.addComponent(UITransform)).setContentSize(viewportWidth, contentHeight);
         this.marketContent.children
             .filter((child) => /^MarketListing_\d+$/.test(child.name)
@@ -65,51 +92,76 @@ export abstract class HomeFeatureMarketSell extends HomeFeatureMarketSellHost {
                 child.active = false;
             });
 
-        const addSlotTemplate = this.marketContent.getChildByName('MarketSellAddSlot');
-        const defaultStartY = viewportHeight / 2 - HomeConfig.MARKET_ROW_HEIGHT / 2 - 10;
-        const startY = hasAddSlot && addSlotTemplate?.isValid
-            ? addSlotTemplate.position.y
-            : templateRow1?.isValid
-                ? templateRow1.position.y
-                : defaultStartY;
-        const listingStartIndex = hasAddSlot ? 1 : 0;
         if (hasAddSlot) {
             this.createMarketSellAddRow(this.marketContent, startY);
         }
         postedListings.forEach((item, index) => {
-            this.createMarketSellPostedRow(this.marketContent!, item, index, startY - (index + listingStartIndex) * rowGap - extraTopGap);
+            this.createMarketSellPostedRow(this.marketContent!, item, index, listingStartY - index * rowGap);
         });
         this.syncMarketListingPriceLayout(this.marketContent);
 
-        const maxScrollY = Math.max(0, contentHeight - viewportHeight);
-        this.clampMarketListScroll(this.marketContent, maxScrollY);
-        this.bindBagGridScroll(this.marketViewport, this.marketContent, maxScrollY);
-        this.bindBagGridScroll(this.marketContent, this.marketContent, maxScrollY);
+        this.clampMarketListScroll(this.marketContent, maxScrollY, HomeConfig.MARKET_SELL_CONTENT_Y);
+        this.bindBagGridScroll(this.marketViewport, this.marketContent, maxScrollY, HomeConfig.MARKET_SELL_CONTENT_Y);
+        this.bindBagGridScroll(this.marketContent, this.marketContent, maxScrollY, HomeConfig.MARKET_SELL_CONTENT_Y);
     }
     protected createMarketSellAddRow(parent: Node, y: number): void {
-        const existingRow = parent.getChildByName('MarketSellAddSlot');
-        const row = this.getOrCreateEditorSkinnedNode('MarketSellAddSlot', parent, HomeConfig.MARKET_ROW_WIDTH, HomeConfig.MARKET_ROW_HEIGHT, 0, y, HomeConfig.UI_MARKET_ITEM_ROW);
+        const row = this.getOrCreateEditorSkinnedNode(
+            'MarketSellAddSlot',
+            parent,
+            HomeConfig.MARKET_SELL_ADD_SLOT_WIDTH,
+            HomeConfig.MARKET_SELL_ADD_SLOT_HEIGHT,
+            0,
+            y,
+            HomeConfig.UI_MARKET_ITEM_ROW,
+        );
         row.active = true;
-        if (!existingRow?.isValid) {
-            row.setPosition(0, y, 0);
-            (row.getComponent(UITransform) || row.addComponent(UITransform)).setContentSize(HomeConfig.MARKET_ROW_WIDTH, HomeConfig.MARKET_ROW_HEIGHT);
-        }
+        row.setPosition(0, y, 0);
+        (row.getComponent(UITransform) || row.addComponent(UITransform)).setContentSize(HomeConfig.MARKET_SELL_ADD_SLOT_WIDTH, HomeConfig.MARKET_SELL_ADD_SLOT_HEIGHT);
         row.children
             .filter((child) => child.name !== 'MarketSellAddButton')
             .forEach((child) => {
                 child.active = false;
             });
 
-        const existingAdd = row.getChildByName('MarketSellAddButton');
-        const add = this.getOrCreateEditorSkinnedNode('MarketSellAddButton', row, HomeConfig.MARKET_SELL_ADD_BUTTON_SIZE, HomeConfig.MARKET_SELL_ADD_BUTTON_SIZE, 0, -12, HomeConfig.UI_MARKET_SELL_ADD);
+        const add = this.getOrCreateEditorSkinnedNode(
+            'MarketSellAddButton',
+            row,
+            HomeConfig.MARKET_SELL_ADD_BUTTON_SIZE,
+            HomeConfig.MARKET_SELL_ADD_BUTTON_SIZE,
+            0,
+            HomeConfig.MARKET_SELL_ADD_BUTTON_Y,
+            HomeConfig.UI_MARKET_SELL_ADD,
+        );
         add.active = true;
-        if (!existingAdd?.isValid) {
-            add.setPosition(0, -12, 0);
-            (add.getComponent(UITransform) || add.addComponent(UITransform)).setContentSize(HomeConfig.MARKET_SELL_ADD_BUTTON_SIZE, HomeConfig.MARKET_SELL_ADD_BUTTON_SIZE);
-        }
+        add.setPosition(0, HomeConfig.MARKET_SELL_ADD_BUTTON_Y, 0);
+        (add.getComponent(UITransform) || add.addComponent(UITransform)).setContentSize(HomeConfig.MARKET_SELL_ADD_BUTTON_SIZE, HomeConfig.MARKET_SELL_ADD_BUTTON_SIZE);
         add.setSiblingIndex(20);
         this.bindScaledClick(add, () => this.openMarketSellItemSelectPopup());
         this.bindScaledClick(row, () => this.openMarketSellItemSelectPopup());
+    }
+    protected getMarketSellListingCreatedAt(item: MarketSellListingData, now = Date.now()): number {
+        if (Number.isFinite(item.createdAt) && (item.createdAt || 0) > 0) return item.createdAt as number;
+        const match = `${item.id || ''}`.match(/_post_(\d{10,})_/);
+        const parsed = match ? Number(match[1]) : NaN;
+        return Number.isFinite(parsed) && parsed > 0 ? parsed : now;
+    }
+    protected getMarketSellListingRemainingText(item: MarketSellListingData): string {
+        const now = Date.now();
+        const expiresAt = Number.isFinite(item.expiresAt) && (item.expiresAt || 0) > 0
+            ? item.expiresAt as number
+            : this.getMarketSellListingCreatedAt(item, now) + HomeConfig.MARKET_POST_EXPIRE_DURATION_MS;
+        const remain = Math.max(0, expiresAt - now);
+        if (remain <= 0) return '\u5269\u4f59\uff1a\u5373\u5c06\u4e0b\u67b6';
+
+        const minuteMs = 60 * 1000;
+        const hourMs = 60 * minuteMs;
+        const dayMs = 24 * hourMs;
+        const days = Math.floor(remain / dayMs);
+        const hours = Math.floor((remain % dayMs) / hourMs);
+        const minutes = Math.max(1, Math.ceil((remain % hourMs) / minuteMs));
+        if (days > 0) return `\u5269\u4f59\uff1a${days}\u5929${hours}\u65f6`;
+        if (hours > 0) return `\u5269\u4f59\uff1a${hours}\u65f6${minutes}\u5206`;
+        return `\u5269\u4f59\uff1a${minutes}\u5206`;
     }
     protected createMarketSellPostedRow(parent: Node, item: MarketSellListingData, index: number, y: number): void {
         const row = this.getOrCreateEditorSkinnedNode(`MarketSellListing_${index + 1}`, parent, HomeConfig.MARKET_ROW_WIDTH, HomeConfig.MARKET_ROW_HEIGHT, 0, y, HomeConfig.UI_MARKET_ITEM_ROW);
@@ -142,6 +194,14 @@ export abstract class HomeFeatureMarketSell extends HomeFeatureMarketSellHost {
         this.applyMarketListingChildLayout(row, layoutTemplate, 'MarketItemName', 0, 54, 360, 36);
         name.horizontalAlign = HorizontalTextAlignment.CENTER;
         this.applyMarketTextStyle(name, 1);
+        const remain = this.getOrCreateEditorLabel(row, 'MarketRemainTime', this.getMarketSellListingRemainingText(item), 17, 210, 54, 170, 28, new Color(92, 65, 43, 255));
+        remain.node.active = true;
+        remain.node.setPosition(210, 54, 0);
+        (remain.node.getComponent(UITransform) || remain.node.addComponent(UITransform)).setContentSize(170, 28);
+        remain.horizontalAlign = HorizontalTextAlignment.RIGHT;
+        remain.overflow = Overflow.SHRINK;
+        this.applyMarketTextStyle(remain, 0);
+        remain.node.setSiblingIndex(4);
         const totalPrice = this.getMarketTotalPrice(item.unitPrice, item.amount);
         const unit = this.getOrCreateEditorLabel(row, 'MarketUnitPrice', `\u5355\u4ef7\uff1a${this.formatMarketPrice(item.unitPrice)} \u5143\u5b9d`, 20, -58.902, 7, 260, 32, new Color(92, 65, 43, 255));
         unit.node.active = true;
@@ -158,12 +218,51 @@ export abstract class HomeFeatureMarketSell extends HomeFeatureMarketSellHost {
         action.active = true;
         this.applyMarketListingChildLayout(row, layoutTemplate, 'MarketActionButton', 226.714, -21, 136, 54);
         action.setSiblingIndex(6);
-        const doneLabel = this.getMarketListingMode(item) === 'request' ? '\u5df2\u53d1\u5e03' : '\u5df2\u4e0a\u67b6';
-        const actionLabel = this.getOrCreateEditorLabel(action, 'MarketActionLabel', doneLabel, 24, 0, 1, 118, 42, new Color(91, 53, 25, 255));
+        const actionLabel = this.getOrCreateEditorLabel(action, 'MarketActionLabel', this.getMarketPostedActionText(item), 24, 0, 1, 118, 42, new Color(91, 53, 25, 255));
         actionLabel.node.active = true;
         this.applyMarketTextStyle(actionLabel, 1);
-        this.bindScaledClick(action, () => this.showToast(this.getMarketListingMode(item) === 'request' ? '\u8be5\u6c42\u8d2d\u5355\u5df2\u53d1\u5e03' : '\u8be5\u7269\u54c1\u5df2\u4e0a\u67b6'));
+        this.bindScaledClick(action, () => this.openMarketPostedListingCancelConfirm(item));
         this.bindScaledClick(row, () => this.openMarketSellListingDetail(item));
+    }
+    protected getMarketPostedActionText(item: MarketSellListingData): string {
+        return this.getMarketListingMode(item) === 'request' ? '\u64a4\u9500' : '\u4e0b\u67b6';
+    }
+    protected openMarketPostedListingCancelConfirm(item: MarketSellListingData): void {
+        const isRequest = this.getMarketListingMode(item) === 'request';
+        const actionText = isRequest ? '\u64a4\u9500\u6c42\u8d2d' : '\u4e0b\u67b6';
+        this.openSharedFlowPopup('ConfirmPopup', {
+            title: '\u63d0\u793a\u8bf4\u660e',
+            message: `\u662f\u5426\u786e\u5b9a${actionText}${item.name} x${item.amount}\uff1f`,
+            onConfirm: () => this.confirmMarketPostedListingCancel(item.id),
+        });
+    }
+    protected confirmMarketPostedListingCancel(listingId: string): void {
+        const index = this.marketSellListings.findIndex((item) => item.id === listingId);
+        if (index < 0) {
+            this.showToast('\u8be5\u8bb0\u5f55\u5df2\u4e0d\u5b58\u5728');
+            this.refreshMarketTabLabels();
+            this.refreshMarketList();
+            return;
+        }
+
+        const [removed] = this.marketSellListings.splice(index, 1);
+        const isRequest = removed ? this.getMarketListingMode(removed) === 'request' : false;
+        if (removed) {
+            this.marketTransactions.unshift({
+                id: `${Date.now()}_${removed.id}_cancel`,
+                itemId: removed.itemId,
+                action: 'cancel',
+                mode: this.getMarketListingMode(removed),
+                itemName: removed.name,
+                amount: removed.amount,
+                totalPrice: this.getMarketTotalPrice(removed.unitPrice, removed.amount),
+                iconPath: removed.iconPath,
+                framePath: removed.framePath,
+            });
+        }
+        this.refreshMarketTabLabels();
+        this.refreshMarketList();
+        this.showToast(isRequest ? '\u6c42\u8d2d\u5df2\u64a4\u9500' : '\u7269\u54c1\u5df2\u4e0b\u67b6');
     }
     protected getMarketSellPostedItemCount(itemId: string, mode: MarketMode = 'trade'): number {
         return this.marketSellListings
@@ -466,29 +565,46 @@ export abstract class HomeFeatureMarketSell extends HomeFeatureMarketSellHost {
             this.showToast(delta > 0 ? `\u5df2\u8fbe\u5230\u6700\u9ad8${priceType}` : `\u5df2\u8fbe\u5230\u6700\u4f4e${priceType}`);
         }
     }
-    protected createMarketSellSettingRow(board: Node, key: string, title: string, y: number, onMinus: () => void, onPlus: () => void): void {
-        const titleLabel = this.getOrCreateEditorLabel(board, `MarketSellConfirm${key}Title`, title, 21, -190, y, 82, 32, new Color(92, 65, 43, 255));
+    protected createMarketSellSettingRow(
+        board: Node,
+        key: string,
+        title: string,
+        layout: { titleX: number; y: number; minusX: number; bgX: number; valueX: number; plusX: number },
+        onMinus: () => void,
+        onPlus: () => void,
+    ): void {
+        const titleLabel = this.getOrCreateEditorLabel(board, `MarketSellConfirm${key}Title`, title, 21, layout.titleX, layout.y, 82, 32, new Color(92, 65, 43, 255));
         titleLabel.node.active = true;
+        titleLabel.node.setPosition(layout.titleX, layout.y, 0);
+        (titleLabel.node.getComponent(UITransform) || titleLabel.node.addComponent(UITransform)).setContentSize(82, 32);
         titleLabel.horizontalAlign = HorizontalTextAlignment.RIGHT;
         this.setLabelOutline(titleLabel, new Color(255, 247, 224, 255), 1);
 
-        const minus = this.getOrCreateEditorSkinnedNode(`MarketSellConfirm${key}Minus`, board, HomeConfig.MARKET_SELL_STEPPER_BUTTON_SIZE, HomeConfig.MARKET_SELL_STEPPER_BUTTON_SIZE, -112, y, HomeConfig.UI_MARKET_SELL_PRICE_MINUS);
+        const minus = this.getOrCreateEditorSkinnedNode(`MarketSellConfirm${key}Minus`, board, HomeConfig.MARKET_SELL_STEPPER_BUTTON_SIZE, HomeConfig.MARKET_SELL_STEPPER_BUTTON_SIZE, layout.minusX, layout.y, HomeConfig.UI_MARKET_SELL_PRICE_MINUS);
         minus.active = true;
+        minus.setPosition(layout.minusX, layout.y, 0);
+        (minus.getComponent(UITransform) || minus.addComponent(UITransform)).setContentSize(HomeConfig.MARKET_SELL_STEPPER_BUTTON_SIZE, HomeConfig.MARKET_SELL_STEPPER_BUTTON_SIZE);
         minus.setSiblingIndex(6);
         this.bindScaledClick(minus, onMinus);
 
-        const valueBg = this.getOrCreateEditorSkinnedNode(`MarketSellConfirm${key}Bg`, board, HomeConfig.MARKET_SELL_SETTING_BG_WIDTH, HomeConfig.MARKET_SELL_SETTING_BG_HEIGHT, 0, y, HomeConfig.UI_MARKET_SELL_QUANTITY_BG);
+        const valueBg = this.getOrCreateEditorSkinnedNode(`MarketSellConfirm${key}Bg`, board, HomeConfig.MARKET_SELL_SETTING_BG_WIDTH, HomeConfig.MARKET_SELL_SETTING_BG_HEIGHT, layout.bgX, layout.y, HomeConfig.UI_MARKET_SELL_QUANTITY_BG);
         valueBg.active = true;
+        valueBg.setPosition(layout.bgX, layout.y, 0);
+        (valueBg.getComponent(UITransform) || valueBg.addComponent(UITransform)).setContentSize(HomeConfig.MARKET_SELL_SETTING_BG_WIDTH, HomeConfig.MARKET_SELL_SETTING_BG_HEIGHT);
         valueBg.setSiblingIndex(5);
 
-        const value = this.getOrCreateEditorLabel(board, `MarketSellConfirm${key}Value`, '', 20, 0, y, 150, 28, new Color(255, 247, 224, 255));
+        const value = this.getOrCreateEditorLabel(board, `MarketSellConfirm${key}Value`, '', 20, layout.valueX, layout.y, 150, 28, new Color(255, 247, 224, 255));
         value.node.active = true;
+        value.node.setPosition(layout.valueX, layout.y, 0);
+        (value.node.getComponent(UITransform) || value.node.addComponent(UITransform)).setContentSize(150, 28);
         value.horizontalAlign = HorizontalTextAlignment.CENTER;
         this.setLabelOutline(value, new Color(50, 42, 36, 255), 2);
         value.node.setSiblingIndex(7);
 
-        const plus = this.getOrCreateEditorSkinnedNode(`MarketSellConfirm${key}Plus`, board, HomeConfig.MARKET_SELL_STEPPER_BUTTON_SIZE, HomeConfig.MARKET_SELL_STEPPER_BUTTON_SIZE, 112, y, HomeConfig.UI_MARKET_SELL_PRICE_PLUS);
+        const plus = this.getOrCreateEditorSkinnedNode(`MarketSellConfirm${key}Plus`, board, HomeConfig.MARKET_SELL_STEPPER_BUTTON_SIZE, HomeConfig.MARKET_SELL_STEPPER_BUTTON_SIZE, layout.plusX, layout.y, HomeConfig.UI_MARKET_SELL_PRICE_PLUS);
         plus.active = true;
+        plus.setPosition(layout.plusX, layout.y, 0);
+        (plus.getComponent(UITransform) || plus.addComponent(UITransform)).setContentSize(HomeConfig.MARKET_SELL_STEPPER_BUTTON_SIZE, HomeConfig.MARKET_SELL_STEPPER_BUTTON_SIZE);
         plus.setSiblingIndex(8);
         this.bindScaledClick(plus, onPlus);
     }
@@ -497,9 +613,13 @@ export abstract class HomeFeatureMarketSell extends HomeFeatureMarketSellHost {
         const board = popup?.getChildByName('MarketSellConfirmBoard');
         if (!board?.isValid) return;
 
-        const quantity = board.getChildByName('MarketSellConfirmQuantityValue')?.getComponent(Label);
-        if (quantity) {
-            quantity.string = `${this.marketSellDraftQuantity}`;
+        const quantityNode = board.getChildByName('MarketSellConfirmQuantityValue');
+        const quantityEditBox = quantityNode?.getChildByName('MarketSellConfirmQuantityInputTouch')?.getComponent(EditBox);
+        if (quantityEditBox) {
+            this.syncMarketSellQuantityEditBox(quantityEditBox, `${this.marketSellDraftQuantity}`);
+        } else {
+            const quantity = quantityNode?.getComponent(Label);
+            if (quantity) quantity.string = `${this.marketSellDraftQuantity}`;
         }
         const unitPrice = board.getChildByName('MarketSellConfirmUnitPriceValue')?.getComponent(Label);
         if (unitPrice) {
@@ -510,6 +630,169 @@ export abstract class HomeFeatureMarketSell extends HomeFeatureMarketSellHost {
             const value = this.isMarketRequestPostPage() ? this.getMarketPostTotalCost() : this.getMarketSellFinalIncome();
             income.string = `${this.formatMarketPrice(value)} \u5143\u5b9d`;
         }
+    }
+    protected setupMarketSellQuantityEditBox(valueLabel: Label, item: BagIllustrationCatalogItem): void {
+        const valueNode = valueLabel.node;
+        const staleEditBox = valueNode.getComponent(EditBox);
+        if (staleEditBox) staleEditBox.destroy();
+        const inputNode = this.getOrCreateEditorNode('MarketSellConfirmQuantityInputTouch', valueNode, 150, 28, 0, 0);
+        inputNode.active = true;
+        inputNode.setPosition(0, 0, 0);
+        inputNode.setSiblingIndex(10);
+        (inputNode.getComponent(UITransform) || inputNode.addComponent(UITransform)).setContentSize(150, 28);
+        const hiddenColor = new Color(255, 247, 224, 0);
+        const textLabel = this.getOrCreateEditorLabel(inputNode, 'TEXT_LABEL', '', 20, 0, 0, 150, 28, hiddenColor);
+        textLabel.node.active = true;
+        textLabel.color = hiddenColor;
+        textLabel.horizontalAlign = HorizontalTextAlignment.CENTER;
+        const placeholderLabel = this.getOrCreateEditorLabel(inputNode, 'PLACEHOLDER_LABEL', '', 20, 0, 0, 150, 28, hiddenColor);
+        placeholderLabel.node.active = true;
+        placeholderLabel.color = hiddenColor;
+        placeholderLabel.horizontalAlign = HorizontalTextAlignment.CENTER;
+        let editBox = inputNode.getComponent(EditBox);
+        editBox ||= inputNode.addComponent(EditBox);
+        const editBoxCompat = editBox as unknown as {
+            textLabel?: Label;
+            placeholderLabel?: Label;
+            inputMode?: number;
+            inputFlag?: number;
+            returnType?: number;
+            fontSize?: number;
+            placeholderFontSize?: number;
+            fontColor?: Color;
+            placeholderFontColor?: Color;
+            cursorColor?: Color;
+            backgroundImage?: null;
+            placeholder?: string;
+            maxLength?: number;
+            lineHeight?: number;
+            string?: string;
+            _textLabel?: Label;
+            _placeholderLabel?: Label;
+            _inputMode?: number;
+            _inputFlag?: number;
+            _returnType?: number;
+            _fontSize?: number;
+            _placeholderFontSize?: number;
+            _fontColor?: Color;
+            _placeholderFontColor?: Color;
+            _cursorColor?: Color;
+            _backgroundImage?: null;
+            _placeholder?: string;
+            _maxLength?: number;
+            _lineHeight?: number;
+            _string?: string;
+        };
+        const inputMode = (EditBox as unknown as { InputMode?: { NUMERIC?: number; PHONE_NUMBER?: number; SINGLE_LINE?: number } }).InputMode;
+        const inputFlag = (EditBox as unknown as { InputFlag?: { SENSITIVE?: number } }).InputFlag;
+        const returnType = (EditBox as unknown as { KeyboardReturnType?: { DONE?: number } }).KeyboardReturnType;
+        const textColor = new Color(255, 247, 224, 255);
+        editBoxCompat.textLabel = textLabel;
+        editBoxCompat.placeholderLabel = placeholderLabel;
+        editBoxCompat.inputMode = inputMode?.NUMERIC ?? inputMode?.PHONE_NUMBER ?? inputMode?.SINGLE_LINE ?? 2;
+        editBoxCompat.inputFlag = inputFlag?.SENSITIVE ?? 1;
+        editBoxCompat.returnType = returnType?.DONE ?? 0;
+        editBoxCompat.fontSize = 20;
+        editBoxCompat.placeholderFontSize = 20;
+        editBoxCompat.fontColor = textColor;
+        editBoxCompat.placeholderFontColor = textColor;
+        editBoxCompat.cursorColor = textColor;
+        editBoxCompat.backgroundImage = null;
+        editBoxCompat.placeholder = '';
+        editBoxCompat.maxLength = Math.max(1, `${this.getMarketPostMaxQuantity(item)}`.length);
+        editBoxCompat.lineHeight = 28;
+        editBoxCompat._textLabel = textLabel;
+        editBoxCompat._placeholderLabel = placeholderLabel;
+        editBoxCompat._inputMode = editBoxCompat.inputMode;
+        editBoxCompat._inputFlag = editBoxCompat.inputFlag;
+        editBoxCompat._returnType = editBoxCompat.returnType;
+        editBoxCompat._fontSize = 20;
+        editBoxCompat._placeholderFontSize = 20;
+        editBoxCompat._fontColor = textColor;
+        editBoxCompat._placeholderFontColor = textColor;
+        editBoxCompat._cursorColor = textColor;
+        editBoxCompat._backgroundImage = null;
+        editBoxCompat._placeholder = '';
+        editBoxCompat._maxLength = editBoxCompat.maxLength;
+        editBoxCompat._lineHeight = 28;
+
+        const changed = this.getMarketSellEditBoxEventType('TEXT_CHANGED');
+        const ended = this.getMarketSellEditBoxEventType('EDITING_DID_ENDED');
+        const returned = this.getMarketSellEditBoxEventType('EDITING_RETURN');
+        valueNode.targetOff(this);
+        inputNode.targetOff(this);
+        inputNode.on(changed, () => this.applyMarketSellQuantityInput(editBox!, item, false), this);
+        inputNode.on(ended, () => this.applyMarketSellQuantityInput(editBox!, item, true), this);
+        inputNode.on(returned, () => this.applyMarketSellQuantityInput(editBox!, item, true), this);
+        this.syncMarketSellQuantityEditBox(editBox, `${this.marketSellDraftQuantity}`);
+    }
+    protected applyMarketSellQuantityInput(editBox: EditBox, item: BagIllustrationCatalogItem, commit: boolean): void {
+        if (this.marketSellQuantityInputSyncing) return;
+        const maxQuantity = this.getMarketPostMaxQuantity(item);
+        const maxDigits = Math.max(1, `${maxQuantity}`.length);
+        const raw = editBox.string || '';
+        let clean = raw.replace(/\D/g, '').slice(0, maxDigits);
+        if (!clean) {
+            if (!commit) {
+                this.syncMarketSellQuantityEditBox(editBox, '');
+                return;
+            }
+            clean = '1';
+        }
+        const parsed = Number.parseInt(clean, 10);
+        const nextQuantity = this.clamp(Number.isFinite(parsed) ? parsed : 1, 1, maxQuantity);
+        const nextText = `${nextQuantity}`;
+        this.syncMarketSellQuantityEditBox(editBox, nextText);
+        if (this.marketSellDraftQuantity !== nextQuantity) {
+            this.marketSellDraftQuantity = nextQuantity;
+            this.refreshMarketSellConfirmDraftLabels();
+        }
+    }
+    protected syncMarketSellQuantityEditBox(editBox: EditBox, text: string): void {
+        this.marketSellQuantityInputSyncing = true;
+        const editBoxCompat = editBox as unknown as {
+            string?: string;
+            _string?: string;
+            textLabel?: Label;
+            _textLabel?: Label;
+            placeholderLabel?: Label;
+            _placeholderLabel?: Label;
+        };
+        editBoxCompat.string = text;
+        editBoxCompat._string = text;
+        const visibleLabel = editBox.node.parent?.getComponent(Label);
+        if (visibleLabel) {
+            visibleLabel.string = text;
+            visibleLabel.node.active = true;
+        }
+        const textLabel = editBoxCompat.textLabel || editBoxCompat._textLabel || editBox.node.getComponent(Label);
+        if (textLabel) {
+            textLabel.string = text;
+            textLabel.node.active = true;
+        }
+        const placeholderLabel = editBoxCompat.placeholderLabel || editBoxCompat._placeholderLabel;
+        if (placeholderLabel) {
+            placeholderLabel.string = '';
+            placeholderLabel.node.active = true;
+        }
+        this.marketSellQuantityInputSyncing = false;
+    }
+    protected getMarketSellEditBoxEventType(name: 'TEXT_CHANGED' | 'EDITING_DID_ENDED' | 'EDITING_RETURN'): string {
+        const eventType = EditBox as unknown as { EventType?: Record<string, string> };
+        return eventType.EventType?.[name] || {
+            TEXT_CHANGED: 'text-changed',
+            EDITING_DID_ENDED: 'editing-did-ended',
+            EDITING_RETURN: 'editing-return',
+        }[name];
+    }
+    protected commitMarketSellQuantityInput(item: BagIllustrationCatalogItem): void {
+        const popup = this.marketPanel?.getChildByName('MarketSellConfirmPopup');
+        const board = popup?.getChildByName('MarketSellConfirmBoard');
+        const editBox = board
+            ?.getChildByName('MarketSellConfirmQuantityValue')
+            ?.getChildByName('MarketSellConfirmQuantityInputTouch')
+            ?.getComponent(EditBox);
+        if (editBox) this.applyMarketSellQuantityInput(editBox, item, true);
     }
     protected openMarketSellConfirmPopup(item: BagIllustrationCatalogItem): void {
         if (!this.marketPanel?.isValid) return;
@@ -539,31 +822,36 @@ export abstract class HomeFeatureMarketSell extends HomeFeatureMarketSellHost {
         }
         dim.setSiblingIndex(0);
 
-        const board = this.getOrCreateEditorSkinnedNode('MarketSellConfirmBoard', popup, HomeConfig.SHARED_CONFIRM_BOARD_WIDTH, HomeConfig.SHARED_CONFIRM_BOARD_HEIGHT, 0, 0, HomeConfig.UI_MARKET_DETAIL_POPUP_BG);
+        const board = this.getOrCreateEditorSkinnedNode('MarketSellConfirmBoard', popup, HomeConfig.MARKET_SELL_CONFIRM_BOARD_WIDTH, HomeConfig.MARKET_SELL_CONFIRM_BOARD_HEIGHT, 0, 0, HomeConfig.UI_MARKET_DETAIL_POPUP_BG);
         board.active = true;
+        board.setScale(HomeConfig.MARKET_SELL_CONFIRM_BOARD_SCALE, HomeConfig.MARKET_SELL_CONFIRM_BOARD_SCALE, 1);
         board.setSiblingIndex(1);
-        (board.getComponent(UITransform) || board.addComponent(UITransform)).setContentSize(HomeConfig.SHARED_CONFIRM_BOARD_WIDTH, HomeConfig.SHARED_CONFIRM_BOARD_HEIGHT);
-        const titleSkin = this.getOrCreateEditorNode('MarketSellConfirmTitleSkin', board, HomeConfig.SHARED_CONFIRM_TITLE_WIDTH, HomeConfig.SHARED_CONFIRM_TITLE_HEIGHT, 0, HomeConfig.SHARED_CONFIRM_TITLE_Y);
-        titleSkin.active = true;
-        titleSkin.setPosition(0, HomeConfig.SHARED_CONFIRM_TITLE_Y, 0);
-        (titleSkin.getComponent(UITransform) || titleSkin.addComponent(UITransform)).setContentSize(HomeConfig.SHARED_CONFIRM_TITLE_WIDTH, HomeConfig.SHARED_CONFIRM_TITLE_HEIGHT);
-        this.applyUiSkinKeepingEditorSize(titleSkin, HomeConfig.UI_CONFIRM_TITLE_BG, HomeConfig.SHARED_CONFIRM_TITLE_WIDTH, HomeConfig.SHARED_CONFIRM_TITLE_HEIGHT);
+        (board.getComponent(UITransform) || board.addComponent(UITransform)).setContentSize(HomeConfig.MARKET_SELL_CONFIRM_BOARD_WIDTH, HomeConfig.MARKET_SELL_CONFIRM_BOARD_HEIGHT);
+        const titleSkin = this.getOrCreateEditorNode('MarketSellConfirmTitleSkin', board, HomeConfig.MARKET_SELL_CONFIRM_TITLE_SKIN_WIDTH, HomeConfig.MARKET_SELL_CONFIRM_TITLE_SKIN_HEIGHT, 0, HomeConfig.MARKET_SELL_CONFIRM_TITLE_SKIN_Y);
+        titleSkin.active = HomeConfig.MARKET_SELL_CONFIRM_TITLE_SKIN_ACTIVE;
+        titleSkin.setPosition(0, HomeConfig.MARKET_SELL_CONFIRM_TITLE_SKIN_Y, 0);
+        (titleSkin.getComponent(UITransform) || titleSkin.addComponent(UITransform)).setContentSize(HomeConfig.MARKET_SELL_CONFIRM_TITLE_SKIN_WIDTH, HomeConfig.MARKET_SELL_CONFIRM_TITLE_SKIN_HEIGHT);
+        this.applyUiSkinKeepingEditorSize(titleSkin, HomeConfig.UI_CONFIRM_TITLE_BG, HomeConfig.MARKET_SELL_CONFIRM_TITLE_SKIN_WIDTH, HomeConfig.MARKET_SELL_CONFIRM_TITLE_SKIN_HEIGHT);
         titleSkin.setSiblingIndex(1);
-        const title = this.getOrCreateEditorLabel(board, 'MarketSellConfirmTitle', this.getCatalogDisplayName(item), HomeConfig.SHARED_CONFIRM_TITLE_FONT_SIZE, 0, HomeConfig.SHARED_CONFIRM_TITLE_Y, HomeConfig.SHARED_CONFIRM_TITLE_LABEL_WIDTH, HomeConfig.SHARED_CONFIRM_TITLE_LABEL_HEIGHT, new Color(126, 74, 36, 255));
+        const title = this.getOrCreateEditorLabel(board, 'MarketSellConfirmTitle', this.getCatalogDisplayName(item), HomeConfig.SHARED_CONFIRM_TITLE_FONT_SIZE, 0, HomeConfig.MARKET_SELL_CONFIRM_TITLE_Y, HomeConfig.MARKET_SELL_CONFIRM_TITLE_WIDTH, HomeConfig.MARKET_SELL_CONFIRM_TITLE_HEIGHT, new Color(126, 74, 36, 255));
         title.node.active = true;
-        title.node.setPosition(0, HomeConfig.SHARED_CONFIRM_TITLE_Y, 0);
-        (title.node.getComponent(UITransform) || title.node.addComponent(UITransform)).setContentSize(HomeConfig.SHARED_CONFIRM_TITLE_LABEL_WIDTH, HomeConfig.SHARED_CONFIRM_TITLE_LABEL_HEIGHT);
+        title.node.setPosition(0, HomeConfig.MARKET_SELL_CONFIRM_TITLE_Y, 0);
+        (title.node.getComponent(UITransform) || title.node.addComponent(UITransform)).setContentSize(HomeConfig.MARKET_SELL_CONFIRM_TITLE_WIDTH, HomeConfig.MARKET_SELL_CONFIRM_TITLE_HEIGHT);
         title.fontSize = HomeConfig.SHARED_CONFIRM_TITLE_FONT_SIZE;
         title.lineHeight = HomeConfig.SHARED_CONFIRM_TITLE_LINE_HEIGHT;
         title.overflow = Overflow.SHRINK;
         this.setLabelOutline(title, new Color(255, 245, 215, 255), 2);
         title.node.setSiblingIndex(2);
 
-        const frame = this.getOrCreateEditorSkinnedNode('MarketSellConfirmFrame', board, 90, 90, 0, 106, item.framePath);
+        const frame = this.getOrCreateEditorSkinnedNode('MarketSellConfirmFrame', board, 90, 90, 0, HomeConfig.MARKET_SELL_CONFIRM_FRAME_Y, item.framePath);
         frame.active = true;
+        frame.setPosition(0, HomeConfig.MARKET_SELL_CONFIRM_FRAME_Y, 0);
+        (frame.getComponent(UITransform) || frame.addComponent(UITransform)).setContentSize(90, 90);
         frame.setSiblingIndex(3);
-        const icon = this.getOrCreateEditorSkinnedNode('MarketSellConfirmIcon', board, 68, 68, 0, 108, item.iconPath);
+        const icon = this.getOrCreateEditorSkinnedNode('MarketSellConfirmIcon', board, 68, 68, 0, HomeConfig.MARKET_SELL_CONFIRM_ICON_Y, item.iconPath);
         icon.active = true;
+        icon.setPosition(0, HomeConfig.MARKET_SELL_CONFIRM_ICON_Y, 0);
+        (icon.getComponent(UITransform) || icon.addComponent(UITransform)).setContentSize(68, 68);
         icon.setSiblingIndex(4);
 
         const oldMinLabel = board.getChildByName('MarketSellConfirmMinPrice');
@@ -571,8 +859,12 @@ export abstract class HomeFeatureMarketSell extends HomeFeatureMarketSellHost {
         const oldMaxLabel = board.getChildByName('MarketSellConfirmMaxPrice');
         if (oldMaxLabel?.isValid) oldMaxLabel.active = false;
 
-        const typeLabel = this.getOrCreateEditorLabel(board, 'MarketSellConfirmType', `\u7c7b\u578b\uff1a${categoryPath}`, 21, 0, 50, 600, 30, new Color(92, 65, 43, 255));
-        const rangeLabel = this.getOrCreateEditorLabel(board, 'MarketSellConfirmPriceRange', `${this.getMarketPostPriceRangePrefix()}\uff1a${this.formatMarketPrice(priceRange.minPrice)}-${this.formatMarketPrice(priceRange.maxPrice)} \u5143\u5b9d`, 20, 0, 18, 520, 30, new Color(92, 65, 43, 255));
+        const typeLabel = this.getOrCreateEditorLabel(board, 'MarketSellConfirmType', `\u7c7b\u578b\uff1a${categoryPath}`, 21, HomeConfig.MARKET_SELL_CONFIRM_TYPE_X, HomeConfig.MARKET_SELL_CONFIRM_TYPE_Y, HomeConfig.MARKET_SELL_CONFIRM_TYPE_WIDTH, HomeConfig.MARKET_SELL_CONFIRM_TYPE_HEIGHT, new Color(92, 65, 43, 255));
+        const rangeLabel = this.getOrCreateEditorLabel(board, 'MarketSellConfirmPriceRange', `${this.getMarketPostPriceRangePrefix()}\uff1a${this.formatMarketPrice(priceRange.minPrice)}-${this.formatMarketPrice(priceRange.maxPrice)} \u5143\u5b9d`, 20, HomeConfig.MARKET_SELL_CONFIRM_PRICE_RANGE_X, HomeConfig.MARKET_SELL_CONFIRM_PRICE_RANGE_Y, HomeConfig.MARKET_SELL_CONFIRM_PRICE_RANGE_WIDTH, HomeConfig.MARKET_SELL_CONFIRM_PRICE_RANGE_HEIGHT, new Color(92, 65, 43, 255));
+        typeLabel.node.setPosition(HomeConfig.MARKET_SELL_CONFIRM_TYPE_X, HomeConfig.MARKET_SELL_CONFIRM_TYPE_Y, 0);
+        (typeLabel.node.getComponent(UITransform) || typeLabel.node.addComponent(UITransform)).setContentSize(HomeConfig.MARKET_SELL_CONFIRM_TYPE_WIDTH, HomeConfig.MARKET_SELL_CONFIRM_TYPE_HEIGHT);
+        rangeLabel.node.setPosition(HomeConfig.MARKET_SELL_CONFIRM_PRICE_RANGE_X, HomeConfig.MARKET_SELL_CONFIRM_PRICE_RANGE_Y, 0);
+        (rangeLabel.node.getComponent(UITransform) || rangeLabel.node.addComponent(UITransform)).setContentSize(HomeConfig.MARKET_SELL_CONFIRM_PRICE_RANGE_WIDTH, HomeConfig.MARKET_SELL_CONFIRM_PRICE_RANGE_HEIGHT);
         [typeLabel, rangeLabel].forEach((label) => {
             label.node.active = true;
             label.horizontalAlign = HorizontalTextAlignment.CENTER;
@@ -585,44 +877,56 @@ export abstract class HomeFeatureMarketSell extends HomeFeatureMarketSellHost {
             board,
             'Quantity',
             '\u6570\u91cf\uff1a',
-            -28,
+            HomeConfig.MARKET_SELL_CONFIRM_QUANTITY_ROW,
             () => this.adjustMarketSellDraftQuantity(-1, item),
             () => this.adjustMarketSellDraftQuantity(1, item),
         );
+        const quantityValue = board.getChildByName('MarketSellConfirmQuantityValue')?.getComponent(Label);
+        if (quantityValue) this.setupMarketSellQuantityEditBox(quantityValue, item);
         this.createMarketSellSettingRow(
             board,
             'UnitPrice',
             '\u5355\u4ef7\uff1a',
-            -68,
+            HomeConfig.MARKET_SELL_CONFIRM_UNIT_PRICE_ROW,
             () => this.adjustMarketSellDraftUnitPrice(-HomeConfig.MARKET_SELL_PRICE_STEP),
             () => this.adjustMarketSellDraftUnitPrice(HomeConfig.MARKET_SELL_PRICE_STEP),
         );
 
-        const incomeCaption = this.getOrCreateEditorLabel(board, 'MarketSellConfirmIncomeCaption', this.isMarketRequestPostPage() ? '\u9884\u8ba1\u82b1\u8d39\uff1a' : '\u6700\u7ec8\u6536\u76ca\uff1a', 21, -54, -108, 170, 30, new Color(92, 65, 43, 255));
+        const incomeCaption = this.getOrCreateEditorLabel(board, 'MarketSellConfirmIncomeCaption', this.isMarketRequestPostPage() ? '\u9884\u8ba1\u82b1\u8d39\uff1a' : '\u6700\u7ec8\u6536\u76ca\uff1a', 21, HomeConfig.MARKET_SELL_CONFIRM_INCOME_CAPTION_X, HomeConfig.MARKET_SELL_CONFIRM_INCOME_CAPTION_Y, 170, 30, new Color(92, 65, 43, 255));
         incomeCaption.node.active = true;
+        incomeCaption.node.setPosition(HomeConfig.MARKET_SELL_CONFIRM_INCOME_CAPTION_X, HomeConfig.MARKET_SELL_CONFIRM_INCOME_CAPTION_Y, 0);
+        (incomeCaption.node.getComponent(UITransform) || incomeCaption.node.addComponent(UITransform)).setContentSize(170, 30);
         incomeCaption.horizontalAlign = HorizontalTextAlignment.RIGHT;
         this.setLabelOutline(incomeCaption, new Color(255, 247, 224, 255), 1);
-        const incomeValue = this.getOrCreateEditorLabel(board, 'MarketSellConfirmIncomeValue', '', 22, 76, -108, 180, 30, new Color(46, 152, 61, 255));
+        const incomeValue = this.getOrCreateEditorLabel(board, 'MarketSellConfirmIncomeValue', '', 22, HomeConfig.MARKET_SELL_CONFIRM_INCOME_VALUE_X, HomeConfig.MARKET_SELL_CONFIRM_INCOME_VALUE_Y, 180, 30, new Color(46, 152, 61, 255));
         incomeValue.node.active = true;
+        incomeValue.node.setPosition(HomeConfig.MARKET_SELL_CONFIRM_INCOME_VALUE_X, HomeConfig.MARKET_SELL_CONFIRM_INCOME_VALUE_Y, 0);
+        (incomeValue.node.getComponent(UITransform) || incomeValue.node.addComponent(UITransform)).setContentSize(180, 30);
         incomeValue.horizontalAlign = HorizontalTextAlignment.LEFT;
         this.setLabelOutline(incomeValue, new Color(255, 247, 224, 255), 1);
 
-        const feePrefix = this.getOrCreateEditorLabel(board, 'MarketSellConfirmFeePrefix', '\u6bcf\u4e2a\u5546\u54c1\u6536\u53d6', 19, -52, -138, 168, 28, new Color(92, 65, 43, 255));
+        const feePrefix = this.getOrCreateEditorLabel(board, 'MarketSellConfirmFeePrefix', '\u6bcf\u4e2a\u5546\u54c1\u6536\u53d6', 19, HomeConfig.MARKET_SELL_CONFIRM_FEE_PREFIX_X, HomeConfig.MARKET_SELL_CONFIRM_FEE_PREFIX_Y, 168, 28, new Color(92, 65, 43, 255));
         feePrefix.node.active = !this.isMarketRequestPostPage();
+        feePrefix.node.setPosition(HomeConfig.MARKET_SELL_CONFIRM_FEE_PREFIX_X, HomeConfig.MARKET_SELL_CONFIRM_FEE_PREFIX_Y, 0);
+        (feePrefix.node.getComponent(UITransform) || feePrefix.node.addComponent(UITransform)).setContentSize(168, 28);
         feePrefix.horizontalAlign = HorizontalTextAlignment.RIGHT;
         this.setLabelOutline(feePrefix, new Color(255, 247, 224, 255), 1);
-        const feeRate = this.getOrCreateEditorLabel(board, 'MarketSellConfirmFeeRate', '10%', 19, 46, -138, 52, 28, new Color(184, 72, 56, 255));
+        const feeRate = this.getOrCreateEditorLabel(board, 'MarketSellConfirmFeeRate', '10%', 19, HomeConfig.MARKET_SELL_CONFIRM_FEE_RATE_X, HomeConfig.MARKET_SELL_CONFIRM_FEE_RATE_Y, 52, 28, new Color(184, 72, 56, 255));
         feeRate.node.active = !this.isMarketRequestPostPage();
+        feeRate.node.setPosition(HomeConfig.MARKET_SELL_CONFIRM_FEE_RATE_X, HomeConfig.MARKET_SELL_CONFIRM_FEE_RATE_Y, 0);
+        (feeRate.node.getComponent(UITransform) || feeRate.node.addComponent(UITransform)).setContentSize(52, 28);
         feeRate.horizontalAlign = HorizontalTextAlignment.CENTER;
         this.setLabelOutline(feeRate, new Color(255, 247, 224, 255), 1);
-        const feeSuffix = this.getOrCreateEditorLabel(board, 'MarketSellConfirmFeeSuffix', '\u624b\u7eed\u8d39', 19, 106, -138, 92, 28, new Color(92, 65, 43, 255));
+        const feeSuffix = this.getOrCreateEditorLabel(board, 'MarketSellConfirmFeeSuffix', '\u624b\u7eed\u8d39', 19, HomeConfig.MARKET_SELL_CONFIRM_FEE_SUFFIX_X, HomeConfig.MARKET_SELL_CONFIRM_FEE_SUFFIX_Y, 92, 28, new Color(92, 65, 43, 255));
         feeSuffix.node.active = !this.isMarketRequestPostPage();
+        feeSuffix.node.setPosition(HomeConfig.MARKET_SELL_CONFIRM_FEE_SUFFIX_X, HomeConfig.MARKET_SELL_CONFIRM_FEE_SUFFIX_Y, 0);
+        (feeSuffix.node.getComponent(UITransform) || feeSuffix.node.addComponent(UITransform)).setContentSize(92, 28);
         feeSuffix.horizontalAlign = HorizontalTextAlignment.LEFT;
         this.setLabelOutline(feeSuffix, new Color(255, 247, 224, 255), 1);
 
-        const cancel = this.getOrCreateEditorSkinnedNode('MarketSellConfirmCancel', board, HomeConfig.SHARED_CONFIRM_BUTTON_WIDTH, HomeConfig.SHARED_CONFIRM_BUTTON_HEIGHT, HomeConfig.SHARED_CONFIRM_CANCEL_BUTTON_X, HomeConfig.SHARED_CONFIRM_BUTTON_Y, HomeConfig.UI_MARKET_DETAIL_BUTTON_BG);
+        const cancel = this.getOrCreateEditorSkinnedNode('MarketSellConfirmCancel', board, HomeConfig.SHARED_CONFIRM_BUTTON_WIDTH, HomeConfig.SHARED_CONFIRM_BUTTON_HEIGHT, HomeConfig.MARKET_SELL_CONFIRM_CANCEL_X, HomeConfig.MARKET_SELL_CONFIRM_CANCEL_Y, HomeConfig.UI_MARKET_DETAIL_BUTTON_BG);
         cancel.active = true;
-        cancel.setPosition(HomeConfig.SHARED_CONFIRM_CANCEL_BUTTON_X, HomeConfig.SHARED_CONFIRM_BUTTON_Y, 0);
+        cancel.setPosition(HomeConfig.MARKET_SELL_CONFIRM_CANCEL_X, HomeConfig.MARKET_SELL_CONFIRM_CANCEL_Y, 0);
         (cancel.getComponent(UITransform) || cancel.addComponent(UITransform)).setContentSize(HomeConfig.SHARED_CONFIRM_BUTTON_WIDTH, HomeConfig.SHARED_CONFIRM_BUTTON_HEIGHT);
         cancel.setSiblingIndex(8);
         const cancelLabel = this.getOrCreateEditorLabel(cancel, 'MarketSellConfirmCancelLabel', '\u53d6\u6d88', HomeConfig.SHARED_CONFIRM_BUTTON_FONT_SIZE, 0, HomeConfig.SHARED_CONFIRM_BUTTON_LABEL_Y, HomeConfig.SHARED_CONFIRM_BUTTON_LABEL_WIDTH, HomeConfig.SHARED_CONFIRM_BUTTON_LABEL_HEIGHT, new Color(255, 238, 218, 255));
@@ -634,9 +938,9 @@ export abstract class HomeFeatureMarketSell extends HomeFeatureMarketSellHost {
         this.setLabelOutline(cancelLabel, new Color(85, 48, 30, 255), 2);
         this.bindScaledClick(cancel, () => this.closeMarketSellConfirmPopup());
 
-        const confirm = this.getOrCreateEditorSkinnedNode('MarketSellConfirmSubmit', board, HomeConfig.SHARED_CONFIRM_BUTTON_WIDTH, HomeConfig.SHARED_CONFIRM_BUTTON_HEIGHT, HomeConfig.SHARED_CONFIRM_ACCEPT_BUTTON_X, HomeConfig.SHARED_CONFIRM_BUTTON_Y, HomeConfig.UI_MARKET_DETAIL_BUTTON_BG);
+        const confirm = this.getOrCreateEditorSkinnedNode('MarketSellConfirmSubmit', board, HomeConfig.SHARED_CONFIRM_BUTTON_WIDTH, HomeConfig.SHARED_CONFIRM_BUTTON_HEIGHT, HomeConfig.MARKET_SELL_CONFIRM_SUBMIT_X, HomeConfig.MARKET_SELL_CONFIRM_SUBMIT_Y, HomeConfig.UI_MARKET_DETAIL_BUTTON_BG);
         confirm.active = true;
-        confirm.setPosition(HomeConfig.SHARED_CONFIRM_ACCEPT_BUTTON_X, HomeConfig.SHARED_CONFIRM_BUTTON_Y, 0);
+        confirm.setPosition(HomeConfig.MARKET_SELL_CONFIRM_SUBMIT_X, HomeConfig.MARKET_SELL_CONFIRM_SUBMIT_Y, 0);
         (confirm.getComponent(UITransform) || confirm.addComponent(UITransform)).setContentSize(HomeConfig.SHARED_CONFIRM_BUTTON_WIDTH, HomeConfig.SHARED_CONFIRM_BUTTON_HEIGHT);
         confirm.setSiblingIndex(9);
         const confirmLabel = this.getOrCreateEditorLabel(confirm, 'MarketSellConfirmSubmitLabel', '\u786e\u5b9a', HomeConfig.SHARED_CONFIRM_BUTTON_FONT_SIZE, 0, HomeConfig.SHARED_CONFIRM_BUTTON_LABEL_Y, HomeConfig.SHARED_CONFIRM_BUTTON_LABEL_WIDTH, HomeConfig.SHARED_CONFIRM_BUTTON_LABEL_HEIGHT, new Color(255, 238, 218, 255));
@@ -655,6 +959,7 @@ export abstract class HomeFeatureMarketSell extends HomeFeatureMarketSellHost {
         this.marketSellSelectedItem = null;
     }
     protected confirmMarketSellListing(item: BagIllustrationCatalogItem, categoryPath: string, priceRange: { basePrice: number; minPrice: number; maxPrice: number }): void {
+        this.commitMarketSellQuantityInput(item);
         const postedListings = this.getCurrentMarketPostedListings();
         if (postedListings.length >= HomeConfig.MARKET_SELL_MAX_LISTINGS) {
             this.showToast(this.getMarketPostLimitText());
@@ -675,8 +980,9 @@ export abstract class HomeFeatureMarketSell extends HomeFeatureMarketSellHost {
             priceRange.maxPrice,
         ));
         const listingMode = this.marketMode;
-        this.marketSellListings.push({
-            id: `market_${listingMode}_post_${Date.now()}_${item.id}_${postedListings.length + 1}`,
+        const now = Date.now();
+        const listing: MarketSellListingData = {
+            id: `market_${listingMode}_post_${now}_${item.id}_${postedListings.length + 1}`,
             mode: listingMode,
             itemId: item.id,
             name: this.getCatalogDisplayName(item),
@@ -688,18 +994,21 @@ export abstract class HomeFeatureMarketSell extends HomeFeatureMarketSellHost {
             categoryPath,
             iconPath: item.iconPath,
             framePath: item.framePath,
+            createdAt: now,
+            expiresAt: now + HomeConfig.MARKET_POST_EXPIRE_DURATION_MS,
+        };
+        this.marketSellListings.push(listing);
+        this.marketTransactions.unshift({
+            id: `${now}_${listing.id}_post`,
+            itemId: listing.itemId,
+            action: 'post',
+            mode: listingMode,
+            itemName: listing.name,
+            amount: listing.amount,
+            totalPrice: this.getMarketTotalPrice(listing.unitPrice, listing.amount),
+            iconPath: listing.iconPath,
+            framePath: listing.framePath,
         });
-        if (listingMode === 'request') {
-            this.marketTransactions.unshift({
-                id: `${Date.now()}_${item.id}`,
-                itemId: item.id,
-                action: 'buy',
-                mode: 'request',
-                itemName: this.getCatalogDisplayName(item),
-                amount: quantity,
-                totalPrice: this.getMarketTotalPrice(unitPrice, quantity),
-            });
-        }
         this.closeMarketSellConfirmPopup();
         this.refreshMarketTabLabels();
         this.refreshMarketList();

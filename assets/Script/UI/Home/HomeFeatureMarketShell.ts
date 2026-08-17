@@ -359,7 +359,43 @@ export abstract class HomeFeatureMarketShell extends HomeViewBase {
     protected getMarketListingMode(item: MarketSellListingData): MarketMode {
         return item.mode || 'trade';
     }
+    protected getMarketListingCreatedAt(item: MarketSellListingData, now = Date.now()): number {
+        if (Number.isFinite(item.createdAt) && (item.createdAt || 0) > 0) return item.createdAt as number;
+        const match = `${item.id || ''}`.match(/_post_(\d{10,})_/);
+        const parsed = match ? Number(match[1]) : NaN;
+        return Number.isFinite(parsed) && parsed > 0 ? parsed : now;
+    }
+    protected normalizeMarketListingExpiry(item: MarketSellListingData, now = Date.now()): void {
+        const createdAt = this.getMarketListingCreatedAt(item, now);
+        item.createdAt = createdAt;
+        if (!Number.isFinite(item.expiresAt) || (item.expiresAt || 0) <= 0) {
+            item.expiresAt = createdAt + HomeConfig.MARKET_POST_EXPIRE_DURATION_MS;
+        }
+    }
+    protected pruneExpiredMarketPostedListings(now = Date.now()): number {
+        let removedCount = 0;
+        for (let index = this.marketSellListings.length - 1; index >= 0; index--) {
+            const item = this.marketSellListings[index];
+            this.normalizeMarketListingExpiry(item, now);
+            if ((item.expiresAt || 0) > now) continue;
+            this.marketSellListings.splice(index, 1);
+            removedCount++;
+            this.marketTransactions.unshift({
+                id: `${now}_${item.id}_expire`,
+                itemId: item.itemId,
+                action: 'expire',
+                mode: this.getMarketListingMode(item),
+                itemName: item.name,
+                amount: item.amount,
+                totalPrice: this.getMarketTotalPrice(item.unitPrice, item.amount),
+                iconPath: item.iconPath,
+                framePath: item.framePath,
+            });
+        }
+        return removedCount;
+    }
     protected getCurrentMarketPostedListings(mode: MarketMode = this.marketMode): MarketSellListingData[] {
+        this.pruneExpiredMarketPostedListings();
         return this.marketSellListings.filter((item) => this.getMarketListingMode(item) === mode);
     }
     protected isMarketRequestPostPage(): boolean {
@@ -573,9 +609,15 @@ export abstract class HomeFeatureMarketShell extends HomeViewBase {
     protected getMarketTransactionStatus(transaction: MarketTransactionData): string {
         const mode = transaction.mode || 'trade';
         if (mode === 'request') {
-            return transaction.action === 'buy' ? '\u53d1\u5e03\u6c42\u8d2d' : '\u51fa\u552e\u6210\u529f';
+            if (transaction.action === 'post') return '\u53d1\u5e03\u6c42\u8d2d';
+            if (transaction.action === 'cancel') return '\u64a4\u9500\u6c42\u8d2d';
+            if (transaction.action === 'expire') return '\u6c42\u8d2d\u5230\u671f';
+            return transaction.action === 'buy' ? '\u6c42\u8d2d\u53d1\u5e03' : '\u51fa\u552e\u6210\u529f';
         }
-        return transaction.action === 'buy' ? '\u8d2d\u4e70\u6210\u529f' : '\u51fa\u552e\u59d4\u6258';
+        if (transaction.action === 'post') return '\u4e0a\u67b6\u6210\u529f';
+        if (transaction.action === 'cancel') return '\u7269\u54c1\u4e0b\u67b6';
+        if (transaction.action === 'expire') return '\u5230\u671f\u4e0b\u67b6';
+        return transaction.action === 'buy' ? '\u8d2d\u4e70\u6210\u529f' : '\u51fa\u552e\u6210\u529f';
     }
     protected getMarketRecordTitle(mode: MarketMode = this.marketMode): string {
         return mode === 'request' ? '\u6c42\u8d2d\u8bb0\u5f55' : '\u4ea4\u6613\u8bb0\u5f55';
@@ -594,17 +636,24 @@ export abstract class HomeFeatureMarketShell extends HomeViewBase {
     }
     protected refreshMarketList(): void {
         if (!this.marketPanel?.isValid) return;
+        this.pruneExpiredMarketPostedListings();
     
         const sellManagePage = this.isMarketSellManagePage();
-        const viewportHeight = sellManagePage ? HomeConfig.MARKET_SELL_VIEWPORT_HEIGHT : HomeConfig.MARKET_VIEWPORT_HEIGHT;
-        const viewportY = sellManagePage ? HomeConfig.MARKET_SELL_VIEWPORT_Y : HomeConfig.MARKET_VIEWPORT_Y;
-        const editorViewport = this.marketPanel.getChildByName('MarketListViewport');
+        const historyPage = this.marketActiveTab === 'history';
+        const viewportHeight = historyPage
+            ? HomeConfig.MARKET_HISTORY_VIEWPORT_HEIGHT
+            : sellManagePage
+                ? HomeConfig.MARKET_SELL_VIEWPORT_HEIGHT
+                : HomeConfig.MARKET_VIEWPORT_HEIGHT;
+        const viewportY = historyPage
+            ? HomeConfig.MARKET_HISTORY_VIEWPORT_Y
+            : sellManagePage
+                ? HomeConfig.MARKET_SELL_VIEWPORT_Y
+                : HomeConfig.MARKET_VIEWPORT_Y;
         this.marketViewport = this.getOrCreateEditorNode('MarketListViewport', this.marketPanel, HomeConfig.MARKET_VIEWPORT_WIDTH, viewportHeight, 0, viewportY);
         this.marketViewport.active = true;
-        if (!editorViewport?.isValid) {
-            this.marketViewport.setPosition(0, viewportY, 0);
-            (this.marketViewport.getComponent(UITransform) || this.marketViewport.addComponent(UITransform)).setContentSize(HomeConfig.MARKET_VIEWPORT_WIDTH, viewportHeight);
-        }
+        this.marketViewport.setPosition(0, viewportY, 0);
+        (this.marketViewport.getComponent(UITransform) || this.marketViewport.addComponent(UITransform)).setContentSize(HomeConfig.MARKET_VIEWPORT_WIDTH, viewportHeight);
         this.marketViewport.setSiblingIndex(15);
         const viewportTransform = this.marketViewport.getComponent(UITransform) || this.marketViewport.addComponent(UITransform);
         const effectiveViewportWidth = viewportTransform.contentSize.width || HomeConfig.MARKET_VIEWPORT_WIDTH;
@@ -628,9 +677,10 @@ export abstract class HomeFeatureMarketShell extends HomeViewBase {
         const existingContent = this.marketViewport.getChildByName('MarketListContent');
         const templateRow1 = existingContent?.getChildByName('MarketListing_1');
         const templateRow2 = existingContent?.getChildByName('MarketListing_2');
-        const rowGap = templateRow1?.isValid && templateRow2?.isValid
-            ? Math.max(1, Math.abs(templateRow1.position.y - templateRow2.position.y))
-            : HomeConfig.MARKET_ROW_GAP;
+        const templateGap = templateRow1?.isValid && templateRow2?.isValid
+            ? Math.abs(templateRow1.position.y - templateRow2.position.y)
+            : 0;
+        const rowGap = templateGap >= HomeConfig.MARKET_ROW_HEIGHT ? templateGap : HomeConfig.MARKET_ROW_GAP;
         const contentHeight = Math.max(effectiveViewportHeight, listings.length * rowGap + 16);
         const historyContent = this.marketViewport.getChildByName('MarketHistoryContent');
         if (historyContent?.isValid) historyContent.active = false;
@@ -647,9 +697,13 @@ export abstract class HomeFeatureMarketShell extends HomeViewBase {
         const empty = this.getOrCreateEditorLabel(this.marketContent, 'MarketListEmpty', '\u6682\u65e0\u7b26\u5408\u6761\u4ef6\u7684\u5546\u54c1', 28, 0, 260, 420, 56, new Color(92, 70, 50, 255));
         empty.node.active = listings.length === 0;
         this.applyMarketTextStyle(empty, 1);
-        const startY = templateRow1?.isValid
+        const startY = templateRow1?.isValid && templateGap >= HomeConfig.MARKET_ROW_HEIGHT
             ? templateRow1.position.y
-            : effectiveViewportHeight / 2 - HomeConfig.MARKET_ROW_HEIGHT / 2 - 10;
+            : templateRow2?.isValid
+                ? templateRow2.position.y + rowGap
+                : templateRow1?.isValid
+                    ? templateRow1.position.y
+                    : effectiveViewportHeight / 2 - HomeConfig.MARKET_ROW_HEIGHT / 2 - 10;
         listings.forEach((item, index) => {
             this.createMarketListingRow(this.marketContent!, item, index, startY - index * rowGap);
         });

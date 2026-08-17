@@ -1097,7 +1097,7 @@ export abstract class HomeFeatureBag extends HomeFeatureBagHost {
             if (!moved) onTap();
         }, this);
     }
-    protected bindBagGridScroll(node: Node, content: Node, maxScrollY: number): void {
+    protected bindBagGridScroll(node: Node, content: Node, maxScrollY: number, minScrollY = 0): void {
         node.off(Node.EventType.TOUCH_START);
         node.off(Node.EventType.TOUCH_MOVE);
         node.off(Node.EventType.TOUCH_END);
@@ -1120,7 +1120,7 @@ export abstract class HomeFeatureBag extends HomeFeatureBagHost {
             }
         };
         const clampContentY = (value: number): number => {
-            const clampedY = this.clamp(value, 0, maxScrollY);
+            const clampedY = this.clamp(value, minScrollY, minScrollY + maxScrollY);
             content.setPosition(0, clampedY, 0);
             return clampedY;
         };
@@ -1154,7 +1154,7 @@ export abstract class HomeFeatureBag extends HomeFeatureBagHost {
         node.on(Node.EventType.TOUCH_MOVE, (event: EventTouch) => {
             event.propagationStopped = true;
             if (maxScrollY <= 0) {
-                clampContentY(0);
+                clampContentY(minScrollY);
                 return;
             }
 

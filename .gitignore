@@ -12,6 +12,7 @@
 # Codex/generated temporary work files
 /.codex-backup/
 /.codex-backups/
+/_codex_backups/
 /.codex-tmp/
 /.codex_tmp/
 /tmp/

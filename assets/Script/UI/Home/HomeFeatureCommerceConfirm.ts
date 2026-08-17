@@ -1,5 +1,6 @@
 import {
     Color,
+    EditBox,
     Graphics,
     HorizontalTextAlignment,
     Label,
@@ -24,6 +25,8 @@ abstract class HomeFeatureCommerceConfirmHost extends HomeViewBase {
  * 数量状态由 Home 基础状态持有；模块只负责弹窗展示和交互编排。
  */
 export abstract class HomeFeatureCommerceConfirm extends HomeFeatureCommerceConfirmHost {
+    protected commerceQuantityInputSyncing = false;
+
     protected getOrCreateConfirmChild(parent: Node, popup: Node, name: string, width: number, height: number, x: number, y: number): Node {
         let node = this.findNode(name, popup);
         if (!node?.isValid) {
@@ -353,6 +356,154 @@ export abstract class HomeFeatureCommerceConfirm extends HomeFeatureCommerceConf
         const graphics = messageBg.getComponent(Graphics);
         if (graphics) graphics.enabled = false;
     }
+    protected setupCommerceQuantityEditBox(valueLabel: Label): EditBox | null {
+        const valueNode = valueLabel.node;
+        const staleEditBox = valueNode.getComponent(EditBox);
+        if (staleEditBox) staleEditBox.destroy();
+
+        let inputNode = valueNode.getChildByName('ConfirmQuantityInputTouch');
+        if (!inputNode?.isValid) {
+            inputNode = this.createNode('ConfirmQuantityInputTouch', valueNode, 118, 28, 0, 0);
+        }
+        inputNode.active = true;
+        inputNode.setPosition(0, 0, 0);
+        inputNode.setSiblingIndex(10);
+        (inputNode.getComponent(UITransform) || inputNode.addComponent(UITransform)).setContentSize(118, 28);
+
+        const hiddenColor = new Color(255, 255, 255, 0);
+        const textLabel = this.getOrCreateConfirmLabel(inputNode, inputNode, 'TEXT_LABEL', '', 25, 0, 0, 118, 28, hiddenColor);
+        textLabel.node.active = true;
+        textLabel.color = hiddenColor;
+        textLabel.horizontalAlign = HorizontalTextAlignment.CENTER;
+        const placeholderLabel = this.getOrCreateConfirmLabel(inputNode, inputNode, 'PLACEHOLDER_LABEL', '', 25, 0, 0, 118, 28, hiddenColor);
+        placeholderLabel.node.active = true;
+        placeholderLabel.color = hiddenColor;
+        placeholderLabel.horizontalAlign = HorizontalTextAlignment.CENTER;
+
+        let editBox = inputNode.getComponent(EditBox);
+        editBox ||= inputNode.addComponent(EditBox);
+        const editBoxCompat = editBox as unknown as {
+            textLabel?: Label;
+            placeholderLabel?: Label;
+            inputMode?: number;
+            inputFlag?: number;
+            returnType?: number;
+            fontSize?: number;
+            placeholderFontSize?: number;
+            fontColor?: Color;
+            placeholderFontColor?: Color;
+            cursorColor?: Color;
+            backgroundImage?: null;
+            placeholder?: string;
+            maxLength?: number;
+            lineHeight?: number;
+            string?: string;
+            _textLabel?: Label;
+            _placeholderLabel?: Label;
+            _inputMode?: number;
+            _inputFlag?: number;
+            _returnType?: number;
+            _fontSize?: number;
+            _placeholderFontSize?: number;
+            _fontColor?: Color;
+            _placeholderFontColor?: Color;
+            _cursorColor?: Color;
+            _backgroundImage?: null;
+            _placeholder?: string;
+            _maxLength?: number;
+            _lineHeight?: number;
+            _string?: string;
+        };
+        const inputMode = (EditBox as unknown as { InputMode?: { NUMERIC?: number; PHONE_NUMBER?: number; SINGLE_LINE?: number } }).InputMode;
+        const inputFlag = (EditBox as unknown as { InputFlag?: { SENSITIVE?: number } }).InputFlag;
+        const returnType = (EditBox as unknown as { KeyboardReturnType?: { DONE?: number } }).KeyboardReturnType;
+        const textColor = new Color(255, 255, 255, 0);
+        editBoxCompat.textLabel = textLabel;
+        editBoxCompat.placeholderLabel = placeholderLabel;
+        editBoxCompat.inputMode = inputMode?.NUMERIC ?? inputMode?.PHONE_NUMBER ?? inputMode?.SINGLE_LINE ?? 2;
+        editBoxCompat.inputFlag = inputFlag?.SENSITIVE ?? 1;
+        editBoxCompat.returnType = returnType?.DONE ?? 0;
+        editBoxCompat.fontSize = 25;
+        editBoxCompat.placeholderFontSize = 25;
+        editBoxCompat.fontColor = textColor;
+        editBoxCompat.placeholderFontColor = textColor;
+        editBoxCompat.cursorColor = textColor;
+        editBoxCompat.backgroundImage = null;
+        editBoxCompat.placeholder = '';
+        editBoxCompat.maxLength = Math.max(1, `${this.commerceQuantityMax}`.length);
+        editBoxCompat.lineHeight = 28;
+        editBoxCompat._textLabel = textLabel;
+        editBoxCompat._placeholderLabel = placeholderLabel;
+        editBoxCompat._inputMode = editBoxCompat.inputMode;
+        editBoxCompat._inputFlag = editBoxCompat.inputFlag;
+        editBoxCompat._returnType = editBoxCompat.returnType;
+        editBoxCompat._fontSize = 25;
+        editBoxCompat._placeholderFontSize = 25;
+        editBoxCompat._fontColor = textColor;
+        editBoxCompat._placeholderFontColor = textColor;
+        editBoxCompat._cursorColor = textColor;
+        editBoxCompat._backgroundImage = null;
+        editBoxCompat._placeholder = '';
+        editBoxCompat._maxLength = editBoxCompat.maxLength;
+        editBoxCompat._lineHeight = 28;
+        return editBox;
+    }
+    protected syncCommerceQuantityEditBox(editBox: EditBox, text: string): void {
+        this.commerceQuantityInputSyncing = true;
+        const editBoxCompat = editBox as unknown as {
+            string?: string;
+            _string?: string;
+            textLabel?: Label;
+            _textLabel?: Label;
+            placeholderLabel?: Label;
+            _placeholderLabel?: Label;
+        };
+        editBoxCompat.string = text;
+        editBoxCompat._string = text;
+        const visibleLabel = editBox.node.parent?.getComponent(Label);
+        if (visibleLabel) {
+            visibleLabel.string = text;
+            visibleLabel.node.active = true;
+        }
+        const textLabel = editBoxCompat.textLabel || editBoxCompat._textLabel || editBox.node.getComponent(Label);
+        if (textLabel) {
+            textLabel.string = text;
+            textLabel.node.active = true;
+        }
+        const placeholderLabel = editBoxCompat.placeholderLabel || editBoxCompat._placeholderLabel;
+        if (placeholderLabel) {
+            placeholderLabel.string = '';
+            placeholderLabel.node.active = true;
+        }
+        this.commerceQuantityInputSyncing = false;
+    }
+    protected getCommerceQuantityEditBoxEventType(name: 'TEXT_CHANGED' | 'EDITING_DID_ENDED' | 'EDITING_RETURN'): string {
+        const eventType = EditBox as unknown as { EventType?: Record<string, string> };
+        return eventType.EventType?.[name] || {
+            TEXT_CHANGED: 'text-changed',
+            EDITING_DID_ENDED: 'editing-did-ended',
+            EDITING_RETURN: 'editing-return',
+        }[name];
+    }
+    protected applyCommerceQuantityInput(editBox: EditBox, commit: boolean, refresh: () => void): void {
+        if (this.commerceQuantityInputSyncing) return;
+        const maxQuantity = Math.max(1, Math.floor(this.commerceQuantityMax));
+        const maxDigits = Math.max(1, `${maxQuantity}`.length);
+        const raw = editBox.string || '';
+        let clean = raw.replace(/\D/g, '').slice(0, maxDigits);
+        if (!clean) {
+            if (!commit) {
+                this.syncCommerceQuantityEditBox(editBox, '');
+                return;
+            }
+            clean = '1';
+        }
+        const parsed = Number.parseInt(clean, 10);
+        const nextQuantity = this.clamp(Number.isFinite(parsed) ? parsed : 1, 1, maxQuantity);
+        this.commerceQuantity = nextQuantity;
+        this.syncCommerceQuantityEditBox(editBox, `${nextQuantity}`);
+        refresh();
+    }
     protected openCommerceQuantityConfirm(
         title: string,
         itemName: string,
@@ -364,16 +515,27 @@ export abstract class HomeFeatureCommerceConfirm extends HomeFeatureCommerceConf
     ): void {
         this.commerceQuantity = 1;
         this.commerceQuantityMax = Math.max(1, Math.floor(maxQuantity));
+        let quantityEditBox: EditBox | null = null;
+        let refresh = (): void => undefined;
         this.openSharedFlowPopup('ConfirmPopup', {
             title,
             variant: 'commerceQuantityConfirm',
-            onConfirm: () => onConfirm(this.commerceQuantity),
+            onConfirm: () => {
+                if (quantityEditBox?.isValid) {
+                    this.applyCommerceQuantityInput(quantityEditBox, true, refresh);
+                }
+                onConfirm(this.commerceQuantity);
+            },
         });
         const popup = this.popupRoot?.getChildByName('ConfirmPopup') || this.findNode('ConfirmPopup');
         if (!popup?.isValid) return;
         const { quantityValue, message } = this.layoutCommerceQuantityConfirmPopup(popup, title, actionText, itemName, unitPrice, currencyName);
-        const refresh = () => {
+        if (quantityValue) {
+            quantityEditBox = this.setupCommerceQuantityEditBox(quantityValue);
+        }
+        refresh = () => {
             if (quantityValue) quantityValue.string = `${this.commerceQuantity}`;
+            if (quantityEditBox?.isValid) this.syncCommerceQuantityEditBox(quantityEditBox, `${this.commerceQuantity}`);
             if (message) message.string = this.formatCommerceQuantityConfirmRichMessage(actionText, itemName, unitPrice, currencyName);
         };
         const minus = this.findNode('ConfirmQuantityMinus', popup);
@@ -396,6 +558,13 @@ export abstract class HomeFeatureCommerceConfirm extends HomeFeatureCommerceConf
             this.commerceQuantity = Math.min(this.commerceQuantityMax, this.commerceQuantity + 1);
             refresh();
         });
+        if (quantityEditBox?.isValid) {
+            const inputNode = quantityEditBox.node;
+            inputNode.targetOff(this);
+            inputNode.on(this.getCommerceQuantityEditBoxEventType('TEXT_CHANGED'), () => this.applyCommerceQuantityInput(quantityEditBox!, false, refresh), this);
+            inputNode.on(this.getCommerceQuantityEditBoxEventType('EDITING_DID_ENDED'), () => this.applyCommerceQuantityInput(quantityEditBox!, true, refresh), this);
+            inputNode.on(this.getCommerceQuantityEditBoxEventType('EDITING_RETURN'), () => this.applyCommerceQuantityInput(quantityEditBox!, true, refresh), this);
+        }
         refresh();
     }
 }
