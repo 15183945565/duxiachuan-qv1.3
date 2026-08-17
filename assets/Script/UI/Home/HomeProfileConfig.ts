@@ -1,4 +1,4 @@
-import { DEFAULT_UID, PROFILE_UI_ROOT, VIEW_HEIGHT, VIEW_WIDTH } from './HomeBaseConfig';
+import { DEFAULT_UID, PROFILE_UI_ROOT, UI_HOME_JIFEN_ICON, VIEW_HEIGHT, VIEW_WIDTH } from './HomeBaseConfig';
 
 export const UI_PROFILE_POPUP_BG = `${PROFILE_UI_ROOT}/profile_popup_bg`;
 export const UI_PROFILE_BTN_CUSTOMER = `${PROFILE_UI_ROOT}/profile_btn_customer`;
@@ -10,6 +10,80 @@ export const UI_PROFILE_BTN_STREAMER = `${PROFILE_UI_ROOT}/profile_btn_streamer`
 export const UI_PROFILE_BTN_EDIT = `${PROFILE_UI_ROOT}/profile_btn_edit`;
 export const UI_PROFILE_BTN_COPY = `${PROFILE_UI_ROOT}/profile_btn_copy`;
 export const UI_PROFILE_AVATAR_FRAME_BUTTON_BG = `${PROFILE_UI_ROOT}/profile_avatar_frame_button_bg`;
+
+export const PROFILE_PRETTY_NUMBER_UI_ROOT = `${PROFILE_UI_ROOT}/PrettyNumber`;
+export const UI_PROFILE_PRETTY_NUMBER_POPUP_BG = `${PROFILE_PRETTY_NUMBER_UI_ROOT}/profile_pretty_number_popup_bg`;
+export const UI_PROFILE_PRETTY_NUMBER_TITLE_BG = `${PROFILE_PRETTY_NUMBER_UI_ROOT}/profile_pretty_number_title_bg`;
+export const UI_PROFILE_PRETTY_NUMBER_CELL_BG = `${PROFILE_PRETTY_NUMBER_UI_ROOT}/profile_pretty_number_cell_bg`;
+export const UI_PROFILE_PRETTY_NUMBER_SELECTED = `${PROFILE_PRETTY_NUMBER_UI_ROOT}/profile_pretty_number_selected`;
+export const UI_PROFILE_PRETTY_NUMBER_BUY_BUTTON_BG = `${PROFILE_PRETTY_NUMBER_UI_ROOT}/profile_pretty_number_buy_button_bg`;
+export const UI_PROFILE_PRETTY_NUMBER_YUANBAO_ICON = UI_HOME_JIFEN_ICON;
+export const PROFILE_PRETTY_NUMBER_BORDER_EFFECT_ROOT = `${PROFILE_PRETTY_NUMBER_UI_ROOT}/BorderEffect`;
+export const PROFILE_PRETTY_NUMBER_BORDER_EFFECT_FRAME_COUNT = 41;
+export const PROFILE_PRETTY_NUMBER_BORDER_EFFECT_PATHS = Array.from({ length: PROFILE_PRETTY_NUMBER_BORDER_EFFECT_FRAME_COUNT }, (_, index) => `${PROFILE_PRETTY_NUMBER_BORDER_EFFECT_ROOT}/profile_pretty_number_border_fx_${(`00000${index}`).slice(-5)}`);
+export const PROFILE_PRETTY_NUMBER_POPUP_WIDTH = 530;
+export const PROFILE_PRETTY_NUMBER_POPUP_HEIGHT = 620;
+export const PROFILE_PRETTY_NUMBER_CELL_WIDTH = 156;
+export const PROFILE_PRETTY_NUMBER_CELL_HEIGHT = 85;
+export const PROFILE_PRETTY_NUMBER_SELECTED_WIDTH = 151.985;
+export const PROFILE_PRETTY_NUMBER_SELECTED_HEIGHT = 74.97166666666666;
+export const PROFILE_PRETTY_NUMBER_SCROLL_WIDTH = 500;
+export const PROFILE_PRETTY_NUMBER_SCROLL_HEIGHT = 426;
+export const PROFILE_PRETTY_NUMBER_SCROLL_Y = -6;
+export const PROFILE_PRETTY_NUMBER_GRID_COLUMNS = 3;
+export const PROFILE_PRETTY_NUMBER_GRID_COLUMN_GAP = 164;
+export const PROFILE_PRETTY_NUMBER_GRID_ROW_GAP = 94;
+export const PROFILE_PRETTY_NUMBER_BUY_BUTTON_WIDTH = 162;
+export const PROFILE_PRETTY_NUMBER_BUY_BUTTON_HEIGHT = 62;
+export const PROFILE_PRETTY_NUMBER_BUY_BUTTON_Y = -262;
+export const PROFILE_PRETTY_NUMBER_STORAGE_KEY = 'duxiachuan.profile.prettyNumber.v1';
+export const PROFILE_PRETTY_NUMBER_ITEMS = [
+    { id: '222', number: '222', price: 80 },
+    { id: '333', number: '333', price: 80 },
+    { id: '444', number: '444', price: 80 },
+    { id: '555', number: '555', price: 80 },
+    { id: '666', number: '666', price: 80 },
+    { id: '777', number: '777', price: 80 },
+    { id: '888', number: '888', price: 80 },
+    { id: '999', number: '999', price: 80 },
+    { id: '111', number: '111', price: 80 },
+    { id: '520', number: '520', price: 80 },
+    { id: '1314', number: '1314', price: 80 },
+    { id: '1688', number: '1688', price: 80 },
+    { id: '1888', number: '1888', price: 80 },
+    { id: '1999', number: '1999', price: 80 },
+    { id: '2024', number: '2024', price: 80 },
+    { id: '2025', number: '2025', price: 80 },
+    { id: '2026', number: '2026', price: 80 },
+    { id: '3456', number: '3456', price: 80 },
+    { id: '4567', number: '4567', price: 80 },
+    { id: '5678', number: '5678', price: 80 },
+    { id: '6789', number: '6789', price: 80 },
+    { id: '7890', number: '7890', price: 80 },
+    { id: '1001', number: '1001', price: 80 },
+    { id: '2002', number: '2002', price: 80 },
+    { id: '3003', number: '3003', price: 80 },
+    { id: '4004', number: '4004', price: 80 },
+    { id: '5005', number: '5005', price: 80 },
+    { id: '6006', number: '6006', price: 80 },
+    { id: '7007', number: '7007', price: 80 },
+    { id: '8008', number: '8008', price: 80 },
+    { id: '9009', number: '9009', price: 80 },
+    { id: '6666', number: '6666', price: 80 },
+    { id: '8888', number: '8888', price: 80 },
+    { id: '9999', number: '9999', price: 80 },
+    { id: '5188', number: '5188', price: 80 },
+] as const;
+
+export const PROFILE_REAL_NAME_UI_ROOT = `${PROFILE_UI_ROOT}/RealName`;
+export const UI_PROFILE_REAL_NAME_POPUP_BG = `${PROFILE_REAL_NAME_UI_ROOT}/profile_real_name_popup_bg`;
+export const UI_PROFILE_REAL_NAME_BUTTON_BG = `${PROFILE_REAL_NAME_UI_ROOT}/profile_real_name_button_bg`;
+export const UI_PROFILE_REAL_NAME_CLOSE = `${PROFILE_REAL_NAME_UI_ROOT}/profile_real_name_close`;
+export const PROFILE_REAL_NAME_POPUP_WIDTH = 530;
+export const PROFILE_REAL_NAME_POPUP_HEIGHT = 620;
+export const PROFILE_REAL_NAME_INPUT_WIDTH = 352;
+export const PROFILE_REAL_NAME_INPUT_HEIGHT = 56;
+export const PROFILE_REAL_NAME_STORAGE_KEY = 'duxiachuan.profile.realName.v1';
 
 export const PROFILE_DAOYOU_UI_ROOT = `${PROFILE_UI_ROOT}/DaoYou`;
 export const UI_PROFILE_DAOYOU_BG = `${PROFILE_DAOYOU_UI_ROOT}/profile_daoyou_bg`;

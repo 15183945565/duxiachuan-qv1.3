@@ -77,6 +77,8 @@ export interface SharedPopupContent {
     title?: string;
     message?: string;
     variant?: 'magicFloorConfirm' | 'beastStrengthenConfirm' | 'commerceQuantityConfirm';
+    magicRealmIndex?: number;
+    magicFloorIndex?: number;
     onConfirm?: () => void;
     onAgain?: () => void;
     onClose?: () => void;

@@ -869,6 +869,16 @@ export abstract class HomeFeatureMagicMap extends HomeFeatureMagicMapHost {
     protected hideConfirmNodeForMagicMonsterPrompt(node: Node | null): void {
         if (!node?.isValid) return;
 
+        if (node.position.x > -9000 && node.position.y > -9000) {
+            const transform = node.getComponent(UITransform);
+            this.hiddenConfirmNodeLayouts.set(node, {
+                x: node.position.x,
+                y: node.position.y,
+                z: node.position.z,
+                width: transform?.contentSize.width || 0,
+                height: transform?.contentSize.height || 0,
+            });
+        }
         this.skinApplyVersions.set(node, ++this.skinApplyVersion);
         node.active = false;
         node.setPosition(-9999, -9999, 0);

@@ -30,6 +30,18 @@ interface MagicBattleDamageParticipant {
     duelOutcome: 'win' | 'lose' | null;
 }
 
+function createMagicBattleDamageTextColor(): Color {
+    return new Color(110, 90, 71, 255);
+}
+
+function createMagicBattleDamageRowTextColor(): Color {
+    return new Color(255, 255, 255, 255);
+}
+
+function createMagicBattleDamageRowOutlineColor(): Color {
+    return new Color(0, 0, 0, 255);
+}
+
 abstract class HomeFeatureMagicBattleDamageHost extends HomeViewBase {
     protected abstract magicBattleDamageHudRoot: Node | null;
     protected abstract magicBattleDamageListRoot: Node | null;
@@ -118,10 +130,10 @@ export abstract class HomeFeatureMagicBattleDamage extends HomeFeatureMagicBattl
             1,
             220,
             42,
-            new Color(246, 228, 186, 255),
+            createMagicBattleDamageTextColor(),
         ).label;
         title.lineHeight = 34;
-        this.setLabelOutline(title, new Color(68, 28, 12, 255), 2);
+        this.setMagicFloorTextEdge(title, false);
         title.node.setSiblingIndex(2);
 
         this.magicBattleDamageListRoot = this.getOrCreateBattleNode(
@@ -153,10 +165,10 @@ export abstract class HomeFeatureMagicBattleDamage extends HomeFeatureMagicBattl
             12,
             330,
             30,
-            new Color(255, 232, 178, 255),
+            createMagicBattleDamageTextColor(),
         ).label;
         rankLabel.lineHeight = 28;
-        this.setLabelOutline(rankLabel, new Color(63, 28, 12, 255), 2);
+        this.setMagicFloorTextEdge(rankLabel, false);
         const ruleLabel = this.getOrCreateBattleLabel(
             rankFrame,
             'MagicBattleRewardRuleLabel',
@@ -166,11 +178,11 @@ export abstract class HomeFeatureMagicBattleDamage extends HomeFeatureMagicBattl
             -16,
             338,
             28,
-            new Color(224, 192, 128, 255),
+            createMagicBattleDamageTextColor(),
         ).label;
         ruleLabel.lineHeight = 24;
         ruleLabel.overflow = Overflow.SHRINK;
-        this.setLabelOutline(ruleLabel, new Color(54, 28, 14, 255), 1);
+        this.setMagicFloorTextEdge(ruleLabel, false);
 
         this.applyMagicBattleDamagePanelVisibility();
         this.raiseMagicBattleOverlayLayers();
@@ -286,7 +298,7 @@ export abstract class HomeFeatureMagicBattleDamage extends HomeFeatureMagicBattl
             HomeConfig.UI_MAGIC_DAMAGE_TRANSLUCENT_FRAME,
         ).node.setSiblingIndex(0);
 
-        const damageTextColor = Color.WHITE;
+        const damageTextColor = createMagicBattleDamageRowTextColor();
         const rank = this.getOrCreateBattleLabel(row, 'MagicBattleDamageRank', `${index + 1}`, 22, -172, 17, 34, 28, damageTextColor).label;
         rank.lineHeight = 28;
         this.applyMagicBattleDamageTextStyle(rank);
@@ -359,16 +371,12 @@ export abstract class HomeFeatureMagicBattleDamage extends HomeFeatureMagicBattl
             0,
             84,
             34,
-            participant.active && !participant.isPlayer
-                ? new Color(69, 36, 16, 255)
-                : new Color(120, 94, 62, 255),
+            createMagicBattleDamageTextColor(),
         ).label;
         duelLabel.string = participant.isPlayer ? '\u81ea\u5df1' : participant.active ? '\u51b3\u6597' : '\u5df2\u79bb\u5f00';
         duelLabel.fontSize = participant.active && !participant.isPlayer ? 22 : 19;
         duelLabel.lineHeight = 28;
-        duelLabel.color = participant.active && !participant.isPlayer
-            ? new Color(69, 36, 16, 255)
-            : new Color(120, 94, 62, 255);
+        duelLabel.color = createMagicBattleDamageTextColor();
         this.setMagicFloorTextEdge(duelLabel, false);
         duelLabel.node.active = true;
         duelLabel.node.setSiblingIndex(1);
@@ -382,12 +390,10 @@ export abstract class HomeFeatureMagicBattleDamage extends HomeFeatureMagicBattl
     }
     protected applyMagicBattleDamageTextStyle(label: Label): void {
         applySimKaiFont(label);
-        label.color = new Color(255, 232, 178, 255);
+        label.color = createMagicBattleDamageRowTextColor();
         label.overflow = Overflow.SHRINK;
         label.enableWrapText = false;
-
-        const outlineColor = new Color(63, 28, 12, 255);
-        this.setMagicFloorTextEdge(label, true, outlineColor, 2);
+        this.setMagicFloorTextEdge(label, true, createMagicBattleDamageRowOutlineColor(), 2);
     }
     protected applyMagicBattleDamageRowEditorTemplate(row: Node, index: number): void {
         if (index <= 0 || !this.magicBattleDamageListRoot?.isValid) return;

@@ -127,6 +127,7 @@ export abstract class HomeViewBase extends Component {
     protected readonly transitionDotTweens: Array<Tween<Node> | Tween<UIOpacity>> = [];
     protected readonly buttonBaseScales = new WeakMap<Node, Vec3>();
     protected readonly skinApplyVersions = new WeakMap<Node, number>();
+    protected readonly hiddenConfirmNodeLayouts = new WeakMap<Node, { x: number; y: number; z: number; width: number; height: number }>();
     protected skinApplyVersion = 0;
     protected toastLabel: Label | null = null;
     protected toastBackground: Node | null = null;

@@ -17,6 +17,8 @@ import type { RoleProfile } from './HomeTypes';
 import { HomeViewBase } from './HomeViewBase';
 import { closeProfileBillPanel } from './HomeProfileBillPanel';
 import { closeProfileDaoYouPanel, openProfileDaoYouPanel } from './HomeProfileDaoYouPanel';
+import { closeProfilePrettyNumberPanel, openProfilePrettyNumberPanel } from './HomeProfilePrettyNumberPanel';
+import { closeProfileRealNamePanel, openProfileRealNamePanel } from './HomeProfileRealNamePanel';
 
 /**
  * Owns the profile entry, main profile popup, labels, and action routing.
@@ -66,6 +68,8 @@ export abstract class HomeFeatureProfileShell extends HomeViewBase {
         panel.active = true;
         closeProfileDaoYouPanel(this);
         closeProfileBillPanel(this);
+        closeProfileRealNamePanel(this);
+        closeProfilePrettyNumberPanel(this);
         this.ensureInputBlocker(panel);
         panel.setSiblingIndex((panel.parent?.children.length || 1) - 1);
         this.refreshRootLayerOrder();
@@ -75,6 +79,8 @@ export abstract class HomeFeatureProfileShell extends HomeViewBase {
     protected closeProfilePopup(): void {
         closeProfileDaoYouPanel(this);
         closeProfileBillPanel(this);
+        closeProfileRealNamePanel(this);
+        closeProfilePrettyNumberPanel(this);
         this.closeProfileSettingsPopup();
         this.closeProfileAvatarFramePopup();
         if (this.profilePopupRoot?.isValid) {
@@ -189,7 +195,7 @@ export abstract class HomeFeatureProfileShell extends HomeViewBase {
             { slotName: 'ProfileFriendButtonSlot', buttonName: 'ProfileFriendButton', message: '\u9053\u53cb\u529f\u80fd\u9884\u7559' },
             { slotName: 'ProfileSettingsButtonSlot', buttonName: 'ProfileSettingsButton', message: '\u8bbe\u7f6e\u529f\u80fd\u9884\u7559' },
             { slotName: 'ProfileRealNameButtonSlot', buttonName: 'ProfileRealNameButton', message: '\u5b9e\u540d\u529f\u80fd\u9884\u7559' },
-            { slotName: 'ProfileStreamerButtonSlot', buttonName: 'ProfileStreamerButton', message: '\u4e3b\u64ad\u529f\u80fd\u9884\u7559' },
+            { slotName: 'ProfileStreamerButtonSlot', buttonName: 'ProfileStreamerButton', message: '\u9753\u53f7\u529f\u80fd\u9884\u7559' },
         ].forEach((action) => {
             const slot = this.findNode(action.slotName, board);
             if (slot) {
@@ -211,6 +217,17 @@ export abstract class HomeFeatureProfileShell extends HomeViewBase {
                     }
                     if (action.buttonName === 'ProfileSettingsButton') {
                         this.openProfileSettingsPopup();
+                        return;
+                    }
+                    if (action.buttonName === 'ProfileRealNameButton') {
+                        openProfileRealNamePanel(this);
+                        return;
+                    }
+                    if (action.buttonName === 'ProfileStreamerButton') {
+                        closeProfileDaoYouPanel(this);
+                        closeProfileBillPanel(this);
+                        closeProfileRealNamePanel(this);
+                        openProfilePrettyNumberPanel(this);
                         return;
                     }
                     this.showToast(action.message);
@@ -322,7 +339,7 @@ export abstract class HomeFeatureProfileShell extends HomeViewBase {
             { name: 'ProfileRealNameButton', icon: HomeConfig.UI_PROFILE_BTN_REALNAME, x: 100.134, y: 21.921, message: '\u5b9e\u540d\u529f\u80fd\u9884\u7559' },
             { name: 'ProfileFriendButton', icon: HomeConfig.UI_PROFILE_BTN_FRIEND, x: 200.267, y: 21.921, message: '\u9053\u53cb\u529f\u80fd\u9884\u7559' },
             { name: 'ProfileSettingsButton', icon: HomeConfig.UI_PROFILE_BTN_SETTINGS, x: 3.609, y: -76, message: '\u8bbe\u7f6e\u529f\u80fd\u9884\u7559' },
-            { name: 'ProfileStreamerButton', icon: HomeConfig.UI_PROFILE_BTN_STREAMER, x: 101.589, y: -76, message: '\u4e3b\u64ad\u529f\u80fd\u9884\u7559' },
+            { name: 'ProfileStreamerButton', icon: HomeConfig.UI_PROFILE_BTN_STREAMER, x: 101.589, y: -76, message: '\u9753\u53f7\u529f\u80fd\u9884\u7559' },
         ];
 
         actions.forEach((action) => {
@@ -341,6 +358,17 @@ export abstract class HomeFeatureProfileShell extends HomeViewBase {
                 }
                 if (action.name === 'ProfileSettingsButton') {
                     this.openProfileSettingsPopup();
+                    return;
+                }
+                if (action.name === 'ProfileRealNameButton') {
+                    openProfileRealNamePanel(this);
+                    return;
+                }
+                if (action.name === 'ProfileStreamerButton') {
+                    closeProfileDaoYouPanel(this);
+                    closeProfileBillPanel(this);
+                    closeProfileRealNamePanel(this);
+                    openProfilePrettyNumberPanel(this);
                     return;
                 }
                 this.showToast(action.message);

@@ -846,6 +846,8 @@ export abstract class HomeFeatureMagicBattle extends HomeFeatureMagicBattleHost 
             title: '\u7cfb\u7edf\u63d0\u793a',
             message: `\u662f\u5426\u5728\u5f53\u524d\u9b54\u754c\u5c42\u6570\u8fdb\u884c\u6311\u6218`,
             variant: 'magicFloorConfirm',
+            magicRealmIndex: realmIndex,
+            magicFloorIndex: floorIndex,
             onConfirm: () => {
                 if (!this.consumeMagicFloorTicket()) {
                     this.showToast('\u9b54\u754c\u95e8\u7968\u4e0d\u8db3');

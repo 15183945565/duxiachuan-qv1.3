@@ -1807,9 +1807,9 @@
     "_dstBlendFactor": 4,
     "_color": {
       "__type__": "cc.Color",
-      "r": 246,
-      "g": 228,
-      "b": 186,
+      "r": 110,
+      "g": 90,
+      "b": 71,
       "a": 255
     },
     "_string": "????",
@@ -1829,7 +1829,7 @@
     "_isUnderline": false,
     "_underlineHeight": 2,
     "_cacheMode": 0,
-    "_enableOutline": true,
+    "_enableOutline": false,
     "_outlineColor": {
       "__type__": "cc.Color",
       "r": 42,
@@ -1837,7 +1837,7 @@
       "b": 12,
       "a": 255
     },
-    "_outlineWidth": 2,
+    "_outlineWidth": 0,
     "_enableShadow": false,
     "_shadowColor": {
       "__type__": "cc.Color",
@@ -2871,8 +2871,8 @@
     "_color": {
       "__type__": "cc.Color",
       "r": 255,
-      "g": 232,
-      "b": 178,
+      "g": 255,
+      "b": 255,
       "a": 255
     },
     "_string": "1",
@@ -2895,9 +2895,9 @@
     "_enableOutline": true,
     "_outlineColor": {
       "__type__": "cc.Color",
-      "r": 63,
-      "g": 28,
-      "b": 12,
+      "r": 0,
+      "g": 0,
+      "b": 0,
       "a": 255
     },
     "_outlineWidth": 2,
@@ -3030,8 +3030,8 @@
     "_color": {
       "__type__": "cc.Color",
       "r": 255,
-      "g": 232,
-      "b": 178,
+      "g": 255,
+      "b": 255,
       "a": 255
     },
     "_string": "???",
@@ -3054,9 +3054,9 @@
     "_enableOutline": true,
     "_outlineColor": {
       "__type__": "cc.Color",
-      "r": 63,
-      "g": 28,
-      "b": 12,
+      "r": 0,
+      "g": 0,
+      "b": 0,
       "a": 255
     },
     "_outlineWidth": 2,
@@ -3189,8 +3189,8 @@
     "_color": {
       "__type__": "cc.Color",
       "r": 255,
-      "g": 232,
-      "b": 178,
+      "g": 255,
+      "b": 255,
       "a": 255
     },
     "_string": "????",
@@ -3213,9 +3213,9 @@
     "_enableOutline": true,
     "_outlineColor": {
       "__type__": "cc.Color",
-      "r": 63,
-      "g": 28,
-      "b": 12,
+      "r": 0,
+      "g": 0,
+      "b": 0,
       "a": 255
     },
     "_outlineWidth": 2,
@@ -3348,8 +3348,8 @@
     "_color": {
       "__type__": "cc.Color",
       "r": 255,
-      "g": 232,
-      "b": 178,
+      "g": 255,
+      "b": 255,
       "a": 255
     },
     "_string": "????",
@@ -3372,9 +3372,9 @@
     "_enableOutline": true,
     "_outlineColor": {
       "__type__": "cc.Color",
-      "r": 63,
-      "g": 28,
-      "b": 12,
+      "r": 0,
+      "g": 0,
+      "b": 0,
       "a": 255
     },
     "_outlineWidth": 2,
@@ -3507,8 +3507,8 @@
     "_color": {
       "__type__": "cc.Color",
       "r": 255,
-      "g": 232,
-      "b": 178,
+      "g": 255,
+      "b": 255,
       "a": 255
     },
     "_string": "0",
@@ -3531,9 +3531,9 @@
     "_enableOutline": true,
     "_outlineColor": {
       "__type__": "cc.Color",
-      "r": 63,
-      "g": 28,
-      "b": 12,
+      "r": 0,
+      "g": 0,
+      "b": 0,
       "a": 255
     },
     "_outlineWidth": 2,
@@ -3719,9 +3719,9 @@
     "_dstBlendFactor": 4,
     "_color": {
       "__type__": "cc.Color",
-      "r": 69,
-      "g": 36,
-      "b": 16,
+      "r": 110,
+      "g": 90,
+      "b": 71,
       "a": 255
     },
     "_string": "??",
@@ -3749,7 +3749,7 @@
       "b": 12,
       "a": 255
     },
-    "_outlineWidth": 2,
+    "_outlineWidth": 0,
     "_enableShadow": false,
     "_shadowColor": {
       "__type__": "cc.Color",
@@ -4767,8 +4767,8 @@
     "_color": {
       "__type__": "cc.Color",
       "r": 255,
-      "g": 232,
-      "b": 178,
+      "g": 255,
+      "b": 255,
       "a": 255
     },
     "_string": "2",
@@ -4791,9 +4791,9 @@
     "_enableOutline": true,
     "_outlineColor": {
       "__type__": "cc.Color",
-      "r": 63,
-      "g": 28,
-      "b": 12,
+      "r": 0,
+      "g": 0,
+      "b": 0,
       "a": 255
     },
     "_outlineWidth": 2,
@@ -4926,8 +4926,8 @@
     "_color": {
       "__type__": "cc.Color",
       "r": 255,
-      "g": 232,
-      "b": 178,
+      "g": 255,
+      "b": 255,
       "a": 255
     },
     "_string": "???",
@@ -4950,9 +4950,9 @@
     "_enableOutline": true,
     "_outlineColor": {
       "__type__": "cc.Color",
-      "r": 63,
-      "g": 28,
-      "b": 12,
+      "r": 0,
+      "g": 0,
+      "b": 0,
       "a": 255
     },
     "_outlineWidth": 2,
@@ -5085,8 +5085,8 @@
     "_color": {
       "__type__": "cc.Color",
       "r": 255,
-      "g": 232,
-      "b": 178,
+      "g": 255,
+      "b": 255,
       "a": 255
     },
     "_string": "????",
@@ -5109,9 +5109,9 @@
     "_enableOutline": true,
     "_outlineColor": {
       "__type__": "cc.Color",
-      "r": 63,
-      "g": 28,
-      "b": 12,
+      "r": 0,
+      "g": 0,
+      "b": 0,
       "a": 255
     },
     "_outlineWidth": 2,
@@ -5244,8 +5244,8 @@
     "_color": {
       "__type__": "cc.Color",
       "r": 255,
-      "g": 232,
-      "b": 178,
+      "g": 255,
+      "b": 255,
       "a": 255
     },
     "_string": "????",
@@ -5268,9 +5268,9 @@
     "_enableOutline": true,
     "_outlineColor": {
       "__type__": "cc.Color",
-      "r": 63,
-      "g": 28,
-      "b": 12,
+      "r": 0,
+      "g": 0,
+      "b": 0,
       "a": 255
     },
     "_outlineWidth": 2,
@@ -5403,8 +5403,8 @@
     "_color": {
       "__type__": "cc.Color",
       "r": 255,
-      "g": 232,
-      "b": 178,
+      "g": 255,
+      "b": 255,
       "a": 255
     },
     "_string": "0",
@@ -5427,9 +5427,9 @@
     "_enableOutline": true,
     "_outlineColor": {
       "__type__": "cc.Color",
-      "r": 63,
-      "g": 28,
-      "b": 12,
+      "r": 0,
+      "g": 0,
+      "b": 0,
       "a": 255
     },
     "_outlineWidth": 2,
@@ -5615,9 +5615,9 @@
     "_dstBlendFactor": 4,
     "_color": {
       "__type__": "cc.Color",
-      "r": 69,
-      "g": 36,
-      "b": 16,
+      "r": 110,
+      "g": 90,
+      "b": 71,
       "a": 255
     },
     "_string": "??",
@@ -5645,7 +5645,7 @@
       "b": 12,
       "a": 255
     },
-    "_outlineWidth": 2,
+    "_outlineWidth": 0,
     "_enableShadow": false,
     "_shadowColor": {
       "__type__": "cc.Color",
@@ -6663,8 +6663,8 @@
     "_color": {
       "__type__": "cc.Color",
       "r": 255,
-      "g": 232,
-      "b": 178,
+      "g": 255,
+      "b": 255,
       "a": 255
     },
     "_string": "3",
@@ -6687,9 +6687,9 @@
     "_enableOutline": true,
     "_outlineColor": {
       "__type__": "cc.Color",
-      "r": 63,
-      "g": 28,
-      "b": 12,
+      "r": 0,
+      "g": 0,
+      "b": 0,
       "a": 255
     },
     "_outlineWidth": 2,
@@ -6822,8 +6822,8 @@
     "_color": {
       "__type__": "cc.Color",
       "r": 255,
-      "g": 232,
-      "b": 178,
+      "g": 255,
+      "b": 255,
       "a": 255
     },
     "_string": "???",
@@ -6846,9 +6846,9 @@
     "_enableOutline": true,
     "_outlineColor": {
       "__type__": "cc.Color",
-      "r": 63,
-      "g": 28,
-      "b": 12,
+      "r": 0,
+      "g": 0,
+      "b": 0,
       "a": 255
     },
     "_outlineWidth": 2,
@@ -6981,8 +6981,8 @@
     "_color": {
       "__type__": "cc.Color",
       "r": 255,
-      "g": 232,
-      "b": 178,
+      "g": 255,
+      "b": 255,
       "a": 255
     },
     "_string": "????",
@@ -7005,9 +7005,9 @@
     "_enableOutline": true,
     "_outlineColor": {
       "__type__": "cc.Color",
-      "r": 63,
-      "g": 28,
-      "b": 12,
+      "r": 0,
+      "g": 0,
+      "b": 0,
       "a": 255
     },
     "_outlineWidth": 2,
@@ -7140,8 +7140,8 @@
     "_color": {
       "__type__": "cc.Color",
       "r": 255,
-      "g": 232,
-      "b": 178,
+      "g": 255,
+      "b": 255,
       "a": 255
     },
     "_string": "????",
@@ -7164,9 +7164,9 @@
     "_enableOutline": true,
     "_outlineColor": {
       "__type__": "cc.Color",
-      "r": 63,
-      "g": 28,
-      "b": 12,
+      "r": 0,
+      "g": 0,
+      "b": 0,
       "a": 255
     },
     "_outlineWidth": 2,
@@ -7299,8 +7299,8 @@
     "_color": {
       "__type__": "cc.Color",
       "r": 255,
-      "g": 232,
-      "b": 178,
+      "g": 255,
+      "b": 255,
       "a": 255
     },
     "_string": "0",
@@ -7323,9 +7323,9 @@
     "_enableOutline": true,
     "_outlineColor": {
       "__type__": "cc.Color",
-      "r": 63,
-      "g": 28,
-      "b": 12,
+      "r": 0,
+      "g": 0,
+      "b": 0,
       "a": 255
     },
     "_outlineWidth": 2,
@@ -7511,9 +7511,9 @@
     "_dstBlendFactor": 4,
     "_color": {
       "__type__": "cc.Color",
-      "r": 69,
-      "g": 36,
-      "b": 16,
+      "r": 110,
+      "g": 90,
+      "b": 71,
       "a": 255
     },
     "_string": "??",
@@ -7541,7 +7541,7 @@
       "b": 12,
       "a": 255
     },
-    "_outlineWidth": 2,
+    "_outlineWidth": 0,
     "_enableShadow": false,
     "_shadowColor": {
       "__type__": "cc.Color",
@@ -7895,9 +7895,9 @@
     "_dstBlendFactor": 4,
     "_color": {
       "__type__": "cc.Color",
-      "r": 255,
-      "g": 232,
-      "b": 178,
+      "r": 110,
+      "g": 90,
+      "b": 71,
       "a": 255
     },
     "_string": "????:-  ??:0(0%)",
@@ -7917,7 +7917,7 @@
     "_isUnderline": false,
     "_underlineHeight": 2,
     "_cacheMode": 0,
-    "_enableOutline": true,
+    "_enableOutline": false,
     "_outlineColor": {
       "__type__": "cc.Color",
       "r": 42,
@@ -7925,7 +7925,7 @@
       "b": 12,
       "a": 255
     },
-    "_outlineWidth": 2,
+    "_outlineWidth": 0,
     "_enableShadow": false,
     "_shadowColor": {
       "__type__": "cc.Color",
@@ -8054,9 +8054,9 @@
     "_dstBlendFactor": 4,
     "_color": {
       "__type__": "cc.Color",
-      "r": 224,
-      "g": 192,
-      "b": 128,
+      "r": 110,
+      "g": 90,
+      "b": 71,
       "a": 255
     },
     "_string": "??????????????????",
@@ -8076,7 +8076,7 @@
     "_isUnderline": false,
     "_underlineHeight": 2,
     "_cacheMode": 0,
-    "_enableOutline": true,
+    "_enableOutline": false,
     "_outlineColor": {
       "__type__": "cc.Color",
       "r": 42,
@@ -8084,7 +8084,7 @@
       "b": 12,
       "a": 255
     },
-    "_outlineWidth": 2,
+    "_outlineWidth": 0,
     "_enableShadow": false,
     "_shadowColor": {
       "__type__": "cc.Color",

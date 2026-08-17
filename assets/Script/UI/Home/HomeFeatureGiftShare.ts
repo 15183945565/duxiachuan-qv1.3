@@ -676,7 +676,6 @@ export abstract class HomeFeatureGiftShare extends HomeViewBase {
         editNode.setPosition(0, 0, 0);
         transform.setAnchorPoint(0.5, 0.5);
         transform.setContentSize(width, height);
-
         const emptyTouchSprite = editNode.getComponent(Sprite);
         if (emptyTouchSprite && !emptyTouchSprite.spriteFrame) {
             emptyTouchSprite.enabled = false;
